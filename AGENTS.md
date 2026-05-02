@@ -7,13 +7,15 @@ This file is the persistent project contract for agents and contributors. Read i
 - Use HonoX as the application framework.
 - Use native SQL through the project database adapter. Do not introduce an ORM unless the project contract is changed.
 - Support Bun for local/runtime development and Cloudflare Workers for deployment.
-- Pass core runtime resources through Hono context variables: `c.var.runtime`, `c.var.db`, `c.var.cache`, `c.var.config`, and `c.var.now`.
+- Pass core runtime resources through the project Hono context extension: `c.runtime`, `c.db`, `c.cache`, `c.config`, and `c.now()`.
 - Use `hono-openapi + zod` for API validation and documentation.
 - Use online migrations. The app must ensure database migrations have run before business handlers depend on tables.
 
 ## Code Quality Rules
 
 - Keep structure clear and modular. A file should have one obvious responsibility.
+- Do not pack unrelated page rendering, client state, forms, tables, schemas, and service logic into one large file. Split by feature and responsibility once a file owns more than one domain concept.
+- Prefer feature folders for admin pages, for example `app/routes/admin/user` and `app/routes/admin/config`, with local `_components` for page-specific islands and widgets.
 - Keep functions small and single-purpose. Extract only when it reduces real complexity.
 - Keep core logic extensible. Adding a new type, strategy, field, adapter, or runtime should add a module or registration entry, not rewrite the main flow.
 - Keep naming explicit and stable. Prefer domain names over generic names like `handler`, `data`, or `item` when the domain is known.
@@ -28,6 +30,7 @@ This file is the persistent project contract for agents and contributors. Read i
 - Non-adapter modules must not import adapter implementations directly.
 - `adapter` directories are the exception. Runtime factories may import exact adapter implementations from `infra/*/adapter/*`.
 - HonoX route files and island files under `app/routes` may use direct local component imports because the file names are part of HonoX routing and island conventions.
+- HonoX pages should use server rendering for initial data when the data is available from context resources. Use islands only for interactive client behavior.
 
 ## Extension Rules
 

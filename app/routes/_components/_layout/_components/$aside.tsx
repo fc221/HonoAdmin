@@ -59,66 +59,24 @@ export default function Aside({
           class={`menu p-4 flex-1 bg-base-200 rounded-box w-full gap-1 ${isDesktopCollapsed ? 'hidden' : ''}`}
         >
           <li>
-            <a href="/">
-              <i class="icon-[ri--home-line]"></i>
+            <a href="/admin">
+              <i class="icon-[ri--dashboard-line]"></i>
               {' '}
-              <span>Item 1</span>
+              <span>控制台</span>
             </a>
           </li>
           <li>
-            <a class="menu-active" href="/">
-              <i class="icon-[ri--home-line]"></i>
+            <a href="/admin/config">
+              <i class="icon-[ri--settings-3-line]"></i>
               {' '}
-              <span>Item 1</span>
+              <span>配置管理</span>
             </a>
           </li>
-          <li class="">
-            <details open>
-              <summary>
-                <i class="icon-[ri--home-line]"></i>
-                {' '}
-                <span>Parent</span>
-              </summary>
-              <ul class="mt-2 flex flex-col gap-1">
-                <li>
-                  <a>Submenu 1</a>
-                </li>
-                <li>
-                  <a class="menu-active">Submenu 2</a>
-                </li>
-                <li>
-                  <details>
-                    <summary>
-                      <i class="icon-[ri--home-line]"></i>
-                      {' '}
-                      <span>Parent</span>
-                    </summary>
-                    <ul class="mt-2 flex flex-col gap-1">
-                      <li>
-                        <a>
-                          <i class="icon-[ri--home-line]"></i>
-                          {' '}
-                          <span>Submenu 1</span>
-                        </a>
-                      </li>
-                      <li>
-                        <a>
-                          <i class="icon-[ri--home-line]"></i>
-                          {' '}
-                          <span>Submenu 2</span>
-                        </a>
-                      </li>
-                    </ul>
-                  </details>
-                </li>
-              </ul>
-            </details>
-          </li>
           <li>
-            <a>
-              <i class="icon-[ri--home-line]"></i>
+            <a href="/admin/user">
+              <i class="icon-[ri--user-settings-line]"></i>
               {' '}
-              <span>Item 3</span>
+              <span>用户管理</span>
             </a>
           </li>
         </ul>
@@ -195,10 +153,10 @@ function CollapsedMenu() {
           style="position-anchor:--aside-menu-dropdown"
         >
           <li>
-            <a>Item 1</a>
+            <a href="/admin/config">配置管理</a>
           </li>
           <li>
-            <a>Item 2</a>
+            <a href="/admin/user">用户管理</a>
           </li>
         </ul>
       </li>

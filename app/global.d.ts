@@ -1,22 +1,16 @@
 import type {} from 'hono'
-import type { CacheAdapter } from './infra/cache'
-import type { DBAdapter } from './infra/database'
 import type {
-  AppRuntime,
-  AppRuntimeConfig,
+  AppContext,
+  AppEnv,
   RuntimeBindings,
 } from './infra/runtime'
 
 declare module 'hono' {
+  interface Context extends AppContext {}
+
   interface Env {
     Bindings: RuntimeBindings
-    Variables: {
-      cache: CacheAdapter
-      config: AppRuntimeConfig
-      db: DBAdapter
-      now: () => string
-      runtime: AppRuntime
-    }
+    Variables: AppEnv['Variables']
   }
 }
 

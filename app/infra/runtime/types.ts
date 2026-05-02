@@ -23,3 +23,16 @@ export type AppRuntime = {
   config: AppRuntimeConfig
   db: DBAdapter
 }
+
+export type AppContext = {
+  cache: CacheAdapter
+  config: AppRuntimeConfig
+  db: DBAdapter
+  now: () => string
+  runtime: AppRuntime
+}
+
+export type AppEnv = {
+  Bindings: RuntimeBindings
+  Variables: Record<string, never>
+}

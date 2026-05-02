@@ -1,5 +1,3 @@
-
-
 export type BaseEntity = {
   id: number
   created_at: string

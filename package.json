@@ -12,6 +12,7 @@
     "deploy": "bun run build && wrangler deploy"
   },
   "dependencies": {
+    "@hono/standard-validator": "^0.2.2",
     "@hono/zod-validator": "^0.7.6",
     "@iconify/vue": "^5.0.0",
     "add": "^2.0.6",

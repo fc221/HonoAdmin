@@ -20,13 +20,26 @@ Runtime resources are created by `infra/runtime` and attached by `service/middle
 
 Handlers should read:
 
-- `c.var.runtime` for the full runtime object.
-- `c.var.db` for SQL access.
-- `c.var.cache` for cache access.
-- `c.var.config` for runtime configuration.
-- `c.var.now()` for request-time timestamps.
+- `c.runtime` for the full runtime object.
+- `c.db` for SQL access.
+- `c.cache` for cache access.
+- `c.config` for runtime configuration.
+- `c.now()` for request-time timestamps.
 
 Business code must not inspect `Bun`, Cloudflare bindings, or environment globals directly. Runtime detection belongs in runtime factories and adapters.
+
+The direct context fields are a project-level Hono `Context` extension. Do not introduce new core resources by ad-hoc assignment in route files. Add the field to the runtime/context type, attach it in `service/middleware/context`, and document the extension point here.
+
+## HonoX Pages And Islands
+
+HonoX pages should render meaningful initial state on the server when data is available through context resources. Islands should be limited to client-only interaction such as form state, local storage tokens, optimistic updates, and refresh actions.
+
+Admin feature pages use feature folders:
+
+- `app/routes/admin/config`: configuration management page and local components.
+- `app/routes/admin/user`: user management page and local components.
+
+Avoid large mixed files that combine route rendering, API clients, forms, tables, and unrelated domain panels. Split page-specific UI into local `_components`, and move shared admin UI into `app/routes/admin/_components`.
 
 ## Database
 

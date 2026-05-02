@@ -1,10 +1,9 @@
-import { BaseEntity } from './base'
+import type { BaseEntity } from '.'
 
-
-export type UserEntity   = BaseEntity & {
+export type UserEntity = BaseEntity & {
   avatar: string | null
-  nickname: string | null
-  username: string
-  password: string
   is_root: number
+  nickname: string | null
+  password: string
+  username: string
 }
