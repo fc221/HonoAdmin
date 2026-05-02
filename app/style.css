@@ -1,0 +1,35 @@
+@import 'tailwindcss' source('../app');
+@plugin "daisyui" {
+  themes: all;
+}
+
+@plugin "@iconify/tailwind4" {
+  prefix: 'icon';
+  scale: 1.2;
+}
+
+:root {
+  --radius-box: 1rem;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  background: var(--color-base-100);
+  overflow-x: hidden;
+}
+
+/* 解决在侧边栏关闭菜单抖动问题 */
+.dropdown {
+  transition-property: opacity, scale !important;
+}
+
+.menu {
+  --menu-active-bg: color-mix(in oklch, var(--color-primary), transparent 90%);
+  --menu-active-fg: var(--color-primary);
+}
