@@ -1,22 +1,29 @@
-import type { ThemeName } from '../$context'
+import type { MenuItem } from '../../../../service/admin/system/menu'
+import type { ThemeName } from '../config'
+import { isMenuItemActive } from '../../../../service/admin/system/menu'
+import Menu from './$menu'
 import Theme from './$theme'
 
 interface Props {
+  currentMenuName: string
   theme: ThemeName
   id: string
   isDesktop: boolean
   isAsideOpen: boolean
   isCollapsed: boolean
+  menus: MenuItem[]
   onToggle: () => void
   onThemeChange: (theme: ThemeName) => void
 }
 
 export default function Aside({
+  currentMenuName,
   theme,
   id,
   isDesktop,
   isAsideOpen,
   isCollapsed,
+  menus,
   onToggle,
   onThemeChange,
 }: Props) {
@@ -28,86 +35,77 @@ export default function Aside({
       : 'bg-black/0 opacity-0'
 
   return (
-    <aside class="drawer-side h-full! overflow-visible">
+    <aside class="drawer-side h-full! overflow-visible z-99">
       <label
         for={id}
         aria-label="关闭侧边栏"
-        // transition-[background-color,opacity] duration-200 ease-out
-        class={`drawer-overlay  ${mobileOverlayClass}`}
+        class={`drawer-overlay transition-[background-color,opacity] duration-150 ease-out ${mobileOverlayClass}`}
       />
       <div
-        // transition-[width,box-shadow] duration-300 ease-out
-        class={`flex flex-col items-center bg-base-100 p-4 gap-3 rounded-box w-64 m-3 h-[calc(100vh-2rem)]  lg:m-0 lg:h-full ${!isDesktop && isAsideOpen ? 'shadow-2xl' : 'shadow-none'} ${isDesktopCollapsed ? 'lg:w-20' : 'lg:w-64'}`}
+        data-layout-aside-panel
+        class={`flex min-w-0 flex-col items-center overflow-x-hidden bg-base-100 p-4 gap-3 rounded-box w-64 m-3 h-[calc(100vh-2rem)] transition-[width,box-shadow] duration-150 ease-out lg:m-0 lg:h-full ${!isDesktop && isAsideOpen ? 'shadow-2xl' : 'shadow-none'} ${isDesktopCollapsed ? 'lg:w-20' : 'lg:w-64'}`}
       >
         {/* logo */}
         <div
-          // transition-[padding,gap] duration-200 ease-out
-          class={`bg-linear-to-br from-primary to-primary/30 rounded-box flex flex-row items-center  ${isDesktopCollapsed ? 'justify-center' : 'w-full p-4 gap-3'}`}
+          data-layout-aside-logo
+          class={`bg-linear-to-br from-primary to-primary/30 rounded-box flex max-w-full min-w-0 flex-row items-center overflow-hidden transition-[padding,gap,width] duration-150 ease-out ${isDesktopCollapsed ? 'justify-center' : 'w-full p-4 gap-3'}`}
         >
           <div class="rounded-box bg-white/20 w-12 h-12 flex items-center justify-center">
             <span class="text-white text-lg font-bold">HA</span>
           </div>
           <div
-            // transition-[max-width,opacity] duration-200 ease-out
-            class={`overflow-hidden whitespace-nowrap text-white font-bold text-lg  ${isDesktopCollapsed ? 'max-w-0 opacity-0' : 'max-w-40 opacity-100'}`}
+            data-layout-aside-brand
+            class={`overflow-hidden whitespace-nowrap text-white font-bold text-lg transition-[max-width,opacity] duration-150 ease-out ${isDesktopCollapsed ? 'max-w-0 opacity-0' : 'max-w-40 opacity-100'}`}
           >
             HonoAdmin
           </div>
         </div>
         {/* menu */}
-        <ul
-          class={`menu p-4 flex-1 bg-base-200 rounded-box w-full gap-1 ${isDesktopCollapsed ? 'hidden' : ''}`}
-        >
-          <li>
-            <a href="/admin">
-              <i class="icon-[ri--dashboard-line]"></i>
-              {' '}
-              <span>控制台</span>
-            </a>
-          </li>
-          <li>
-            <a href="/admin/config">
-              <i class="icon-[ri--settings-3-line]"></i>
-              {' '}
-              <span>配置管理</span>
-            </a>
-          </li>
-          <li>
-            <a href="/admin/user">
-              <i class="icon-[ri--user-settings-line]"></i>
-              {' '}
-              <span>用户管理</span>
-            </a>
-          </li>
-        </ul>
-        <div class={isDesktopCollapsed ? 'flex flex-1' : 'hidden'}>
-          <CollapsedMenu />
+        <div class="w-full min-w-0 flex-1 min-h-0 overflow-x-hidden">
+          <Menu
+            dataLayoutMenuExpanded
+            currentMenuName={currentMenuName}
+            items={menus}
+            className={`menu p-4 bg-base-200 rounded-box w-full h-full space-y-1 overflow-y-auto ${isDesktopCollapsed ? 'hidden' : ''}`}
+          />
+          <div
+            data-layout-menu-collapsed
+            class={`min-w-0 justify-center ${isDesktopCollapsed ? 'flex' : 'hidden'}`}
+          >
+            <CollapsedMenu currentMenuName={currentMenuName} items={menus} />
+          </div>
         </div>
         {/* aside options */}
         <div
-          // transition-[gap] transition-discrete
-          class={`w-full pt-2 gap-2 border-t border-base-300  ${isDesktopCollapsed ? 'flex flex-col items-center' : 'flex flex-row items-center justify-between'}`}
+          data-layout-aside-options
+          class={`w-full max-w-full min-w-0 overflow-hidden pt-2 gap-2 border-t border-base-300 transition-[gap] duration-150 ease-out ${isDesktopCollapsed ? 'flex flex-col items-center' : 'flex flex-row items-center justify-between'}`}
         >
           <Theme theme={theme} onThemeChange={onThemeChange} />
           {/* options collapsed */}
           <button
-            // transition-colors transition-discrete
-            class={`btn btn-ghost  ${isDesktopCollapsed ? 'btn-circle' : ''}`}
+            data-layout-aside-toggle
+            class={`btn btn-ghost transition-[border-radius] duration-150 ease-out ${isDesktopCollapsed ? 'btn-circle' : ''}`}
             type="button"
             onClick={onToggle}
           >
             <i
-              class={
-                !isDesktop
-                  ? 'icon-[ri--close-line]'
-                  : isDesktopCollapsed
-                    ? 'icon-[ri--arrow-right-double-fill]'
-                    : 'icon-[ri--arrow-left-double-fill]'
-              }
+              data-layout-icon-mobile
+              class={`${!isDesktop ? 'inline-block' : 'hidden'} icon-[ri--close-line]`}
+            >
+            </i>
+            <i
+              data-layout-icon-desktop-expanded
+              class={`${isDesktop && !isDesktopCollapsed ? 'inline-block' : 'hidden'} icon-[ri--arrow-left-double-fill]`}
+            >
+            </i>
+            <i
+              data-layout-icon-desktop-collapsed
+              class={`${isDesktopCollapsed ? 'inline-block' : 'hidden'} icon-[ri--arrow-right-double-fill]`}
             >
             </i>
             <span
-              class={`overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-200 ease-out ${isDesktopCollapsed ? 'max-w-0 opacity-0 absolute' : 'max-w-32 opacity-100'}`}
+              data-layout-aside-toggle-label
+              class={`overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-150 ease-out ${isDesktopCollapsed ? 'max-w-0 opacity-0 absolute' : 'max-w-32 opacity-100'}`}
             >
               {!isDesktop
                 ? isAsideOpen
@@ -122,44 +120,84 @@ export default function Aside({
   )
 }
 
-function CollapsedMenu() {
+function CollapsedMenu({
+  currentMenuName,
+  items,
+}: {
+  currentMenuName: string
+  items: MenuItem[]
+}) {
   return (
-    <ul class="menu flex-1 p-0">
-      <li>
-        <button
-          class="menu-active"
-          popovertarget="aside-menu-dropdown"
-          style="anchor-name:--aside-menu-dropdown"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-            />
-          </svg>
-        </button>
-        <ul
-          class="dropdown dropdown-right menu w-52 rounded-box bg-base-100"
-          popover="auto"
-          id="aside-menu-dropdown"
-          style="position-anchor:--aside-menu-dropdown"
-        >
-          <li>
-            <a href="/admin/config">配置管理</a>
-          </li>
-          <li>
-            <a href="/admin/user">用户管理</a>
-          </li>
-        </ul>
-      </li>
+    <ul class="menu min-w-0 items-center gap-1 p-0">
+      {items.map((item) => (
+        <CollapsedRootMenuItem
+          currentMenuName={currentMenuName}
+          item={item}
+          key={item.name}
+        />
+      ))}
     </ul>
   )
+}
+
+function CollapsedRootMenuItem({
+  currentMenuName,
+  item,
+}: {
+  currentMenuName: string
+  item: MenuItem
+}) {
+  const activeClass = isMenuItemActive(item, currentMenuName)
+    ? 'menu-active'
+    : ''
+
+  if (!item.children?.length) {
+    if (!item.href) {
+      return null
+    }
+
+    return (
+      <li class="min-w-0">
+        <a
+          aria-label={item.label}
+          class={`${activeClass} justify-center`}
+          data-pjax={item.pjax === false ? undefined : 'true'}
+          href={item.href}
+          title={item.label}
+        >
+          <i class={`${item.icon} shrink-0`}></i>
+        </a>
+      </li>
+    )
+  }
+
+  const popoverId = getCollapsedMenuPopoverId(item.name)
+  const anchorName = `--${popoverId}`
+
+  return (
+    <li class="min-w-0">
+      <button
+        aria-label={item.label}
+        class={`${activeClass} justify-center`}
+        popovertarget={popoverId}
+        style={`anchor-name:${anchorName}`}
+        title={item.label}
+        type="button"
+      >
+        <i class={`${item.icon} shrink-0`}></i>
+      </button>
+      <Menu
+        currentMenuName={currentMenuName}
+        id={popoverId}
+        items={item.children}
+        className="dropdown dropdown-right menu w-52 max-w-[calc(100vw-6rem)] overflow-x-hidden rounded-box bg-base-100 p-3 shadow space-y-1"
+        popover="auto"
+        style={`position-anchor:${anchorName}`}
+      />
+    </li>
+  )
+}
+
+function getCollapsedMenuPopoverId(name: string) {
+  return `aside-menu-${name.split('.').join('-')}`
 }

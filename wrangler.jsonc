@@ -8,30 +8,30 @@
   ],
   "assets": {
     "directory": "./dist"
-  }
+  },
+  // HonoAdmin runtime bindings:
+  //
   // "vars": {
-  //   "MY_VAR": "my-variable"
+  //   "APP_TIMEZONE": "Asia/Shanghai"
   // },
-  // "kv_namespaces": [
-  //   {
-  //     "binding": "MY_KV_NAMESPACE",
-  //     "id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-  //   }
-  // ],
-  // "r2_buckets": [
-  //   {
-  //     "binding": "MY_BUCKET",
-  //     "bucket_name": "my-bucket"
-  //   }
-  // ],
+  //
+  // Required D1 binding. The binding name must be "DB".
   // "d1_databases": [
   //   {
-  //     "binding": "MY_DB",
-  //     "database_name": "my-database",
-  //     "database_id": ""
+  //     "binding": "DB",
+  //     "database_name": "hono-admin",
+  //     "database_id": "<your-d1-database-id>"
   //   }
   // ],
-  // "ai": {
-  //   "binding": "AI"
-  // }
+  //
+  // Optional KV cache binding. The binding name must be "CACHE".
+  // "kv_namespaces": [
+  //   {
+  //     "binding": "CACHE",
+  //     "id": "<your-kv-namespace-id>"
+  //   }
+  // ]
+  //
+  // Configure the session secret outside this file:
+  // wrangler secret put JWT_SECRET
 }

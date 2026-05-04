@@ -1,2 +1,2 @@
-export * from './migrations'
+export * from './migrator'
 export * from './types'

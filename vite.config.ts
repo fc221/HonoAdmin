@@ -46,6 +46,9 @@ export default defineConfig(({ command }) => ({
   server: {
     host: '0.0.0.0',
   },
+  ssr: command === 'serve'
+    ? { external: ['casbin', 'buffer'] }
+    : undefined,
   plugins: [
     disableDevCache(),
     honox({

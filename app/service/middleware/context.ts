@@ -3,6 +3,7 @@ import { env } from 'hono/adapter'
 import { createMiddleware } from 'hono/factory'
 
 import { createAppRuntime } from '../../infra/runtime'
+import { nowInTimezone } from '../../utils'
 
 export const attach = createMiddleware<AppEnv>(async (c, next) => {
   const runtime = await createAppRuntime(env(c))
@@ -11,7 +12,7 @@ export const attach = createMiddleware<AppEnv>(async (c, next) => {
   c.db = runtime.db
   c.cache = runtime.cache
   c.config = runtime.config
-  c.now = () => new Date().toISOString()
+  c.now = () => nowInTimezone(runtime.config.timezone)
 
   await next()
 })

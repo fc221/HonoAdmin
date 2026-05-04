@@ -1,44 +1,100 @@
+import type { Child } from 'hono/jsx'
+import type { DaisyThemeName, LayoutConfig, ThemeName } from './config'
 import {
-  Child,
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
   useState,
 } from 'hono/jsx'
 
-export interface LayoutConfig {
-  theme: ThemeName // 主题
-}
+import {
+  defaultLayoutConfig,
+  desktopBreakpoint,
+  isThemeName,
+  layoutConfigStorageKey,
+  systemThemeQuery,
+} from './config'
 
-export const themeNames = ['system', 'light', 'dark', 'black'] as const
+type LayoutConfigPatch = Partial<LayoutConfig>
 
-export type ThemeName = (typeof themeNames)[number]
-
-type DaisyThemeName = Exclude<ThemeName, 'system'>
-
-// 默认配置
-const defaultConfig: LayoutConfig = {
-  theme: 'light',
-}
-
-// 定义上下文类型
-interface LayoutContextType {
+interface LayoutContextValue {
   config: LayoutConfig
-  isDesktop: boolean // 是否为桌面端
+  isDesktop: boolean
   isReady: boolean
-  updateConfig: (newConfig: Partial<LayoutConfig>) => void // 支持部分更新
-  resetConfig: () => void // 重置为默认
+  updateConfig: (patch: LayoutConfigPatch) => void
+  resetConfig: () => void
 }
 
-const LayoutContext = createContext<LayoutContextType | null>(null)
+const LayoutContext = createContext<LayoutContextValue | null>(null)
+const layoutReadyDelayMs = 120
 
-const layoutConfigStorageKey = 'layout-config'
-const legacyConfigStorageKey = 'app-config'
-const systemThemeQuery = '(prefers-color-scheme: dark)'
+function createDefaultLayoutConfig(): LayoutConfig {
+  return { ...defaultLayoutConfig }
+}
 
-function isThemeName(value: unknown): value is ThemeName {
-  return typeof value === 'string' && themeNames.includes(value as ThemeName)
+function isSameLayoutConfig(
+  left: LayoutConfig,
+  right: LayoutConfig,
+): boolean {
+  return (
+    left.sidebarCollapsed === right.sidebarCollapsed
+    && left.theme === right.theme
+  )
+}
+
+function normalizeLayoutConfig(
+  value: unknown,
+  fallback: LayoutConfig,
+): LayoutConfig {
+  if (!value || typeof value !== 'object') {
+    return fallback
+  }
+
+  const partialConfig = value as Partial<LayoutConfig>
+
+  return {
+    sidebarCollapsed:
+      typeof partialConfig.sidebarCollapsed === 'boolean'
+        ? partialConfig.sidebarCollapsed
+        : fallback.sidebarCollapsed,
+    theme: isThemeName(partialConfig.theme)
+      ? partialConfig.theme
+      : fallback.theme,
+  }
+}
+
+function readStoredLayoutConfig(): LayoutConfig {
+  const fallback = createDefaultLayoutConfig()
+
+  if (typeof localStorage === 'undefined') {
+    return fallback
+  }
+
+  try {
+    const storedConfig = localStorage.getItem(layoutConfigStorageKey)
+    if (!storedConfig) {
+      return fallback
+    }
+
+    return normalizeLayoutConfig(JSON.parse(storedConfig), fallback)
+  } catch {
+    return fallback
+  }
+}
+
+function mergeLayoutConfig(
+  config: LayoutConfig,
+  patch: LayoutConfigPatch,
+): LayoutConfig {
+  return normalizeLayoutConfig({ ...config, ...patch }, config)
+}
+
+function persistLayoutConfig(config: LayoutConfig) {
+  try {
+    localStorage.setItem(layoutConfigStorageKey, JSON.stringify(config))
+  } catch {}
 }
 
 function resolveTheme(theme: ThemeName): DaisyThemeName {
@@ -46,69 +102,97 @@ function resolveTheme(theme: ThemeName): DaisyThemeName {
     return theme
   }
 
+  if (typeof window === 'undefined') {
+    return 'light'
+  }
+
   return window.matchMedia(systemThemeQuery).matches ? 'dark' : 'light'
 }
 
-function persistLayoutConfig(config: LayoutConfig) {
-  localStorage.setItem(layoutConfigStorageKey, JSON.stringify(config))
-  localStorage.removeItem(legacyConfigStorageKey)
-}
-
 function applyTheme(theme: ThemeName) {
+  if (typeof document === 'undefined') {
+    return
+  }
+
   document.documentElement.setAttribute('data-theme', resolveTheme(theme))
 }
 
+function applySidebarCollapsed(sidebarCollapsed: boolean) {
+  if (typeof document === 'undefined') {
+    return
+  }
+
+  document.documentElement.dataset.sidebarCollapsed = sidebarCollapsed
+    ? 'true'
+    : 'false'
+}
+
+function isDesktopViewport() {
+  if (typeof window === 'undefined') {
+    return true
+  }
+
+  return window.innerWidth >= desktopBreakpoint
+}
+
 export default function LayoutProvider({ children }: { children: Child }) {
-  const [config, setConfig] = useState<LayoutConfig>(defaultConfig)
-  const [isDesktop, setIsDesktop] = useState(true)
+  const [config, setConfig] = useState<LayoutConfig>(readStoredLayoutConfig)
+  const [isDesktop, setIsDesktop] = useState(isDesktopViewport)
   const [isReady, setIsReady] = useState(false)
 
-  const updateConfig = (newConfig: Partial<LayoutConfig>) => {
-    const hasChanges = Object.entries(newConfig).some(
-      ([k, v]) => config[k as keyof LayoutConfig] !== v,
-    )
-
-    if (!hasChanges) {
-      return
+  const updateConfig = useCallback((patch: LayoutConfigPatch) => {
+    if (typeof patch.sidebarCollapsed === 'boolean') {
+      applySidebarCollapsed(patch.sidebarCollapsed)
     }
 
-    const nextConfig = { ...config, ...newConfig }
-    persistLayoutConfig(nextConfig)
-    applyTheme(nextConfig.theme)
-    setConfig(nextConfig)
-  }
+    if (patch.theme) {
+      applyTheme(patch.theme)
+    }
 
-  const resetConfig = () => {
-    setConfig({ ...defaultConfig })
-  }
+    setConfig((currentConfig) => {
+      const nextConfig = mergeLayoutConfig(currentConfig, patch)
+      persistLayoutConfig(nextConfig)
+      return isSameLayoutConfig(currentConfig, nextConfig)
+        ? currentConfig
+        : nextConfig
+    })
+  }, [])
+
+  const resetConfig = useCallback(() => {
+    applySidebarCollapsed(defaultLayoutConfig.sidebarCollapsed)
+    applyTheme(defaultLayoutConfig.theme)
+
+    setConfig((currentConfig) => {
+      const nextConfig = createDefaultLayoutConfig()
+      persistLayoutConfig(nextConfig)
+      return isSameLayoutConfig(currentConfig, nextConfig)
+        ? currentConfig
+        : nextConfig
+    })
+  }, [])
 
   useEffect(() => {
-    let nextConfig: LayoutConfig = { ...defaultConfig }
+    const syncDesktopState = () => setIsDesktop(isDesktopViewport())
 
-    // 从 localStorage 加载配置
-    const storedConfig
-      = localStorage.getItem(layoutConfigStorageKey)
-        ?? localStorage.getItem(legacyConfigStorageKey)
-    try {
-      if (storedConfig) {
-        const parsedConfig = JSON.parse(storedConfig) as Partial<LayoutConfig>
-        const theme = parsedConfig.theme
-        nextConfig = {
-          ...nextConfig,
-          theme: isThemeName(theme) ? theme : nextConfig.theme,
-        }
-      }
-    } catch {}
+    setConfig((currentConfig) => {
+      const storedConfig = readStoredLayoutConfig()
+      return isSameLayoutConfig(currentConfig, storedConfig)
+        ? currentConfig
+        : storedConfig
+    })
+    syncDesktopState()
 
-    setConfig(nextConfig)
-    setIsDesktop(window.innerWidth >= 1024)
-    setIsReady(true)
+    // 让 SSR 全屏 loading 至少完成一次绘制，避免刷新初始化状态闪换。
+    const readyTimer = setTimeout(() => {
+      document.documentElement.dataset.layoutReady = 'true'
+      setIsReady(true)
+    }, layoutReadyDelayMs)
 
-    const handleResize = () => {
-      setIsDesktop(window.innerWidth >= 1024)
+    window.addEventListener('resize', syncDesktopState)
+    return () => {
+      clearTimeout(readyTimer)
+      window.removeEventListener('resize', syncDesktopState)
     }
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
   }, [])
 
   useEffect(() => {
@@ -117,16 +201,18 @@ export default function LayoutProvider({ children }: { children: Child }) {
     }
 
     persistLayoutConfig(config)
+    applySidebarCollapsed(config.sidebarCollapsed)
     applyTheme(config.theme)
 
-    if (config.theme !== 'system') {
+    if (config.theme !== 'system' || typeof window === 'undefined') {
       return
     }
 
     const mediaQuery = window.matchMedia(systemThemeQuery)
     const handleSystemThemeChange = () => applyTheme(config.theme)
     mediaQuery.addEventListener('change', handleSystemThemeChange)
-    return () => mediaQuery.removeEventListener('change', handleSystemThemeChange)
+    return () =>
+      mediaQuery.removeEventListener('change', handleSystemThemeChange)
   }, [config, isReady])
 
   const contextValue = useMemo(
@@ -137,7 +223,7 @@ export default function LayoutProvider({ children }: { children: Child }) {
       updateConfig,
       resetConfig,
     }),
-    [config, isDesktop, isReady],
+    [config, isDesktop, isReady, updateConfig, resetConfig],
   )
 
   return (

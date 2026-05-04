@@ -1,12 +1,15 @@
 import type { CacheAdapter } from '../cache'
 import type { DBAdapter } from '../database'
+import type { BootstrapConfigStatus } from './bootstrap'
 
 export type RuntimeBindings = {
   CACHE_NAMESPACE?: string
   DB?: D1Database
   DATABASE_URL?: string
   CACHE?: KVNamespace
+  HONO_ADMIN_ENV_FILE?: string
   JWT_SECRET?: string
+  APP_TIMEZONE?: string
 }
 
 export type RuntimeTarget = 'bun' | 'cloudflare-workers'
@@ -14,8 +17,10 @@ export type RuntimeTarget = 'bun' | 'cloudflare-workers'
 export type AppRuntimeConfig = {
   appName: string
   appVersion: string
+  bootstrap: BootstrapConfigStatus
   jwtSecret?: string
   runtimeTarget: RuntimeTarget
+  timezone: string
 }
 
 export type AppRuntime = {

@@ -3,7 +3,6 @@ import type { AppEnv } from '../../../infra/runtime'
 import { Hono } from 'hono'
 import {
   describeRoute,
-  openAPIRouteHandler,
   resolver,
   validator,
 } from 'hono-openapi'
@@ -22,6 +21,7 @@ import {
   idParamSchema,
   listConfigs,
   listUsers,
+  listUserSchema,
   updateConfig,
   updateConfigSchema,
   updateUser,
@@ -53,25 +53,6 @@ app.onError((error, c) => {
   const { body, status } = toErrorShape(error)
   return c.json(body, status as ContentfulStatusCode)
 })
-
-app.get('/openapi.json', openAPIRouteHandler(app, {
-  documentation: {
-    info: {
-      description: 'HonoAdmin admin management API.',
-      title: 'HonoAdmin Admin API',
-      version: '0.0.0',
-    },
-    openapi: '3.1.0',
-    components: {
-      securitySchemes: {
-        bearerAuth: {
-          scheme: 'bearer',
-          type: 'http',
-        },
-      },
-    },
-  },
-}))
 
 app.use('*', bearerAuth({
   invalidToken: {
@@ -114,7 +95,7 @@ app.get(
     tags: ['Configs'],
   }),
   async (c) => c.json({
-    data: await listConfigs(c.db),
+    data: await listConfigs(c),
     ok: true,
   }),
 )
@@ -139,9 +120,8 @@ app.post(
   validator('json', createConfigSchema),
   async (c) => c.json({
     data: await createConfig(
-      c.db,
+      c,
       c.req.valid('json'),
-      c.now(),
     ),
     ok: true,
   }, 201),
@@ -168,10 +148,9 @@ app.put(
   validator('json', updateConfigSchema),
   async (c) => c.json({
     data: await updateConfig(
-      c.db,
+      c,
       c.req.valid('param').id,
       c.req.valid('json'),
-      c.now(),
     ),
     ok: true,
   }),
@@ -196,7 +175,7 @@ app.delete(
   }),
   validator('param', idParamSchema),
   async (c) => {
-    await deleteConfig(c.db, c.req.valid('param').id)
+    await deleteConfig(c, c.req.valid('param').id)
     return c.json({ ok: true })
   },
 )
@@ -218,8 +197,9 @@ app.get(
     security: [{ bearerAuth: [] }],
     tags: ['Users'],
   }),
+  validator('query', listUserSchema),
   async (c) => c.json({
-    data: await listUsers(c.db),
+    data: await listUsers(c, c.req.valid('query')),
     ok: true,
   }),
 )
@@ -244,9 +224,8 @@ app.post(
   validator('json', createUserSchema),
   async (c) => c.json({
     data: await createUser(
-      c.db,
+      c,
       c.req.valid('json'),
-      c.now(),
     ),
     ok: true,
   }, 201),
@@ -273,10 +252,9 @@ app.put(
   validator('json', updateUserSchema),
   async (c) => c.json({
     data: await updateUser(
-      c.db,
+      c,
       c.req.valid('param').id,
       c.req.valid('json'),
-      c.now(),
     ),
     ok: true,
   }),
@@ -301,7 +279,7 @@ app.delete(
   }),
   validator('param', idParamSchema),
   async (c) => {
-    await deleteUser(c.db, c.req.valid('param').id)
+    await deleteUser(c, c.req.valid('param').id)
     return c.json({ ok: true })
   },
 )

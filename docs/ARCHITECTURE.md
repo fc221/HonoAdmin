@@ -34,12 +34,20 @@ The direct context fields are a project-level Hono `Context` extension. Do not i
 
 HonoX pages should render meaningful initial state on the server when data is available through context resources. Islands should be limited to client-only interaction such as form state, local storage tokens, optimistic updates, and refresh actions.
 
+When a feature is only used by the HonoX page, prefer integrated mode:
+
+- `GET /feature` renders the page from context resources.
+- `POST /feature` handles form actions and redirects back to the page.
+- No client-side `fetch` or standalone API is introduced unless another client needs that contract.
+
 Admin feature pages use feature folders:
 
-- `app/routes/admin/config`: configuration management page and local components.
-- `app/routes/admin/user`: user management page and local components.
+- `app/routes/admin/system/config`: configuration management page and local components.
+- `app/routes/admin/system/user`: user management page and local components.
 
 Avoid large mixed files that combine route rendering, API clients, forms, tables, and unrelated domain panels. Split page-specific UI into local `_components`, and move shared admin UI into `app/routes/admin/_components`.
+
+Feature constants live beside the module that owns them. Layout components render their local navigation constants instead of duplicating labels, paths, or icons.
 
 ## Database
 
@@ -66,7 +74,9 @@ Migration rules:
 
 ## OpenAPI And Validation
 
-API validation and documentation use `hono-openapi + zod`.
+Standalone API validation and documentation use `hono-openapi + zod`.
+
+Do not add an API just because a page submits data. Use HonoX same-route actions first. Add APIs only when the feature needs external clients, generated documentation, or a separated integration boundary.
 
 API route rules:
 

@@ -1,25 +1,19 @@
 import type { AppRuntime, RuntimeBindings } from './types'
-import { ConfigurationError } from '../../utils'
+import { normalizeTimezone } from '../../utils'
 import { KVCacheAdapter } from '../cache/adapter/kv'
 import { NoopCacheAdapter } from '../cache/adapter/noop'
-import { runMigrations } from '../database'
-
 import { D1Adapter } from '../database/adapter/d1'
 
-let migrationPromise: Promise<void> | null = null
+import { UnavailableDBAdapter } from '../database/adapter/unavailable'
+import { getCloudflareWorkersBootstrapConfigStatus } from './bootstrap'
 
 export async function createCloudflareWorkersRuntime(
   bindings: RuntimeBindings,
 ): Promise<AppRuntime> {
-  if (!bindings.DB) {
-    throw new ConfigurationError('Cloudflare Workers 运行时缺少 DB 绑定。', {
-      binding: 'DB',
-    })
-  }
-
-  const db = new D1Adapter(bindings.DB)
-  migrationPromise ??= runMigrations(db)
-  await migrationPromise
+  const bootstrap = getCloudflareWorkersBootstrapConfigStatus(bindings)
+  const db = bindings.DB
+    ? new D1Adapter(bindings.DB)
+    : new UnavailableDBAdapter('Cloudflare Workers 运行时缺少 DB 绑定。')
 
   return {
     cache: bindings.CACHE
@@ -28,8 +22,10 @@ export async function createCloudflareWorkersRuntime(
     config: {
       appName: __APP_NAME__,
       appVersion: __APP_VERSION__,
+      bootstrap,
       jwtSecret: bindings.JWT_SECRET?.trim() || undefined,
       runtimeTarget: 'cloudflare-workers',
+      timezone: normalizeTimezone(bindings.APP_TIMEZONE),
     },
     db,
   }
