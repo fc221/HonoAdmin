@@ -3,6 +3,11 @@ import {
   loginUser,
   verifyAdminSession,
 } from '../../service'
+import { getSiteLogoText } from '../_utils/branding'
+import {
+  formatPageTitle,
+  getRenderableSiteConfig,
+} from '../_utils/site'
 import LoginForm from './_components/_login-form'
 
 const defaultReturnTo = '/user/profile'
@@ -28,6 +33,7 @@ export const POST = createRoute(async (c) => {
 
 export default createRoute(async (c) => {
   const returnTo = normalizeReturnTo(c.req.query('returnTo'))
+  const siteConfig = await getRenderableSiteConfig(c)
 
   if (await verifyAdminSession(c)) {
     return c.redirect(returnTo, 302)
@@ -35,7 +41,7 @@ export default createRoute(async (c) => {
 
   return c.render(
     <main class="min-h-screen bg-base-200 text-base-content">
-      <title>登录 - HonoAdmin</title>
+      <title>{formatPageTitle('登录', siteConfig.title)}</title>
       <div class="grid min-h-screen lg:grid-cols-[minmax(0,1fr)_500px]">
         <section class="relative hidden overflow-hidden bg-base-300 lg:flex">
           <div class="absolute inset-0 opacity-[0.08] bg-[linear-gradient(var(--color-base-content)_1px,transparent_1px),linear-gradient(90deg,var(--color-base-content)_1px,transparent_1px)] bg-size-[32px_32px]" />
@@ -44,15 +50,15 @@ export default createRoute(async (c) => {
           <div class="relative flex h-full w-full flex-col justify-between p-10 xl:p-12">
             <a href="/" class="flex w-fit items-center gap-3">
               <span class="flex h-12 w-12 items-center justify-center rounded-box bg-primary text-lg font-bold text-primary-content">
-                HA
+                {getSiteLogoText(siteConfig.title)}
               </span>
-              <span class="text-xl font-bold">HonoAdmin</span>
+              <span class="text-xl font-bold">{siteConfig.title}</span>
             </a>
 
             <div class="max-w-2xl">
               <div class="mb-6 inline-flex items-center gap-2 rounded-box border border-base-content/10 bg-base-100/70 px-4 py-2 text-sm text-base-content/70 backdrop-blur">
                 <i class="icon-[ri--shield-check-line]" />
-                <span>HonoAdmin Console</span>
+                <span>{`${siteConfig.title} Console`}</span>
               </div>
               <h1 class="max-w-xl text-4xl font-bold leading-tight xl:text-5xl">
                 一处入口，管理配置、用户和运行时状态。
@@ -85,9 +91,9 @@ export default createRoute(async (c) => {
             <div class="mb-8 flex items-center justify-between lg:hidden">
               <a href="/" class="flex items-center gap-3">
                 <span class="flex h-11 w-11 items-center justify-center rounded-box bg-primary font-bold text-primary-content">
-                  HA
+                  {getSiteLogoText(siteConfig.title)}
                 </span>
-                <span class="text-lg font-bold">HonoAdmin</span>
+                <span class="text-lg font-bold">{siteConfig.title}</span>
               </a>
               <a href="/" class="btn btn-ghost btn-circle" aria-label="返回首页">
                 <i class="icon-[ri--home-line]" />
@@ -105,6 +111,7 @@ export default createRoute(async (c) => {
               <LoginForm
                 error={c.req.query('error')}
                 returnTo={returnTo}
+                siteTitle={siteConfig.title}
               />
             </div>
 

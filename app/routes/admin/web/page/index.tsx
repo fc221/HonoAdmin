@@ -24,9 +24,10 @@ export default createRoute(async (c) => {
       canSwitchRole={layout.canSwitchRole}
       currentMenuName="admin.web.page"
       menus={layout.menus}
+      siteTitle={layout.siteTitle}
       user={layout.user}
     >
-      <title>页面管理 - HonoAdmin</title>
+      <title>{`页面管理 - ${layout.siteTitle}`}</title>
       <WebPagePanel
         alert={getPageAlert(c)}
         keyword={listInput.keyword}

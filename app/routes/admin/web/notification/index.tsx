@@ -27,9 +27,10 @@ export default createRoute(async (c) => {
       canSwitchRole={layout.canSwitchRole}
       currentMenuName="admin.web.notification"
       menus={layout.menus}
+      siteTitle={layout.siteTitle}
       user={layout.user}
     >
-      <title>公告管理 - HonoAdmin</title>
+      <title>{`公告管理 - ${layout.siteTitle}`}</title>
       <WebNotificationPanel
         alert={getPageAlert(c)}
         keyword={listInput.keyword}

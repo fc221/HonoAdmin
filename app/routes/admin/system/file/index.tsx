@@ -25,9 +25,10 @@ export default createRoute(async (c) => {
       canSwitchRole={layout.canSwitchRole}
       currentMenuName="admin.system.file"
       menus={layout.menus}
+      siteTitle={layout.siteTitle}
       user={layout.user}
     >
-      <title>文件管理 - HonoAdmin</title>
+      <title>{`文件管理 - ${layout.siteTitle}`}</title>
       <FilePanel
         alert={getPageAlert(c)}
         files={pagination.items}

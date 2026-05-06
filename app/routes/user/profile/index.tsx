@@ -34,9 +34,10 @@ export default createRoute(async (c) => {
         canSwitchRole={layout.canSwitchRole}
         currentMenuName="user.profile"
         menus={layout.menus}
+        siteTitle={layout.siteTitle}
         user={layout.user}
       >
-        <title>个人中心 - HonoAdmin</title>
+        <title>{`个人中心 - ${layout.siteTitle}`}</title>
         <ProfilePanel
           activeTab={activeTab}
           alert={getPageAlert(c)}

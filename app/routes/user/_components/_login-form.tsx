@@ -1,9 +1,10 @@
 interface Props {
   error?: string
   returnTo: string
+  siteTitle: string
 }
 
-export default function LoginForm({ error, returnTo }: Props) {
+export default function LoginForm({ error, returnTo, siteTitle }: Props) {
   return (
     <form class="space-y-5" method="post">
       <input name="returnTo" type="hidden" value={returnTo} />
@@ -58,7 +59,7 @@ export default function LoginForm({ error, returnTo }: Props) {
         </label>
         <a
           class="link link-hover text-sm text-primary"
-          href="mailto:admin@example.com?subject=Reset%20HonoAdmin%20password"
+          href={`mailto:admin@example.com?subject=${encodeURIComponent(`Reset ${siteTitle} password`)}`}
         >
           忘记密码？
         </a>

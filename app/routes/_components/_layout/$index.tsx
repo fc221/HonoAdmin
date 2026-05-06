@@ -10,6 +10,7 @@ interface Props {
   children: Child
   currentMenuName: string
   menus?: MenuItem[]
+  siteTitle?: string
   user?: UserHeaderProfile | null
 }
 
@@ -27,6 +28,7 @@ export default function Layout({
   children,
   currentMenuName,
   menus,
+  siteTitle,
   user,
 }: Props) {
   return (
@@ -35,6 +37,7 @@ export default function Layout({
         canSwitchRole={canSwitchRole}
         currentMenuName={currentMenuName}
         menus={menus}
+        siteTitle={siteTitle}
         user={user}
       >
         {children}
@@ -49,6 +52,7 @@ function AsideLayout({
   children,
   currentMenuName: initialCurrentMenuName,
   menus = defaultMenus,
+  siteTitle = 'HonoAdmin',
   user = null,
 }: Props) {
   const { config, isDesktop, isReady, updateConfig } = useLayoutContext()
@@ -140,6 +144,7 @@ function AsideLayout({
           isCollapsed={isCollapsed}
           onToggle={handleAsideToggle}
           onMenuNavigate={handleMenuNavigate}
+          siteTitle={siteTitle}
           theme={config.theme}
           menus={menus}
           onThemeChange={(theme) => updateConfig({ theme })}
@@ -186,7 +191,7 @@ function AsideLayout({
                   )}
             </section>
             <footer class="mt-auto px-4 pb-1 pt-3 text-center text-xs text-base-content/50">
-              Copyright © 2026 HonoAdmin. All rights reserved.
+              {`Copyright © 2026 ${siteTitle}. All rights reserved.`}
             </footer>
           </div>
         </main>

@@ -16,9 +16,10 @@ export default createRoute(async (c) => {
       canSwitchRole={layout.canSwitchRole}
       currentMenuName="admin.system.config"
       menus={layout.menus}
+      siteTitle={layout.siteTitle}
       user={layout.user}
     >
-      <title>配置管理 - HonoAdmin</title>
+      <title>{`配置管理 - ${layout.siteTitle}`}</title>
       <ConfigPanel
         alert={getPageAlert(c)}
         configs={await listConfigs(c)}

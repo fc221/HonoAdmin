@@ -23,9 +23,10 @@ export default createRoute(async (c) => {
       canSwitchRole={layout.canSwitchRole}
       currentMenuName="admin.system.update"
       menus={layout.menus}
+      siteTitle={layout.siteTitle}
       user={layout.user}
     >
-      <title>更新管理 - HonoAdmin</title>
+      <title>{`更新管理 - ${layout.siteTitle}`}</title>
       <UpdatePanel
         alert={getPageAlert(c)}
         canMigrate={!!user?.isRoot}

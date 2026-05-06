@@ -17,9 +17,10 @@ export default createRoute(async (c) => {
       canSwitchRole={layout.canSwitchRole}
       currentMenuName="admin.web.notification"
       menus={layout.menus}
+      siteTitle={layout.siteTitle}
       user={layout.user}
     >
-      <title>新增公告 - HonoAdmin</title>
+      <title>{`新增公告 - ${layout.siteTitle}`}</title>
       <PageAlert alert={getPageAlert(c)} />
       <section class="rounded-box border border-base-300 bg-base-100 p-4">
         <PageHeader

@@ -35,9 +35,10 @@ export default createRoute(async (c) => {
         canSwitchRole={layout.canSwitchRole}
         currentMenuName="admin.system.role"
         menus={layout.menus}
+        siteTitle={layout.siteTitle}
         user={layout.user}
       >
-        <title>{`编辑角色 - ${role.name} - HonoAdmin`}</title>
+        <title>{`编辑角色 - ${role.name} - ${layout.siteTitle}`}</title>
         <PageAlert alert={getPageAlert(c)} />
         <section class="rounded-box border border-base-300 bg-base-100 p-4">
           <PageHeader

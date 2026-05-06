@@ -24,9 +24,10 @@ export default createRoute(async (c) => {
       canSwitchRole={layout.canSwitchRole}
       currentMenuName="admin.web.feedback"
       menus={layout.menus}
+      siteTitle={layout.siteTitle}
       user={layout.user}
     >
-      <title>用户反馈 - HonoAdmin</title>
+      <title>{`用户反馈 - ${layout.siteTitle}`}</title>
       <WebFeedbackPanel
         alert={getPageAlert(c)}
         feedbacks={pagination.items}

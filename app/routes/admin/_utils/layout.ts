@@ -11,10 +11,12 @@ import {
   listUserSessionRoles,
   userMenus,
 } from '../../../service'
+import { getRenderableSiteConfig } from '../../_utils/site'
 
 export interface AdminLayoutData {
   canSwitchRole: boolean
   menus: MenuItem[]
+  siteTitle: string
   user: UserHeaderProfile | null
 }
 
@@ -22,7 +24,7 @@ export async function getAdminLayoutData(
   c: Context,
 ): Promise<AdminLayoutData> {
   const sessionUser = await getAdminSessionUser(c)
-  const [authorizedAdminMenus, profile, roles] = await Promise.all([
+  const [authorizedAdminMenus, profile, roles, siteConfig] = await Promise.all([
     listAuthorizedAdminMenus(c, sessionUser),
     sessionUser
       ? getUserHeaderProfileById(c, sessionUser.id)
@@ -30,6 +32,7 @@ export async function getAdminLayoutData(
     sessionUser
       ? listUserSessionRoles(c, sessionUser.id)
       : Promise.resolve([]),
+    getRenderableSiteConfig(c),
   ])
   const activeRole = getActiveRole(roles, sessionUser?.roleId ?? null)
   const isUserSideRole = isUserRole(activeRole) || !hasMenuHref(authorizedAdminMenus)
@@ -37,6 +40,7 @@ export async function getAdminLayoutData(
   return {
     canSwitchRole: roles.length > 1,
     menus: isUserSideRole ? userMenus : authorizedAdminMenus,
+    siteTitle: siteConfig.title,
     user: profile
       ? {
           ...profile,

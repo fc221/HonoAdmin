@@ -1,6 +1,7 @@
 import type { MenuItem } from '../../../../service/admin/system/menu'
 import type { ThemeName } from '../config'
 import { isMenuItemActive } from '../../../../service/admin/system/menu'
+import { getSiteLogoText } from '../../../_utils/branding'
 import Menu from './$menu'
 import Theme from './$theme'
 
@@ -15,6 +16,7 @@ interface Props {
   onMenuNavigate: () => void
   onToggle: () => void
   onThemeChange: (theme: ThemeName) => void
+  siteTitle: string
 }
 
 export default function Aside({
@@ -28,6 +30,7 @@ export default function Aside({
   onMenuNavigate,
   onToggle,
   onThemeChange,
+  siteTitle,
 }: Props) {
   const isDesktopCollapsed = isDesktop && isCollapsed
   const mobileOverlayClass = isDesktop
@@ -53,13 +56,13 @@ export default function Aside({
           class={`bg-linear-to-br from-primary to-primary/30 rounded-box flex max-w-full min-w-0 flex-row items-center overflow-hidden transition-[padding,gap,width] duration-150 ease-out ${isDesktopCollapsed ? 'justify-center' : 'w-full p-4 gap-3'}`}
         >
           <div class="rounded-box bg-white/20 w-12 h-12 flex items-center justify-center">
-            <span class="text-white text-lg font-bold">HA</span>
+            <span class="text-white text-lg font-bold">{getSiteLogoText(siteTitle)}</span>
           </div>
           <div
             data-layout-aside-brand
             class={`overflow-hidden whitespace-nowrap text-white font-bold text-lg transition-[max-width,opacity] duration-150 ease-out ${isDesktopCollapsed ? 'max-w-0 opacity-0' : 'max-w-40 opacity-100'}`}
           >
-            HonoAdmin
+            {siteTitle}
           </div>
         </div>
         {/* menu */}

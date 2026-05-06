@@ -26,9 +26,10 @@ export default createRoute(async (c) => {
       canSwitchRole={layout.canSwitchRole}
       currentMenuName="admin.system.operate-log"
       menus={layout.menus}
+      siteTitle={layout.siteTitle}
       user={layout.user}
     >
-      <title>操作日志 - HonoAdmin</title>
+      <title>{`操作日志 - ${layout.siteTitle}`}</title>
       <OperateLogPanel
         alert={getPageAlert(c)}
         keyword={listInput.keyword}

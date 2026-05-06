@@ -10,9 +10,10 @@ export default createRoute(async (c) => {
       canSwitchRole={layout.canSwitchRole}
       currentMenuName="admin.dashboard"
       menus={layout.menus}
+      siteTitle={layout.siteTitle}
       user={layout.user}
     >
-      <title>仪表盘 - HonoAdmin</title>
+      <title>{`仪表盘 - ${layout.siteTitle}`}</title>
       <section class="rounded-box border border-base-300 bg-base-100 p-4">
         <div>
           <h1 class="text-2xl font-bold">仪表盘</h1>
