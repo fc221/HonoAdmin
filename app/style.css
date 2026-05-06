@@ -114,6 +114,19 @@ body {
   --menu-active-fg: var(--color-primary);
 }
 
+/* App pages scroll inside [data-page-scroll]; keep daisyUI modals from changing root scroll chrome. */
+:root:has(.modal.modal-open),
+:root:has(.modal[open]),
+:root:has(.modal:target),
+:root:has(.modal-toggle:checked + .modal) {
+  --page-has-backdrop: 0 !important;
+  --page-overflow: visible !important;
+  --page-scroll-bg: var(--root-bg) !important;
+  --page-scroll-gutter: unset !important;
+  --page-scroll-transition: none !important;
+  animation: none !important;
+}
+
 .table :where(th, td) {
   vertical-align: middle;
 }
