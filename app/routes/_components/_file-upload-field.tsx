@@ -21,7 +21,7 @@ export default function FileUploadField({
 
   return (
     <div
-      class="space-y-2"
+      class="min-w-0 space-y-2"
       data-file-upload="true"
       data-file-upload-type={uploadType}
       data-form-field={name}
@@ -29,17 +29,17 @@ export default function FileUploadField({
       <label class="text-sm font-medium" for={`${name}-upload-url`}>
         {label}
       </label>
-      <div class="flex flex-col gap-3">
-        <div class="flex flex-wrap items-center gap-3">
+      <div class="flex min-w-0 flex-col gap-3">
+        <div class="flex min-w-0 flex-wrap items-center gap-3">
           <img
             alt={label}
-            class={`h-14 w-14 rounded object-cover ${currentValue ? '' : 'hidden'}`}
+            class={`h-14 w-14 shrink-0 rounded object-cover ${currentValue ? '' : 'hidden'}`}
             data-file-upload-preview="true"
             src={currentValue || undefined}
           />
           <input
             id={`${name}-upload-url`}
-            class="input min-w-64 flex-1"
+            class="input min-w-0 flex-1"
             maxlength={500}
             name={name}
             placeholder={placeholder}

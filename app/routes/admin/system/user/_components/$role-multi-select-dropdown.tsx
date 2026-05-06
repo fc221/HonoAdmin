@@ -29,12 +29,12 @@ export default function RoleMultiSelectDropdown({
   }
 
   return (
-    <details class="dropdown w-full">
-      <summary class="btn btn-outline w-full justify-between font-normal">
-        <span class="truncate">{summary}</span>
+    <details class="dropdown w-full min-w-0 max-w-full">
+      <summary class="btn btn-outline w-full min-w-0 justify-between font-normal">
+        <span class="min-w-0 truncate">{summary}</span>
         <i class="icon-[ri--arrow-down-s-line]" aria-hidden="true" />
       </summary>
-      <div class="dropdown-content z-40 mt-2 w-full rounded-box border border-base-300 bg-base-100 p-2 shadow-lg">
+      <div class="dropdown-content z-40 mt-2 w-full max-w-full rounded-box border border-base-300 bg-base-100 p-2 shadow-lg">
         <div class="max-h-56 overflow-auto">
           {roles.length
             ? roles.map((role) => {
@@ -54,7 +54,7 @@ export default function RoleMultiSelectDropdown({
                       onChange={() => toggleRole(role.id)}
                     />
                     <span class="min-w-0 flex-1 truncate">{role.name}</span>
-                    <span class="badge badge-ghost badge-sm">{role.code}</span>
+                    <span class="badge badge-ghost badge-sm shrink-0">{role.code}</span>
                     {checked
                       ? <i class="icon-[ri--check-line] text-primary" />
                       : null}
@@ -73,7 +73,7 @@ export default function RoleMultiSelectDropdown({
 }
 
 function getRoleOptionClass(checked: boolean): string {
-  const baseClass = 'flex cursor-pointer items-center gap-3 rounded-field px-3 py-2 hover:bg-base-200'
+  const baseClass = 'flex min-w-0 cursor-pointer items-center gap-3 rounded-field px-3 py-2 hover:bg-base-200'
   return checked
     ? `${baseClass} bg-primary/10 text-primary`
     : baseClass

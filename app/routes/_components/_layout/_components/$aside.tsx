@@ -12,6 +12,7 @@ interface Props {
   isAsideOpen: boolean
   isCollapsed: boolean
   menus: MenuItem[]
+  onMenuNavigate: () => void
   onToggle: () => void
   onThemeChange: (theme: ThemeName) => void
 }
@@ -24,6 +25,7 @@ export default function Aside({
   isAsideOpen,
   isCollapsed,
   menus,
+  onMenuNavigate,
   onToggle,
   onThemeChange,
 }: Props) {
@@ -67,12 +69,17 @@ export default function Aside({
             currentMenuName={currentMenuName}
             items={menus}
             className={`menu p-4 bg-base-200 rounded-box w-full h-full space-y-1 overflow-y-auto ${isDesktopCollapsed ? 'hidden' : ''}`}
+            onNavigate={onMenuNavigate}
           />
           <div
             data-layout-menu-collapsed
             class={`min-w-0 justify-center ${isDesktopCollapsed ? 'flex' : 'hidden'}`}
           >
-            <CollapsedMenu currentMenuName={currentMenuName} items={menus} />
+            <CollapsedMenu
+              currentMenuName={currentMenuName}
+              items={menus}
+              onNavigate={onMenuNavigate}
+            />
           </div>
         </div>
         {/* aside options */}
@@ -123,9 +130,11 @@ export default function Aside({
 function CollapsedMenu({
   currentMenuName,
   items,
+  onNavigate,
 }: {
   currentMenuName: string
   items: MenuItem[]
+  onNavigate: () => void
 }) {
   return (
     <ul class="menu min-w-0 items-center gap-1 p-0">
@@ -134,6 +143,7 @@ function CollapsedMenu({
           currentMenuName={currentMenuName}
           item={item}
           key={item.name}
+          onNavigate={onNavigate}
         />
       ))}
     </ul>
@@ -143,9 +153,11 @@ function CollapsedMenu({
 function CollapsedRootMenuItem({
   currentMenuName,
   item,
+  onNavigate,
 }: {
   currentMenuName: string
   item: MenuItem
+  onNavigate: () => void
 }) {
   const activeClass = isMenuItemActive(item, currentMenuName)
     ? 'menu-active'
@@ -163,6 +175,7 @@ function CollapsedRootMenuItem({
           class={`${activeClass} justify-center`}
           data-pjax={item.pjax === false ? undefined : 'true'}
           href={item.href}
+          onClick={onNavigate}
           title={item.label}
         >
           <i class={`${item.icon} shrink-0`}></i>
@@ -191,6 +204,7 @@ function CollapsedRootMenuItem({
         id={popoverId}
         items={item.children}
         className="dropdown dropdown-right menu w-52 max-w-[calc(100vw-6rem)] overflow-x-hidden rounded-box bg-base-100 p-3 shadow space-y-1"
+        onNavigate={onNavigate}
         popover="auto"
         style={`position-anchor:${anchorName}`}
       />

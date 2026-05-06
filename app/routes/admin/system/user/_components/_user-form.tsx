@@ -21,7 +21,7 @@ export default function UserForm({ cancelTargetId, mode, roles, user }: Props) {
 
   return (
     <form
-      class="grid gap-4 md:grid-cols-2"
+      class="grid min-w-0 gap-4 md:grid-cols-2"
       data-pjax="true"
       data-validate-trigger="blur"
       method="post"
@@ -29,7 +29,7 @@ export default function UserForm({ cancelTargetId, mode, roles, user }: Props) {
       <input name="intent" type="hidden" value={mode} />
       {user ? <input name="id" type="hidden" value={user.id} /> : null}
 
-      <div class="space-y-2" data-form-field="roleIds">
+      <div class="min-w-0 space-y-2" data-form-field="roleIds">
         <FieldLabel label="角色" />
         <RoleMultiSelectDropdown
           roles={roles}
@@ -45,7 +45,7 @@ export default function UserForm({ cancelTargetId, mode, roles, user }: Props) {
         value={user?.avatar}
       />
 
-      <div class="space-y-2" data-form-field="username">
+      <div class="min-w-0 space-y-2" data-form-field="username">
         <FieldLabel label="用户名" />
         <input
           autocomplete="username"
@@ -61,7 +61,7 @@ export default function UserForm({ cancelTargetId, mode, roles, user }: Props) {
         <p class="label">用于登录和后台识别，创建后仍可编辑。</p>
       </div>
 
-      <div class="space-y-2" data-form-field="nickname">
+      <div class="min-w-0 space-y-2" data-form-field="nickname">
         <FieldLabel label="昵称" />
         <input
           class="input w-full"
@@ -73,7 +73,7 @@ export default function UserForm({ cancelTargetId, mode, roles, user }: Props) {
         <p class="label">列表和个人资料中展示的名称。</p>
       </div>
 
-      <div class="space-y-2" data-form-field="mail">
+      <div class="min-w-0 space-y-2" data-form-field="mail">
         <FieldLabel label="邮箱" />
         <input
           autocomplete="email"
@@ -87,7 +87,7 @@ export default function UserForm({ cancelTargetId, mode, roles, user }: Props) {
         <p class="label">可选，留空表示未绑定邮箱。</p>
       </div>
 
-      <div class="space-y-2" data-form-field="phone">
+      <div class="min-w-0 space-y-2" data-form-field="phone">
         <FieldLabel label="手机" />
         <input
           autocomplete="tel"
@@ -101,7 +101,7 @@ export default function UserForm({ cancelTargetId, mode, roles, user }: Props) {
         <p class="label">可选，留空表示未绑定手机。</p>
       </div>
 
-      <div class="space-y-2" data-form-field="password">
+      <div class="min-w-0 space-y-2" data-form-field="password">
         <FieldLabel label="密码" />
         <input
           autocomplete="new-password"
@@ -118,7 +118,7 @@ export default function UserForm({ cancelTargetId, mode, roles, user }: Props) {
         </p>
       </div>
 
-      <div class="space-y-2" data-form-field="status">
+      <div class="min-w-0 space-y-2" data-form-field="status">
         <FieldLabel label="状态" />
         <select class="select w-full" name="status">
           {userStatusOptions.map((option) => (
@@ -134,7 +134,7 @@ export default function UserForm({ cancelTargetId, mode, roles, user }: Props) {
         <p class="label">禁用用户无法登录后台。</p>
       </div>
 
-      <div class="modal-action md:col-span-2 border-t border-base-300 pt-4">
+      <div class="modal-action min-w-0 border-t border-base-300 pt-4 md:col-span-2">
         {cancelTargetId
           ? (
               <label

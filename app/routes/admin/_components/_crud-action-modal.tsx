@@ -82,7 +82,7 @@ function ActionModal({
       </label>
       <input class="modal-toggle" id={id} type="checkbox" />
       <div class="modal" role="dialog">
-        <div class="modal-box flex max-h-[calc(100dvh-2rem)] max-w-4xl flex-col overflow-hidden p-0 text-left">
+        <div class="modal-box flex max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-4xl flex-col overflow-hidden p-0 text-left">
           <label
             class="btn btn-sm btn-circle btn-ghost absolute right-3 top-3 z-10"
             for={id}
@@ -91,10 +91,10 @@ function ActionModal({
           >
             <i class="icon-[ri--close-line]"></i>
           </label>
-          <div class="shrink-0 border-b border-base-300 px-6 py-4 pr-14">
+          <div class="shrink-0 border-b border-base-300 px-4 py-4 pr-14 sm:px-6">
             <h2 class="text-xl font-bold">{title}</h2>
           </div>
-          <div class="min-h-0 flex-1 overflow-y-auto px-6 py-5">{children}</div>
+          <div class="min-h-0 min-w-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6">{children}</div>
         </div>
         <label class="modal-backdrop" for={id}>
           关闭

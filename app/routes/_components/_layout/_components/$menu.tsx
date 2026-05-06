@@ -10,6 +10,7 @@ interface MenuProps {
   items: MenuItem[]
   dataLayoutMenuExpanded?: boolean
   id?: string
+  onNavigate?: () => void
   popover?: 'auto' | 'manual'
   style?: string
 }
@@ -20,6 +21,7 @@ export default function Menu({
   items,
   dataLayoutMenuExpanded,
   id,
+  onNavigate,
   popover,
   style,
 }: MenuProps) {
@@ -31,12 +33,16 @@ export default function Menu({
       popover={popover}
       style={style}
     >
-      {items.map((item) => renderMenuItem(item, currentMenuName))}
+      {items.map((item) => renderMenuItem(item, currentMenuName, onNavigate))}
     </ul>
   )
 }
 
-function renderMenuItem(item: MenuItem, currentMenuName: string) {
+function renderMenuItem(
+  item: MenuItem,
+  currentMenuName: string,
+  onNavigate: (() => void) | undefined,
+) {
   if (item.children?.length) {
     return (
       <li key={item.name} class="min-w-0">
@@ -49,7 +55,7 @@ function renderMenuItem(item: MenuItem, currentMenuName: string) {
           </summary>
           <ul class="mt-1 min-w-0 overflow-x-hidden space-y-1">
             {item.children.map((child) =>
-              renderMenuItem(child, currentMenuName)
+              renderMenuItem(child, currentMenuName, onNavigate)
             )}
           </ul>
         </details>
@@ -67,6 +73,7 @@ function renderMenuItem(item: MenuItem, currentMenuName: string) {
         class={`${isMenuItemActive(item, currentMenuName) ? 'menu-active' : ''} min-w-0`}
         data-pjax={item.pjax === false ? undefined : 'true'}
         href={item.href}
+        onClick={onNavigate}
       >
         <i class={`${item.icon} shrink-0`}></i>
         <span class="min-w-0 truncate">{item.label}</span>

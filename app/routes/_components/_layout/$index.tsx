@@ -110,6 +110,12 @@ function AsideLayout({
     setIsAsideOpen((open) => !open)
   }
 
+  const handleMenuNavigate = () => {
+    if (!isDesktop) {
+      setIsAsideOpen(false)
+    }
+  }
+
   return (
     <div class="h-screen overflow-x-hidden p-4 bg-base-200">
       <LayoutLoading visible={!isReady} />
@@ -133,6 +139,7 @@ function AsideLayout({
           isAsideOpen={isAsideOpen}
           isCollapsed={isCollapsed}
           onToggle={handleAsideToggle}
+          onMenuNavigate={handleMenuNavigate}
           theme={config.theme}
           menus={menus}
           onThemeChange={(theme) => updateConfig({ theme })}
