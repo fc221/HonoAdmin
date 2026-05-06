@@ -10,6 +10,9 @@ import { migration0008SystemFileManagement } from './0008_system_file_management
 import { migration0009SystemUpdateManagement } from './0009_system_update_management'
 import { migration0010SiteConfigAndMigrationUpdate } from './0010_site_config_and_migration_update'
 import { migration0011UserProfileFields } from './0011_user_profile_fields'
+import { migration0012UserMultiRoles } from './0012_user_multi_roles'
+import { migration0013RemoveSeededAgentRole } from './0013_remove_seeded_agent_role'
+import { migration0014RootUserRoleAssignment } from './0014_root_user_role_assignment'
 
 export const migrations: Migration[] = [
   migration0001AdminCore,
@@ -23,4 +26,7 @@ export const migrations: Migration[] = [
   migration0009SystemUpdateManagement,
   migration0010SiteConfigAndMigrationUpdate,
   migration0011UserProfileFields,
+  migration0012UserMultiRoles,
+  migration0013RemoveSeededAgentRole,
+  migration0014RootUserRoleAssignment,
 ]

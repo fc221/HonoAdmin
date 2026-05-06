@@ -54,11 +54,17 @@ export default function UserTable({ roles, timezone, users }: Props) {
                   <span class={`badge badge-soft ${user.isRoot ? 'badge-error' : 'badge-info'}`}>
                     {user.isRoot ? 'root' : 'user'}
                   </span>
-                  <span class="badge badge-soft badge-primary">
-                    {user.roleId
-                      ? roleLabels.get(user.roleId) ?? `角色 #${user.roleId}`
-                      : '未分配角色'}
-                  </span>
+                  {user.roleIds.length
+                    ? user.roleIds.map((roleId) => (
+                        <span class="badge badge-soft badge-primary" key={roleId}>
+                          {roleLabels.get(roleId) ?? `角色 #${roleId}`}
+                        </span>
+                      ))
+                    : (
+                        <span class="badge badge-soft badge-primary">
+                          未分配角色
+                        </span>
+                      )}
                   <span class={`badge badge-soft ${UserStatusUtils.getBadgeClass(user.status)}`}>
                     {UserStatusUtils.getLabel(user.status)}
                   </span>

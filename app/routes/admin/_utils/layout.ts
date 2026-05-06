@@ -1,12 +1,19 @@
 import type { Context } from 'hono'
-import type { MenuItem, UserHeaderProfile } from '../../../service'
+import type {
+  MenuItem,
+  UserHeaderProfile,
+  UserSessionRole,
+} from '../../../service'
 import {
   getAdminSessionUser,
   getUserHeaderProfileById,
   listAuthorizedAdminMenus,
+  listUserSessionRoles,
+  userMenus,
 } from '../../../service'
 
 export interface AdminLayoutData {
+  canSwitchRole: boolean
   menus: MenuItem[]
   user: UserHeaderProfile | null
 }
@@ -15,18 +22,48 @@ export async function getAdminLayoutData(
   c: Context,
 ): Promise<AdminLayoutData> {
   const sessionUser = await getAdminSessionUser(c)
-  const [menus, user] = await Promise.all([
+  const [authorizedAdminMenus, profile, roles] = await Promise.all([
     listAuthorizedAdminMenus(c, sessionUser),
     sessionUser
       ? getUserHeaderProfileById(c, sessionUser.id)
       : Promise.resolve(null),
+    sessionUser
+      ? listUserSessionRoles(c, sessionUser.id)
+      : Promise.resolve([]),
   ])
+  const activeRole = getActiveRole(roles, sessionUser?.roleId ?? null)
+  const isUserSideRole = isUserRole(activeRole) || !hasMenuHref(authorizedAdminMenus)
 
-  return { menus, user }
+  return {
+    canSwitchRole: roles.length > 1,
+    menus: isUserSideRole ? userMenus : authorizedAdminMenus,
+    user: profile
+      ? {
+          ...profile,
+          activeRoleId: sessionUser?.roleId ?? null,
+          roles,
+        }
+      : null,
+  }
 }
 
-export async function getAdminLayoutMenus(
+export async function getUserLayoutData(
   c: Context,
-): Promise<MenuItem[]> {
-  return listAuthorizedAdminMenus(c, await getAdminSessionUser(c))
+): Promise<AdminLayoutData> {
+  return getAdminLayoutData(c)
+}
+
+function hasMenuHref(items: MenuItem[]): boolean {
+  return items.some((item) => !!item.href || hasMenuHref(item.children ?? []))
+}
+
+function getActiveRole(
+  roles: UserSessionRole[],
+  activeRoleId: number | null,
+): UserSessionRole | null {
+  return roles.find((role) => role.id === activeRoleId) ?? roles[0] ?? null
+}
+
+function isUserRole(role: UserSessionRole | null): boolean {
+  return role?.code === 'user'
 }

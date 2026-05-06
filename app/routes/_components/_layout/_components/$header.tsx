@@ -1,4 +1,7 @@
-import type { UserHeaderProfile } from '../../../../service'
+import type {
+  UserHeaderProfile,
+  UserSessionRole,
+} from '../../../../service'
 import type {
   MenuBreadcrumbItem,
   MenuItem,
@@ -11,6 +14,7 @@ import {
 import { getAvatarText } from '../../../../utils'
 
 interface Props {
+  canSwitchRole: boolean
   currentMenuName: string
   isDesktop: boolean
   isAsideOpen: boolean
@@ -22,6 +26,7 @@ interface Props {
 }
 
 export default function Header({
+  canSwitchRole,
   currentMenuName,
   isDesktop,
   isAsideOpen,
@@ -43,9 +48,21 @@ export default function Header({
   const [updateStatus, setUpdateStatus] = useState<{
     pendingMigrationCount: number
   }>({ pendingMigrationCount: 0 })
+  const [isRoleMenuOpen, setIsRoleMenuOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
 
+  const handleRoleSwitchSubmit = (event: Event) => {
+    event.preventDefault()
+    setIsRoleMenuOpen(false)
+    const form = event.currentTarget as HTMLFormElement
+    void submitRoleSwitchForm(form)
+  }
+
   useEffect(() => {
+    if (!hasAdminMenuHref(menus)) {
+      return
+    }
+
     let disposed = false
 
     fetch('/admin/system/update/status', {
@@ -77,32 +94,41 @@ export default function Header({
     return () => {
       disposed = true
     }
-  }, [])
+  }, [menus])
 
   useEffect(() => {
-    if (!isUserMenuOpen) {
+    if (!isRoleMenuOpen && !isUserMenuOpen) {
       return
     }
 
     const closeOnOutsidePointer = (event: PointerEvent) => {
       const target = event.target
+      if (!(target instanceof Element)) {
+        return
+      }
+
       if (
-        target instanceof Element
-        && target.closest('[data-header-user-menu="true"]')
+        target.closest('[data-header-role-menu="true"]')
+        || target.closest('[data-header-user-menu="true"]')
       ) {
         return
       }
 
+      setIsRoleMenuOpen(false)
       setIsUserMenuOpen(false)
     }
 
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
+        setIsRoleMenuOpen(false)
         setIsUserMenuOpen(false)
       }
     }
 
-    const closeOnPjaxContent = () => setIsUserMenuOpen(false)
+    const closeOnPjaxContent = () => {
+      setIsRoleMenuOpen(false)
+      setIsUserMenuOpen(false)
+    }
 
     document.addEventListener('pointerdown', closeOnOutsidePointer)
     document.addEventListener('keydown', closeOnEscape)
@@ -112,7 +138,7 @@ export default function Header({
       document.removeEventListener('keydown', closeOnEscape)
       window.removeEventListener('hono-admin:pjax-content', closeOnPjaxContent)
     }
-  }, [isUserMenuOpen])
+  }, [isRoleMenuOpen, isUserMenuOpen])
 
   return (
     <header class="navbar w-full rounded-box bg-base-100 justify-between">
@@ -144,6 +170,20 @@ export default function Header({
         >
           <i class="icon-[ri--loop-right-line]"></i>
         </button>
+        {canSwitchRole && user?.roles.length
+          ? (
+              <RoleSwitchDropdown
+                activeRoleId={user.activeRoleId}
+                isOpen={isRoleMenuOpen}
+                roles={user.roles}
+                onSubmit={handleRoleSwitchSubmit}
+                onToggle={() => {
+                  setIsRoleMenuOpen((open) => !open)
+                  setIsUserMenuOpen(false)
+                }}
+              />
+            )
+          : null}
         {updateStatus.pendingMigrationCount > 0
           ? (
               <a
@@ -163,7 +203,10 @@ export default function Header({
             aria-haspopup="menu"
             class="btn btn-ghost gap-2 px-2"
             type="button"
-            onClick={() => setIsUserMenuOpen((open) => !open)}
+            onClick={() => {
+              setIsUserMenuOpen((open) => !open)
+              setIsRoleMenuOpen(false)
+            }}
           >
             <HeaderUserAvatar user={user} />
             <div class="text-sm hidden max-w-28 truncate lg:block">
@@ -174,7 +217,7 @@ export default function Header({
           {isUserMenuOpen
             ? (
                 <ul
-                  class="menu absolute right-0 top-full z-50 mt-3 w-36 rounded-box bg-base-100 p-2 shadow flex gap-y-1"
+                  class="menu absolute right-0 top-full z-50 mt-3 w-52 rounded-box bg-base-100 p-2 shadow flex gap-y-1"
                   role="menu"
                 >
                   <li>
@@ -182,9 +225,16 @@ export default function Header({
                       个人中心
                     </a>
                   </li>
-                  <li>
-                    <form action="/user/logout" method="post">
-                      <button class="w-full justify-start" type="submit">
+                  <li class="w-full">
+                    <form
+                      action="/user/logout"
+                      class="contents"
+                      method="post"
+                    >
+                      <button
+                        class="flex w-full items-center rounded-field px-3 py-2 text-left hover:bg-base-200"
+                        type="submit"
+                      >
                         退出登录
                       </button>
                     </form>
@@ -195,6 +245,162 @@ export default function Header({
         </div>
       </div>
     </header>
+  )
+}
+
+function RoleSwitchDropdown({
+  activeRoleId,
+  isOpen,
+  onSubmit,
+  onToggle,
+  roles,
+}: {
+  activeRoleId: number | null
+  isOpen: boolean
+  onSubmit: (event: Event) => void
+  onToggle: () => void
+  roles: UserSessionRole[]
+}) {
+  const activeRole = roles.find((role) => role.id === activeRoleId)
+
+  return (
+    <div class="relative" data-header-role-menu="true">
+      <button
+        aria-expanded={isOpen ? 'true' : 'false'}
+        aria-haspopup="menu"
+        aria-label={`切换角色${activeRole ? `，当前为${activeRole.name}` : ''}`}
+        class="btn btn-ghost btn-circle opacity-80"
+        title={activeRole ? `当前角色：${activeRole.name}` : '切换角色'}
+        type="button"
+        onClick={onToggle}
+      >
+        <i class="icon-[ri--shield-user-line]" aria-hidden="true" />
+      </button>
+      {isOpen
+        ? (
+            <ul
+              class="menu absolute right-0 top-full z-50 mt-3 w-44 rounded-box bg-base-100 p-2 shadow flex gap-y-1"
+              role="menu"
+            >
+              <li class="menu-title px-3">
+                <span>角色切换</span>
+              </li>
+              {roles.map((role) => (
+                <RoleSwitchMenuItem
+                  active={activeRoleId === role.id}
+                  key={role.id}
+                  onSubmit={onSubmit}
+                  role={role}
+                />
+              ))}
+            </ul>
+          )
+        : null}
+    </div>
+  )
+}
+
+function RoleSwitchMenuItem({
+  active,
+  onSubmit,
+  role,
+}: {
+  active: boolean
+  onSubmit: (event: Event) => void
+  role: UserSessionRole
+}) {
+  return (
+    <li class="w-full">
+      <form
+        action="/user/role-switch"
+        class="contents"
+        method="post"
+        onSubmit={onSubmit}
+      >
+        <input name="roleId" type="hidden" value={role.id} />
+        <button
+          class="flex w-full items-center justify-between rounded-field px-3 py-2 text-left hover:bg-base-200 disabled:cursor-default disabled:opacity-60"
+          disabled={active}
+          type="submit"
+        >
+          <span>{role.name}</span>
+          {active
+            ? <i class="icon-[ri--check-line]" aria-hidden="true" />
+            : null}
+        </button>
+      </form>
+    </li>
+  )
+}
+
+interface RoleSwitchActionResult {
+  alert?: {
+    closable?: boolean
+    message?: string
+    type?: string
+  }
+  honoAdminAction?: boolean
+  ok?: boolean
+  target?: string
+}
+
+async function submitRoleSwitchForm(form: HTMLFormElement): Promise<void> {
+  let response: Response
+  try {
+    response = await fetch(form.action, {
+      body: new FormData(form),
+      headers: {
+        'Accept': 'application/json',
+        'X-PJAX': 'true',
+      },
+      method: form.method || 'POST',
+    })
+  } catch {
+    form.submit()
+    return
+  }
+
+  const result = await readRoleSwitchActionResult(response)
+  if (!result?.target) {
+    form.submit()
+    return
+  }
+
+  location.replace(createRoleSwitchUrl(result))
+}
+
+async function readRoleSwitchActionResult(
+  response: Response,
+): Promise<RoleSwitchActionResult | null> {
+  if (!response.headers.get('Content-Type')?.includes('application/json')) {
+    return null
+  }
+
+  try {
+    const result = await response.json() as RoleSwitchActionResult
+    return result.honoAdminAction === true ? result : null
+  } catch {
+    return null
+  }
+}
+
+function createRoleSwitchUrl(result: RoleSwitchActionResult): string {
+  const url = new URL(result.target ?? '/user/profile', location.href)
+
+  if (result.alert?.type && result.alert.message) {
+    url.searchParams.set('alert', result.alert.type)
+    url.searchParams.set('message', result.alert.message)
+    if (typeof result.alert.closable === 'boolean') {
+      url.searchParams.set('closable', String(result.alert.closable))
+    }
+  }
+
+  return url.href
+}
+
+function hasAdminMenuHref(items: MenuItem[]): boolean {
+  return items.some((item) =>
+    item.href?.startsWith('/admin') || hasAdminMenuHref(item.children ?? [])
   )
 }
 

@@ -77,30 +77,46 @@ describe('service CRUD', () => {
 
   test('user create, list, update, delete', async () => {
     const { ctx } = testContext
+    const roles = await listRoles(ctx)
+    const adminRoleId = roles.find((role) => role.code === 'admin')?.id
+    const userRoleId = roles.find((role) => role.code === 'user')?.id
+
+    expect(adminRoleId).toBeDefined()
+    expect(userRoleId).toBeDefined()
+    if (!adminRoleId || !userRoleId) {
+      throw new Error('Expected default admin and user roles to exist.')
+    }
+
     const created = await createUser(ctx, {
       isRoot: false,
       password: 'secret123',
+      roleIds: [userRoleId, adminRoleId],
       status: UserStatus.NORMAL,
       username: 'editor',
     })
 
     expect(created.id).toBeGreaterThan(0)
     expect(created.username).toBe('editor')
+    expect(created.roleIds).toEqual([userRoleId, adminRoleId])
 
     const list = await listUsers(ctx, { keyword: 'edit' })
     expect(list.total).toBe(1)
     expect(list.items[0]?.username).toBe('editor')
+    expect(list.items[0]?.roleIds).toEqual([userRoleId, adminRoleId])
 
     const updated = await updateUser(ctx, created.id, {
       bio: 'Writes and reviews content.',
       gender: UserGender.OTHER,
       mail: 'editor@example.com',
       nickname: 'Editor',
+      roleIds: [adminRoleId],
     })
     expect(updated.bio).toBe('Writes and reviews content.')
     expect(updated.gender).toBe(UserGender.OTHER)
     expect(updated.mail).toBe('editor@example.com')
     expect(updated.nickname).toBe('Editor')
+    expect(updated.roleId).toBe(adminRoleId)
+    expect(updated.roleIds).toEqual([adminRoleId])
 
     await deleteUser(ctx, created.id)
     const afterDelete = await listUsers(ctx, { keyword: 'editor' })

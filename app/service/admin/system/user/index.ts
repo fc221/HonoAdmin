@@ -23,17 +23,28 @@ export * from './entity'
 export * from './enum'
 
 export interface UserCredential {
+  activeRoleId?: number | null
   id: number
   isRoot: boolean
   password: string
+  roleCode?: string | null
   roleId: number | null
+  roleIds?: number[]
   username: string
 }
 
+export interface UserSessionRole {
+  code: string
+  id: number
+  name: string
+}
+
 export interface UserHeaderProfile {
+  activeRoleId: number | null
   avatar: string | null
   id: number
   nickname: string | null
+  roles: UserSessionRole[]
   username: string
 }
 
@@ -41,6 +52,7 @@ interface UserCredentialEntity {
   id: number
   is_root: number
   password: string
+  role_code: string | null
   role_id: number | null
   username: string
 }
@@ -70,11 +82,12 @@ const userColumns = `
 `
 
 const userCredentialColumns = `
-  id,
-  username,
-  password,
-  is_root,
-  role_id
+  "user".id,
+  "user".username,
+  "user".password,
+  "user".is_root,
+  "user".role_id,
+  role.code AS role_code
 `
 
 export async function listUsers(
@@ -110,9 +123,15 @@ export async function listUsers(
     pagination.pageSize,
     getPaginationOffset(pagination),
   ])
+  const roleIdsByUserId = await listUserRoleIdsByUserIds(
+    ctx,
+    rows.map((row) => row.id),
+  )
 
   return createPaginatedResult(
-    rows.map(toUserRecord),
+    rows.map((row) =>
+      toUserRecord(row, roleIdsByUserId.get(row.id) ?? getFallbackRoleIds(row.role_id))
+    ),
     total,
     pagination,
   )
@@ -136,45 +155,52 @@ export async function createUser(
     await assertCanCreateRoot(ctx)
   }
 
-  const roleId = input.roleId ?? (input.isRoot ? 1 : 2)
-  await assertRoleExists(ctx, roleId)
+  const roleIds = await resolveCreateUserRoleIds(ctx, input)
+  const roleId = roleIds[0] ?? null
+  await assertRolesExist(ctx, roleIds)
 
   const now = ctx.now()
-  const result = await ctx.db.execute(
-    `
-      INSERT INTO "user" (
-        username,
-        password,
-        nickname,
-        avatar,
-        gender,
-        bio,
-        is_root,
-        mail,
-        phone,
-        role_id,
-        status,
-        created_at,
-        updated_at
-      )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `,
-    [
-      input.username,
-      await hashPassword(input.password),
-      input.nickname ?? null,
-      input.avatar ?? null,
-      input.gender ?? null,
-      input.bio ?? null,
-      input.isRoot ? 1 : 0,
-      input.mail ?? null,
-      input.phone ?? null,
-      roleId,
-      input.status,
-      now,
-      now,
-    ],
-  )
+  const result = await ctx.db.transaction(async (db) => {
+    const txCtx = { ...ctx, db }
+    const result = await db.execute(
+      `
+        INSERT INTO "user" (
+          username,
+          password,
+          nickname,
+          avatar,
+          gender,
+          bio,
+          is_root,
+          mail,
+          phone,
+          role_id,
+          status,
+          created_at,
+          updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+      [
+        input.username,
+        await hashPassword(input.password),
+        input.nickname ?? null,
+        input.avatar ?? null,
+        input.gender ?? null,
+        input.bio ?? null,
+        input.isRoot ? 1 : 0,
+        input.mail ?? null,
+        input.phone ?? null,
+        roleId,
+        input.status,
+        now,
+        now,
+      ],
+    )
+
+    await replaceUserRoles(txCtx, Number(result.lastInsertId), roleIds)
+    return result
+  })
 
   return getUserById(ctx, Number(result.lastInsertId))
 }
@@ -186,7 +212,11 @@ export async function updateUser(
 ): Promise<UserRecord> {
   const current = await requireUser(ctx, id)
   const nextUsername = input.username ?? current.username
-  const nextRoleId = hasField(input, 'roleId') ? input.roleId ?? null : current.role_id
+  const shouldUpdateRoles = hasField(input, 'roleIds') || hasField(input, 'roleId')
+  const nextRoleIds = shouldUpdateRoles
+    ? normalizeRoleIds(input.roleIds, hasField(input, 'roleId') ? input.roleId ?? null : undefined)
+    : await listUserRoleIds(ctx, id, current.role_id)
+  const nextRoleId = nextRoleIds[0] ?? null
 
   if (nextUsername !== current.username) {
     await assertUsernameAvailable(ctx, nextUsername, id)
@@ -200,7 +230,7 @@ export async function updateUser(
     throw new ValidationError('不支持通过后台入口新增 root 管理员。', { id })
   }
 
-  await assertRoleExists(ctx, nextRoleId)
+  await assertRolesExist(ctx, nextRoleIds)
 
   if (
     current.is_root === 1
@@ -219,41 +249,48 @@ export async function updateUser(
     await assertCanRemoveRoot(ctx, id)
   }
 
-  await ctx.db.execute(
-    `
-      UPDATE "user"
-      SET username = ?,
-          password = ?,
-          nickname = ?,
-          avatar = ?,
-          gender = ?,
-          bio = ?,
-          is_root = ?,
-          mail = ?,
-          phone = ?,
-          role_id = ?,
-          status = ?,
-          updated_at = ?
-      WHERE id = ?
-    `,
-    [
-      nextUsername,
-      input.password ? await hashPassword(input.password) : current.password,
-      hasField(input, 'nickname') ? input.nickname ?? null : current.nickname,
-      hasField(input, 'avatar') ? input.avatar ?? null : current.avatar,
-      hasField(input, 'gender') ? input.gender ?? null : current.gender,
-      hasField(input, 'bio') ? input.bio ?? null : current.bio,
-      hasField(input, 'isRoot')
-        ? input.isRoot ? 1 : 0
-        : current.is_root,
-      hasField(input, 'mail') ? input.mail ?? null : current.mail,
-      hasField(input, 'phone') ? input.phone ?? null : current.phone,
-      nextRoleId,
-      hasField(input, 'status') ? input.status ?? UserStatus.NORMAL : current.status,
-      ctx.now(),
-      id,
-    ],
-  )
+  await ctx.db.transaction(async (db) => {
+    const txCtx = { ...ctx, db }
+    await db.execute(
+      `
+        UPDATE "user"
+        SET username = ?,
+            password = ?,
+            nickname = ?,
+            avatar = ?,
+            gender = ?,
+            bio = ?,
+            is_root = ?,
+            mail = ?,
+            phone = ?,
+            role_id = ?,
+            status = ?,
+            updated_at = ?
+        WHERE id = ?
+      `,
+      [
+        nextUsername,
+        input.password ? await hashPassword(input.password) : current.password,
+        hasField(input, 'nickname') ? input.nickname ?? null : current.nickname,
+        hasField(input, 'avatar') ? input.avatar ?? null : current.avatar,
+        hasField(input, 'gender') ? input.gender ?? null : current.gender,
+        hasField(input, 'bio') ? input.bio ?? null : current.bio,
+        hasField(input, 'isRoot')
+          ? input.isRoot ? 1 : 0
+          : current.is_root,
+        hasField(input, 'mail') ? input.mail ?? null : current.mail,
+        hasField(input, 'phone') ? input.phone ?? null : current.phone,
+        nextRoleId,
+        hasField(input, 'status') ? input.status ?? UserStatus.NORMAL : current.status,
+        ctx.now(),
+        id,
+      ],
+    )
+
+    if (shouldUpdateRoles) {
+      await replaceUserRoles(txCtx, id, nextRoleIds)
+    }
+  })
 
   return getUserById(ctx, id)
 }
@@ -265,7 +302,10 @@ export async function deleteUser(ctx: ServiceContext, id: number): Promise<void>
     await assertCanRemoveRoot(ctx, id)
   }
 
-  await ctx.db.execute('DELETE FROM "user" WHERE id = ?', [id])
+  await ctx.db.transaction(async (db) => {
+    await db.execute('DELETE FROM sys_user_role WHERE user_id = ?', [id])
+    await db.execute('DELETE FROM "user" WHERE id = ?', [id])
+  })
 }
 
 export async function getUserCredentialById(
@@ -276,12 +316,21 @@ export async function getUserCredentialById(
     `
       SELECT ${userCredentialColumns}
       FROM "user"
-      WHERE id = ? AND status = ?
+      LEFT JOIN sys_role role
+        ON role.id = "user".role_id
+      WHERE "user".id = ? AND "user".status = ?
     `,
     [id, UserStatus.NORMAL],
   )
 
-  return row ? toUserCredential(row) : null
+  if (!row) {
+    return null
+  }
+
+  return toUserCredential(
+    row,
+    await listUserRoleIds(ctx, row.id, row.role_id),
+  )
 }
 
 export async function getUserCredentialByUsername(
@@ -292,12 +341,21 @@ export async function getUserCredentialByUsername(
     `
       SELECT ${userCredentialColumns}
       FROM "user"
-      WHERE username = ? AND status = ?
+      LEFT JOIN sys_role role
+        ON role.id = "user".role_id
+      WHERE "user".username = ? AND "user".status = ?
     `,
     [username, UserStatus.NORMAL],
   )
 
-  return row ? toUserCredential(row) : null
+  if (!row) {
+    return null
+  }
+
+  return toUserCredential(
+    row,
+    await listUserRoleIds(ctx, row.id, row.role_id),
+  )
 }
 
 export async function getUserHeaderProfileById(
@@ -313,7 +371,43 @@ export async function getUserHeaderProfileById(
     [id, UserStatus.NORMAL],
   )
 
-  return row ? toUserHeaderProfile(row) : null
+  return row
+    ? toUserHeaderProfile(row, await listUserSessionRoles(ctx, id), null)
+    : null
+}
+
+export async function listUserSessionRoles(
+  ctx: ServiceContext,
+  userId: number,
+): Promise<UserSessionRole[]> {
+  try {
+    const roles = await ctx.db.query<UserSessionRole>(
+      `
+        SELECT
+          role.id AS id,
+          role.code AS code,
+          role.name AS name
+        FROM sys_user_role user_role
+        INNER JOIN sys_role role
+          ON role.id = user_role.role_id
+        WHERE user_role.user_id = ?
+        ORDER BY user_role.id ASC
+      `,
+      [userId],
+    )
+    return roles.length ? roles : listUserSessionRolesFromLegacyRole(ctx, userId)
+  } catch {
+    return listUserSessionRolesFromLegacyRole(ctx, userId)
+  }
+}
+
+export async function isUserAssignedRole(
+  ctx: ServiceContext,
+  userId: number,
+  roleId: number,
+): Promise<boolean> {
+  const roleIds = await listUserRoleIds(ctx, userId, null)
+  return roleIds.includes(roleId)
 }
 
 export async function verifyUserPassword(
@@ -377,7 +471,7 @@ export async function getUserById(
   id: number,
 ): Promise<UserRecord> {
   const row = await requireUser(ctx, id)
-  return toUserRecord(row)
+  return toUserRecord(row, await listUserRoleIds(ctx, id, row.role_id))
 }
 
 async function requireUser(ctx: ServiceContext, id: number): Promise<UserEntity> {
@@ -417,26 +511,145 @@ async function assertUsernameAvailable(
   }
 }
 
-function toUserCredential(row: UserCredentialEntity): UserCredential {
+async function listUserRoleIds(
+  ctx: ServiceContext,
+  userId: number,
+  fallbackRoleId: number | null,
+): Promise<number[]> {
+  try {
+    const rows = await ctx.db.query<{ role_id: number }>(
+      `
+        SELECT role_id
+        FROM sys_user_role
+        WHERE user_id = ?
+        ORDER BY id ASC
+      `,
+      [userId],
+    )
+    return rows.length
+      ? rows.map((row) => row.role_id)
+      : getFallbackRoleIds(fallbackRoleId)
+  } catch {
+    return getFallbackRoleIds(fallbackRoleId)
+  }
+}
+
+async function listUserRoleIdsByUserIds(
+  ctx: ServiceContext,
+  userIds: number[],
+): Promise<Map<number, number[]>> {
+  const roleIdsByUserId = new Map<number, number[]>()
+
+  if (userIds.length === 0) {
+    return roleIdsByUserId
+  }
+
+  try {
+    const rows = await ctx.db.query<{
+      role_id: number
+      user_id: number
+    }>(
+      `
+        SELECT user_id, role_id
+        FROM sys_user_role
+        WHERE user_id IN (${createPlaceholders(userIds)})
+        ORDER BY user_id ASC, id ASC
+      `,
+      userIds,
+    )
+
+    for (const row of rows) {
+      const roleIds = roleIdsByUserId.get(row.user_id) ?? []
+      roleIds.push(row.role_id)
+      roleIdsByUserId.set(row.user_id, roleIds)
+    }
+  } catch {}
+
+  return roleIdsByUserId
+}
+
+async function listUserSessionRolesFromLegacyRole(
+  ctx: ServiceContext,
+  userId: number,
+): Promise<UserSessionRole[]> {
+  const user = await ctx.db.first<{ role_id: number | null }>(
+    'SELECT role_id FROM "user" WHERE id = ?',
+    [userId],
+  )
+
+  if (!user?.role_id) {
+    return []
+  }
+
+  const role = await ctx.db.first<UserSessionRole>(
+    `
+      SELECT id, code, name
+      FROM sys_role
+      WHERE id = ?
+    `,
+    [user.role_id],
+  )
+
+  return role ? [role] : []
+}
+
+async function replaceUserRoles(
+  ctx: ServiceContext,
+  userId: number,
+  roleIds: number[],
+): Promise<void> {
+  const now = ctx.now()
+
+  await ctx.db.execute('DELETE FROM sys_user_role WHERE user_id = ?', [userId])
+
+  for (const roleId of roleIds) {
+    await ctx.db.execute(
+      `
+        INSERT INTO sys_user_role (
+          user_id,
+          role_id,
+          created_at,
+          updated_at
+        )
+        VALUES (?, ?, ?, ?)
+      `,
+      [userId, roleId, now, now],
+    )
+  }
+}
+
+function toUserCredential(
+  row: UserCredentialEntity,
+  roleIds: number[],
+): UserCredential {
   return {
+    activeRoleId: row.role_id,
     id: row.id,
     isRoot: row.is_root === 1,
     password: row.password,
+    roleCode: row.role_code,
     roleId: row.role_id,
+    roleIds,
     username: row.username,
   }
 }
 
-function toUserHeaderProfile(row: UserHeaderProfileEntity): UserHeaderProfile {
+function toUserHeaderProfile(
+  row: UserHeaderProfileEntity,
+  roles: UserSessionRole[],
+  activeRoleId: number | null,
+): UserHeaderProfile {
   return {
+    activeRoleId,
     avatar: row.avatar,
     id: row.id,
     nickname: row.nickname,
+    roles,
     username: row.username,
   }
 }
 
-function toUserRecord(row: UserEntity): UserRecord {
+function toUserRecord(row: UserEntity, roleIds: number[]): UserRecord {
   return {
     avatar: row.avatar,
     bio: row.bio,
@@ -448,28 +661,81 @@ function toUserRecord(row: UserEntity): UserRecord {
     nickname: row.nickname,
     phone: row.phone,
     roleId: row.role_id,
+    roleIds,
     status: row.status,
     updatedAt: row.updated_at,
     username: row.username,
   }
 }
 
-async function assertRoleExists(
+async function assertRolesExist(
   ctx: ServiceContext,
-  roleId: number | null | undefined,
+  roleIds: number[],
 ): Promise<void> {
-  if (!roleId) {
+  if (roleIds.length === 0) {
     return
   }
 
-  const row = await ctx.db.first<{ id: number }>(
-    'SELECT id FROM sys_role WHERE id = ?',
-    [roleId],
+  const rows = await ctx.db.query<{ id: number }>(
+    `
+      SELECT id
+      FROM sys_role
+      WHERE id IN (${createPlaceholders(roleIds)})
+    `,
+    roleIds,
   )
+  const existingRoleIds = new Set(rows.map((row) => row.id))
+  const missingRoleId = roleIds.find((roleId) => !existingRoleIds.has(roleId))
 
-  if (!row) {
-    throw new ValidationError('角色不存在。', { roleId })
+  if (missingRoleId) {
+    throw new ValidationError('角色不存在。', { roleId: missingRoleId })
   }
+}
+
+function normalizeRoleIds(
+  roleIds: number[] | undefined,
+  fallbackRoleId: number | null | undefined,
+): number[] {
+  const values = roleIds ?? getFallbackRoleIds(fallbackRoleId ?? null)
+  return [...new Set(values.filter((roleId) => Number.isInteger(roleId) && roleId > 0))]
+}
+
+function getFallbackRoleIds(roleId: number | null): number[] {
+  return roleId ? [roleId] : []
+}
+
+async function resolveCreateUserRoleIds(
+  ctx: ServiceContext,
+  input: CreateUserInput,
+): Promise<number[]> {
+  if (input.roleIds || input.roleId) {
+    return normalizeRoleIds(input.roleIds, input.roleId)
+  }
+
+  return listRoleIdsByCodes(ctx, input.isRoot ? ['admin', 'user'] : ['user'])
+}
+
+async function listRoleIdsByCodes(
+  ctx: ServiceContext,
+  codes: string[],
+): Promise<number[]> {
+  const rows = await ctx.db.query<{ code: string, id: number }>(
+    `
+      SELECT id, code
+      FROM sys_role
+      WHERE code IN (${createPlaceholders(codes)})
+    `,
+    codes,
+  )
+  const roleIdsByCode = new Map(rows.map((row) => [row.code, row.id]))
+
+  return codes
+    .map((code) => roleIdsByCode.get(code))
+    .filter((roleId): roleId is number => typeof roleId === 'number')
+}
+
+function createPlaceholders(values: unknown[]): string {
+  return values.map(() => '?').join(', ')
 }
 
 async function hashPassword(password: string): Promise<string> {

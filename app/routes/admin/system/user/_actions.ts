@@ -11,6 +11,7 @@ import {
 import { ValidationError } from '../../../../utils'
 import {
   getFormValue,
+  getFormValues,
   getNullableFormValue,
   respondWithActionAlert,
   respondWithActionError,
@@ -33,7 +34,7 @@ export async function handleUserAction(c: Context): Promise<Response> {
           nickname: getNullableFormValue(body, 'nickname'),
           password: getFormValue(body, 'password'),
           phone: getNullableFormValue(body, 'phone'),
-          roleId: getNullableId(body, 'roleId'),
+          roleIds: getRoleIds(body),
           status: getFormValue(body, 'status'),
           username: getFormValue(body, 'username'),
         }),
@@ -61,7 +62,7 @@ export async function handleUserAction(c: Context): Promise<Response> {
           nickname: getNullableFormValue(body, 'nickname'),
           password: password || undefined,
           phone: getNullableFormValue(body, 'phone'),
-          roleId: getNullableId(body, 'roleId'),
+          roleIds: getRoleIds(body),
           status: getFormValue(body, 'status'),
           username: getFormValue(body, 'username'),
         }),
@@ -101,10 +102,10 @@ export async function handleUserAction(c: Context): Promise<Response> {
   }
 }
 
-function getNullableId(
+function getRoleIds(
   body: Record<string, unknown>,
-  key: string,
-): number | null {
-  const value = getFormValue(body, key)
-  return value ? Number(value) : null
+): number[] {
+  return getFormValues(body, 'roleIds')
+    .map((value) => Number(value))
+    .filter((value) => Number.isInteger(value) && value > 0)
 }

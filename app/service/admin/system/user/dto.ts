@@ -28,6 +28,7 @@ export const userRecordSchema = z.object({
   nickname: z.string().nullable(),
   phone: z.string().nullable(),
   roleId: z.number().int().positive().nullable(),
+  roleIds: z.array(z.number().int().positive()),
   status: userStatusSchema,
   updatedAt: z.string(),
   username: z.string(),
@@ -45,6 +46,7 @@ export const createUserSchema = z.object({
     .max(128, '密码不能超过 128 个字符。'),
   phone: nullablePhoneSchema,
   roleId: z.number().int().positive('请选择有效角色。').nullable().optional(),
+  roleIds: z.array(z.number().int().positive('请选择有效角色。')).optional(),
   status: userStatusSchema.default(UserStatus.NORMAL),
   username: z.string()
     .trim()
@@ -66,6 +68,7 @@ export const updateUserSchema = z.object({
     .optional(),
   phone: nullablePhoneSchema,
   roleId: z.number().int().positive('请选择有效角色。').nullable().optional(),
+  roleIds: z.array(z.number().int().positive('请选择有效角色。')).optional(),
   status: userStatusSchema.optional(),
   username: z.string()
     .trim()

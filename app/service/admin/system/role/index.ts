@@ -260,7 +260,7 @@ export async function listAuthorizedAdminMenus(
     return []
   }
 
-  if (user.isRoot) {
+  if (isRootAdminRole(user)) {
     return adminMenus
   }
 
@@ -287,7 +287,7 @@ export async function canAccessAdminPath(
   method: string,
   actionKey = '*',
 ): Promise<boolean> {
-  if (user.isRoot || isAlwaysAllowedAdminPath(path)) {
+  if (isRootAdminRole(user) || isAlwaysAllowedAdminPath(path)) {
     return true
   }
 
@@ -798,6 +798,10 @@ function getPolicyAction(policy: RolePolicyInput): string {
 
 function isAlwaysAllowedAdminPath(path: string): boolean {
   return alwaysAllowedAdminPaths.has(path)
+}
+
+function isRootAdminRole(user: UserCredential): boolean {
+  return user.isRoot && (!user.roleCode || user.roleCode === 'admin')
 }
 
 function getUserSubject(userId: number): string {

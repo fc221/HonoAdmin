@@ -20,6 +20,8 @@ export function installUiInteractions() {
 }
 
 export function initializePageAlerts() {
+  clearConsumedAlertQuery()
+
   document
     .querySelectorAll<HTMLElement>(pageAlertSelector)
     .forEach(scheduleAlertDismiss)
@@ -76,4 +78,29 @@ function closeDetailsOnEscape(event: KeyboardEvent) {
     .forEach((details) => {
       details.open = false
     })
+}
+
+function clearConsumedAlertQuery() {
+  if (
+    !document.querySelector('[data-page-alert-root]')
+    || typeof window.history.replaceState !== 'function'
+  ) {
+    return
+  }
+
+  const url = new URL(window.location.href)
+  const hadAlertQuery = (
+    url.searchParams.has('alert')
+    || url.searchParams.has('message')
+    || url.searchParams.has('closable')
+  )
+
+  if (!hadAlertQuery) {
+    return
+  }
+
+  url.searchParams.delete('alert')
+  url.searchParams.delete('message')
+  url.searchParams.delete('closable')
+  window.history.replaceState(window.history.state, '', url)
 }

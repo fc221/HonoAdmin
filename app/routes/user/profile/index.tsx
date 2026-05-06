@@ -6,7 +6,7 @@ import {
 import { UnauthorizedError } from '../../../utils'
 import Layout from '../../_components/_layout/$index'
 import { getPageAlert } from '../../_utils/form'
-import { getAdminLayoutMenus } from '../../admin/_utils/layout'
+import { getUserLayoutData } from '../../admin/_utils/layout'
 import { handleProfileAction } from './_actions'
 import ProfilePanel from './_components/_profile-panel'
 
@@ -24,13 +24,18 @@ export default createRoute(async (c) => {
     pageSize: c.req.query('pageSize'),
   })
   try {
-    const [profileData, menus] = await Promise.all([
+    const [profileData, layout] = await Promise.all([
       getCurrentUserProfilePageData(c, logInput),
-      getAdminLayoutMenus(c),
+      getUserLayoutData(c),
     ])
 
     return c.render(
-      <Layout currentMenuName="user.profile" menus={menus} user={profileData.user}>
+      <Layout
+        canSwitchRole={layout.canSwitchRole}
+        currentMenuName="user.profile"
+        menus={layout.menus}
+        user={layout.user}
+      >
         <title>个人中心 - HonoAdmin</title>
         <ProfilePanel
           activeTab={activeTab}

@@ -1,9 +1,14 @@
 import type { ServiceRequestContext } from '../types'
 import type { UserCredential } from './system/user'
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie'
-import { getUserCredentialById } from './system/user'
+import {
+  getUserCredentialById,
+  listUserSessionRoles,
+} from './system/user'
 
 const adminSessionCookieName = 'hono_admin_session'
+const adminSessionRoleModeCookieName = 'hono_admin_role_mode'
+const adminSessionActiveRoleCookieName = 'hono_admin_active_role_id'
 const adminSessionMaxAgeSeconds = 60 * 60 * 24 * 7
 const adminSessionCookiePath = '/'
 
@@ -22,6 +27,51 @@ export async function setAdminSession(
     sameSite: 'Lax',
     secure: new URL(c.req.url).protocol === 'https:',
   })
+  clearSessionActiveRole(c)
+}
+
+export function setSessionActiveRole(
+  c: ServiceRequestContext,
+  roleId: number,
+): void {
+  setCookie(c, adminSessionActiveRoleCookieName, String(roleId), {
+    httpOnly: true,
+    maxAge: adminSessionMaxAgeSeconds,
+    path: adminSessionCookiePath,
+    sameSite: 'Lax',
+    secure: new URL(c.req.url).protocol === 'https:',
+  })
+}
+
+export function clearSessionActiveRole(c: ServiceRequestContext): void {
+  deleteCookie(c, adminSessionActiveRoleCookieName, {
+    path: adminSessionCookiePath,
+  })
+}
+
+export async function getSessionActiveRoleId(
+  c: ServiceRequestContext,
+  user: UserCredential,
+): Promise<number | null> {
+  const roles = await listUserSessionRoles(c, user.id)
+  const roleIds = roles.map((role) => role.id)
+  const cookieRoleId = Number(getCookie(c, adminSessionActiveRoleCookieName))
+
+  if (Number.isInteger(cookieRoleId) && roleIds.includes(cookieRoleId)) {
+    return cookieRoleId
+  }
+
+  const legacyRoleMode = getCookie(c, adminSessionRoleModeCookieName)
+  if (legacyRoleMode === 'admin' || legacyRoleMode === 'user') {
+    const legacyRole = roles.find((role) => role.code === legacyRoleMode)
+    if (legacyRole) {
+      return legacyRole.id
+    }
+  }
+
+  return user.roleId && roleIds.includes(user.roleId)
+    ? user.roleId
+    : roleIds[0] ?? null
 }
 
 export async function verifyAdminSession(
@@ -60,13 +110,21 @@ export async function getAdminSessionUser(
 
   const expectedSession = await signAdminSession(user, issuedAt)
   const expectedSignature = expectedSession.split('.')[2]
-  return constantTimeEqual(signature, expectedSignature ?? '') ? user : null
+  if (!constantTimeEqual(signature, expectedSignature ?? '')) {
+    return null
+  }
+
+  return withSessionActiveRole(c, user)
 }
 
 export function clearAdminSession(c: ServiceRequestContext): void {
   deleteCookie(c, adminSessionCookieName, {
     path: adminSessionCookiePath,
   })
+  deleteCookie(c, adminSessionRoleModeCookieName, {
+    path: adminSessionCookiePath,
+  })
+  clearSessionActiveRole(c)
 }
 
 async function signAdminSession(
@@ -106,4 +164,21 @@ function toHex(bytes: Uint8Array): string {
   return [...bytes]
     .map((byte) => byte.toString(16).padStart(2, '0'))
     .join('')
+}
+
+async function withSessionActiveRole(
+  c: ServiceRequestContext,
+  user: UserCredential,
+): Promise<UserCredential> {
+  const roles = await listUserSessionRoles(c, user.id)
+  const activeRoleId = await getSessionActiveRoleId(c, user)
+  const activeRole = roles.find((role) => role.id === activeRoleId)
+
+  return {
+    ...user,
+    activeRoleId,
+    roleCode: activeRole?.code ?? user.roleCode,
+    roleId: activeRoleId,
+    roleIds: roles.map((role) => role.id),
+  }
 }

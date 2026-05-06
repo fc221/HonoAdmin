@@ -1,6 +1,7 @@
 import type { RoleOption, UserRecord } from '../../../../../service'
 import { UserStatus, userStatusOptions } from '../../../../../service'
 import FileUploadField from '../../../../_components/_file-upload-field'
+import RoleMultiSelectDropdown from './$role-multi-select-dropdown'
 
 interface Props {
   cancelTargetId?: string
@@ -14,7 +15,9 @@ export default function UserForm({ cancelTargetId, mode, roles, user }: Props) {
   const defaultRoleId = isUpdate
     ? null
     : (roles.find((role) => role.code === 'user')?.id ?? null)
-  const selectedRoleId = user?.roleId ?? defaultRoleId
+  const selectedRoleIds = user?.roleIds?.length
+    ? user.roleIds
+    : defaultRoleId ? [defaultRoleId] : []
 
   return (
     <form
@@ -26,23 +29,13 @@ export default function UserForm({ cancelTargetId, mode, roles, user }: Props) {
       <input name="intent" type="hidden" value={mode} />
       {user ? <input name="id" type="hidden" value={user.id} /> : null}
 
-      <div class="space-y-2" data-form-field="roleId">
+      <div class="space-y-2" data-form-field="roleIds">
         <FieldLabel label="角色" />
-        <select class="select w-full" name="roleId">
-          <option selected={!selectedRoleId} value="">
-            不分配角色
-          </option>
-          {roles.map((role) => (
-            <option
-              key={role.id}
-              selected={selectedRoleId === role.id}
-              value={role.id}
-            >
-              {role.name}
-            </option>
-          ))}
-        </select>
-        <p class="label">非 root 用户依赖角色获得菜单和操作权限。</p>
+        <RoleMultiSelectDropdown
+          roles={roles}
+          selectedRoleIds={selectedRoleIds}
+        />
+        <p class="label">可分配多个角色，用户可在头像菜单中切换当前生效角色。</p>
       </div>
 
       <FileUploadField

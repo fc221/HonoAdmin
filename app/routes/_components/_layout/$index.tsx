@@ -1,11 +1,12 @@
 import type { MenuItem, UserHeaderProfile } from '../../../service'
 import { Child, useEffect, useState } from 'hono/jsx'
-import { adminMenus } from '../../../service/admin/system/menu'
+import { defaultMenus } from '../../../service/admin/system/menu'
 import LayoutProvider, { useLayoutContext } from './$context'
 import Aside from './_components/$aside'
 import Header from './_components/$header'
 
 interface Props {
+  canSwitchRole?: boolean
   children: Child
   currentMenuName: string
   menus?: MenuItem[]
@@ -22,6 +23,7 @@ interface PjaxStatusDetail {
 }
 
 export default function Layout({
+  canSwitchRole,
   children,
   currentMenuName,
   menus,
@@ -29,7 +31,12 @@ export default function Layout({
 }: Props) {
   return (
     <LayoutProvider>
-      <AsideLayout currentMenuName={currentMenuName} menus={menus} user={user}>
+      <AsideLayout
+        canSwitchRole={canSwitchRole}
+        currentMenuName={currentMenuName}
+        menus={menus}
+        user={user}
+      >
         {children}
       </AsideLayout>
     </LayoutProvider>
@@ -38,9 +45,10 @@ export default function Layout({
 
 // 侧边栏布局
 function AsideLayout({
+  canSwitchRole,
   children,
   currentMenuName: initialCurrentMenuName,
-  menus = adminMenus,
+  menus = defaultMenus,
   user = null,
 }: Props) {
   const { config, isDesktop, isReady, updateConfig } = useLayoutContext()
@@ -54,6 +62,7 @@ function AsideLayout({
   const id = 'aside-drawer'
   const isCollapsed = isDesktop ? config.sidebarCollapsed : false
   const isDrawerOpen = isReady ? isDesktop || isAsideOpen : false
+  const canUseRoleSwitch = canSwitchRole ?? hasAdminMenuHref(menus)
 
   useEffect(() => {
     if (!isReady) {
@@ -132,6 +141,7 @@ function AsideLayout({
         <main class="drawer-content flex h-full min-w-0 flex-col overflow-hidden">
           {/* header */}
           <Header
+            canSwitchRole={canUseRoleSwitch}
             currentMenuName={currentMenuName}
             isDesktop={isDesktop}
             isAsideOpen={isAsideOpen}
@@ -205,6 +215,12 @@ function MainPjaxLoading({ visible }: { visible: boolean }) {
     >
       <span class="loading loading-spinner loading-md text-primary"></span>
     </div>
+  )
+}
+
+function hasAdminMenuHref(items: MenuItem[]): boolean {
+  return items.some((item) =>
+    item.href?.startsWith('/admin') || hasAdminMenuHref(item.children ?? [])
   )
 }
 

@@ -21,6 +21,7 @@ export default createRoute(async (c) => {
 
   return c.render(
     <Layout
+      canSwitchRole={layout.canSwitchRole}
       currentMenuName="admin.web.feedback"
       menus={layout.menus}
       user={layout.user}
