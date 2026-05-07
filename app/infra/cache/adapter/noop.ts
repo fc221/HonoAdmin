@@ -1,4 +1,4 @@
-import type { CacheAdapter, CacheSetOptions } from '..'
+import type { CacheAdapter, CacheSetOptions } from '../types'
 
 export class NoopCacheAdapter implements CacheAdapter {
   readonly kind = 'noop' as const

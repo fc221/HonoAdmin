@@ -1,5 +1,6 @@
 import { createRoute } from 'honox/factory'
-import { listWebPages, listWebPageSchema } from '../../../../service'
+import { listWebPages } from '../../../../service/admin/web/page'
+import { listWebPageSchema } from '../../../../service/admin/web/page/dto'
 import Layout from '../../../_components/_layout/$index'
 import { getPageAlert } from '../../../_utils/form'
 import { getAdminLayoutData } from '../../_utils/layout'

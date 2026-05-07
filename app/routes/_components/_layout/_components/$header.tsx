@@ -1,17 +1,17 @@
 import type {
-  UserHeaderProfile,
-  UserSessionRole,
-} from '../../../../service'
-import type {
   MenuBreadcrumbItem,
   MenuItem,
-} from '../../../../service/admin/system/menu'
+} from '../../../../service/admin/system/menu/consts'
+import type {
+  UserHeaderProfile,
+  UserSessionRole,
+} from '../../../../service/admin/system/user/dto'
 import { useEffect, useState } from 'hono/jsx'
 import {
   getMenuBreadcrumbs,
-  userMenus,
 } from '../../../../service/admin/system/menu'
-import { getAvatarText } from '../../../../utils'
+import { userMenus } from '../../../../service/admin/system/menu/consts'
+import { getAvatarText } from '../../../../utils/avatar'
 
 interface Props {
   canSwitchRole: boolean

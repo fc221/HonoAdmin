@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { paginationResultSchema, paginationSchema } from '../../../common'
+import { paginationResultSchema, paginationSchema } from '../../../common/pagination'
 import { fileStorageModes, fileUploadTypes } from './enum'
 
 export const fileUploadTypeSchema = z.enum(fileUploadTypes)

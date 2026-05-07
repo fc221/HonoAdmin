@@ -1,8 +1,6 @@
 import { createRoute } from 'honox/factory'
-import {
-  loginUser,
-  verifyAdminSession,
-} from '../../service'
+import { verifyAdminSession } from '../../service/admin/session'
+import { loginUser } from '../../service/user/login'
 import { getSiteLogoText } from '../_utils/branding'
 import {
   formatPageTitle,

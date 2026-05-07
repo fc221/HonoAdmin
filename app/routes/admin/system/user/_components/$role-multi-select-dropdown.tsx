@@ -1,4 +1,4 @@
-import type { RoleOption } from '../../../../../service'
+import type { RoleOption } from '../../../../../service/admin/system/role/dto'
 import { useMemo, useState } from 'hono/jsx'
 
 interface Props {

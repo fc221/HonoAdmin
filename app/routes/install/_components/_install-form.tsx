@@ -1,5 +1,5 @@
-import type { MigrationStatus } from '../../../infra/database'
-import type { BootstrapConfigStatus } from '../../../infra/runtime'
+import type { MigrationStatus } from '../../../infra/database/migrator'
+import type { BootstrapConfigStatus } from '../../../infra/runtime/bootstrap'
 import type { PageAlertState } from '../../_components/_page-alert'
 import PageAlert from '../../_components/_page-alert'
 

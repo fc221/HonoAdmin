@@ -15,7 +15,7 @@ export default function PageHeader({
 }: Props) {
   return (
     <div class="mb-4 flex flex-col gap-3 border-b border-base-300 pb-4 sm:flex-row sm:items-center sm:justify-between">
-      <div class="flex w-full min-w-0 flex-1 items-start gap-3">
+      <div class="flex w-full min-w-0 flex-1 items-center gap-3">
         {backHref
           ? (
               <a

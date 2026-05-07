@@ -1,9 +1,10 @@
-import type { ConfigRecord, ConfigType } from '../../../../../service'
+import type { ConfigRecord } from '../../../../../service/admin/system/config/dto'
+import type { ConfigType } from '../../../../../service/admin/system/config/enum'
 import type { PageAlertState } from '../../../../_components/_page-alert'
 import {
   builtInConfigDefinitions,
   configTypeOptions,
-} from '../../../../../service'
+} from '../../../../../service/admin/system/config/constants'
 import PageAlert from '../../../../_components/_page-alert'
 
 interface Props {
@@ -61,7 +62,7 @@ function ConfigTypeForm({
       method="post"
     >
       <input name="configType" type="hidden" value={type} />
-      <div class="grid gap-4 md:grid-cols-2">
+      <div class={`grid gap-4 ${configs.length < 5 ? 'md:grid-cols-1 w-1/2' : 'md:grid-cols-2'}`}>
         {configs.map((config) => (
           <ConfigValueField config={config} key={config.id} />
         ))}

@@ -1,5 +1,6 @@
 import { createRoute } from 'honox/factory'
-import { listFiles, listFileSchema } from '../../../../service'
+import { listFiles } from '../../../../service/admin/system/file'
+import { listFileSchema } from '../../../../service/admin/system/file/dto'
 import Layout from '../../../_components/_layout/$index'
 import { getPageAlert } from '../../../_utils/form'
 import { getAdminLayoutData } from '../../_utils/layout'

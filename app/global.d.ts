@@ -3,7 +3,7 @@ import type {
   AppContext,
   AppEnv,
   RuntimeBindings,
-} from './infra/runtime'
+} from './infra/runtime/types'
 
 declare module 'hono' {
   interface Context extends AppContext {}

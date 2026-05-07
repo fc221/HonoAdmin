@@ -5,10 +5,8 @@ import {
   respondWithActionAlert,
   respondWithActionError,
 } from '../app/routes/_utils/form'
-import {
-  createWebNotificationSchema,
-  updateUserSchema,
-} from '../app/service'
+import { updateUserSchema } from '../app/service/admin/system/user/dto'
+import { createWebNotificationSchema } from '../app/service/admin/web/notification/dto'
 
 function createActionTestApp() {
   const app = new Hono()

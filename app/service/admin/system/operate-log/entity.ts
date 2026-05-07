@@ -1,4 +1,4 @@
-import type { BaseEntity } from '../../../../infra/database'
+import type { BaseEntity } from '../../../../infra/database/types'
 import type { OperateLogStatus, OperateLogType } from './enum'
 
 export interface OperateLogEntity extends Pick<BaseEntity, 'id' | 'created_at'> {

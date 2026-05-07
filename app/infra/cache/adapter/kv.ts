@@ -1,5 +1,5 @@
-import type { CacheAdapter, CacheSetOptions } from '..'
-import { CacheError } from '../../../utils'
+import type { CacheAdapter, CacheSetOptions } from '../types'
+import { CacheError } from '../../../utils/errors'
 
 export class KVCacheAdapter implements CacheAdapter {
   readonly kind = 'kv' as const

@@ -1,4 +1,4 @@
-import type { UpdateStatus } from '../../../../../service'
+import type { UpdateStatus } from '../../../../../service/admin/system/update/dto'
 import type { PageAlertState } from '../../../../_components/_page-alert'
 import PageAlert from '../../../../_components/_page-alert'
 

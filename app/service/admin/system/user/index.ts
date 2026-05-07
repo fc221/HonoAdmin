@@ -1,26 +1,26 @@
-import type { PaginatedResult } from '../../../common'
+import type { PaginatedResult } from '../../../common/pagination'
 import type { ServiceContext } from '../../../types'
 import type {
   CreateUserInput,
   ListUserInput,
   UpdateUserInput,
+  UserHeaderProfile,
   UserRecord,
+  UserSessionRole,
 } from './dto'
 import type { UserEntity } from './entity'
-import { NotFoundError, ValidationError } from '../../../../utils'
+import { NotFoundError, ValidationError } from '../../../../utils/errors'
 import {
-  buildKeywordCondition,
-  buildWhereClause,
   createPaginatedResult,
   getPaginationOffset,
   resolvePagination,
-} from '../../../common'
+} from '../../../common/pagination'
+import {
+  buildKeywordCondition,
+  buildWhereClause,
+} from '../../../common/query'
 import { listUserSchema } from './dto'
 import { UserStatus } from './enum'
-
-export * from './dto'
-export * from './entity'
-export * from './enum'
 
 export interface UserCredential {
   activeRoleId?: number | null
@@ -30,21 +30,6 @@ export interface UserCredential {
   roleCode?: string | null
   roleId: number | null
   roleIds?: number[]
-  username: string
-}
-
-export interface UserSessionRole {
-  code: string
-  id: number
-  name: string
-}
-
-export interface UserHeaderProfile {
-  activeRoleId: number | null
-  avatar: string | null
-  id: number
-  nickname: string | null
-  roles: UserSessionRole[]
   username: string
 }
 

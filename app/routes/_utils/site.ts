@@ -1,6 +1,7 @@
 import type { Context } from 'hono'
-import type { SiteConfig } from '../../service'
-import { getDatabaseMigrationStatus, getSiteConfig } from '../../service'
+import type { SiteConfig } from '../../service/admin/system/config/dto'
+import { getSiteConfig } from '../../service/admin/system/config'
+import { getDatabaseMigrationStatus } from '../../service/admin/system/update'
 
 export async function getRenderableSiteConfig(
   c: Context,

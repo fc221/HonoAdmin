@@ -1,4 +1,4 @@
-import type { BaseEntity } from '../../../../infra/database'
+import type { BaseEntity } from '../../../../infra/database/types'
 import { UserGender, UserStatus } from './enum'
 
 export interface UserEntity extends BaseEntity {

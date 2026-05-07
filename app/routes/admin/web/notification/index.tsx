@@ -1,8 +1,6 @@
 import { createRoute } from 'honox/factory'
-import {
-  listWebNotifications,
-  listWebNotificationSchema,
-} from '../../../../service'
+import { listWebNotifications } from '../../../../service/admin/web/notification'
+import { listWebNotificationSchema } from '../../../../service/admin/web/notification/dto'
 import Layout from '../../../_components/_layout/$index'
 import { getPageAlert } from '../../../_utils/form'
 import { getAdminLayoutData } from '../../_utils/layout'

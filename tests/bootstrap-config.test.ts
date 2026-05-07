@@ -5,9 +5,9 @@ import { describe, expect, test } from 'bun:test'
 import {
   getBunConfigPath,
   getCloudflareWorkersBootstrapConfigStatus,
-  reloadBunRuntime,
   saveBunRuntimeConfig,
-} from '../app/infra/runtime'
+} from '../app/infra/runtime/bootstrap'
+import { reloadBunRuntime } from '../app/infra/runtime/factory'
 
 describe('bootstrap runtime config', () => {
   test('resolves Bun env file path from binding, process env, then cwd', () => {

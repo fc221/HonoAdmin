@@ -1,8 +1,6 @@
 import type { ServiceContext } from '../../../types'
 import type { UpdateStatus } from './dto'
-import { getMigrationStatus, runPendingMigrations } from '../../../../infra/database'
-
-export * from './dto'
+import { getMigrationStatus, runPendingMigrations } from '../../../../infra/database/migrator'
 
 export async function getUpdateStatus(
   ctx: ServiceContext,

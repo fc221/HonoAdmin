@@ -1,5 +1,5 @@
-import type { CacheAdapter } from '../cache'
-import type { DBAdapter } from '../database'
+import type { CacheAdapter } from '../cache/types'
+import type { DBAdapter } from '../database/types'
 import type { BootstrapConfigStatus } from './bootstrap'
 
 export type RuntimeBindings = {

@@ -1,13 +1,15 @@
 import type { Context } from 'hono'
-import type { ConfigType } from '../../../../service'
+import type { ConfigType } from '../../../../service/admin/system/config/enum'
+import { updateConfig } from '../../../../service/admin/system/config'
+import {
+  updateConfigSchema,
+} from '../../../../service/admin/system/config/dto'
 import {
   configTypes,
-  createRequestOperateLog,
-  idParamSchema,
-  updateConfig,
-  updateConfigSchema,
-} from '../../../../service'
-import { ValidationError } from '../../../../utils'
+} from '../../../../service/admin/system/config/enum'
+import { createRequestOperateLog } from '../../../../service/admin/system/operate-log'
+import { idParamSchema } from '../../../../service/common/response'
+import { ValidationError } from '../../../../utils/errors'
 import {
   getFormValue,
   respondWithActionAlert,

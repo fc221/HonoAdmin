@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { paginationSchema } from '../../../common'
+import { paginationSchema } from '../../../common/pagination'
 
 export const pageAliasSchema = z.string()
   .trim()

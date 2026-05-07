@@ -1,5 +1,5 @@
 import type { Context } from 'hono'
-import type { AppContext, AppEnv } from '../infra/runtime'
+import type { AppContext, AppEnv } from '../infra/runtime/types'
 
 export type ServiceContext = Pick<
   AppContext,

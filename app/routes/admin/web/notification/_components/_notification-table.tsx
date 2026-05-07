@@ -1,4 +1,4 @@
-import type { WebNotificationRecord } from '../../../../../service'
+import type { WebNotificationRecord } from '../../../../../service/admin/web/notification/dto'
 import { ConfirmActionModal } from '../../../_components/_crud-action-modal'
 
 interface Props {

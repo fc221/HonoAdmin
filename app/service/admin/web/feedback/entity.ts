@@ -1,4 +1,4 @@
-import type { BaseEntity } from '../../../../infra/database'
+import type { BaseEntity } from '../../../../infra/database/types'
 import type { WebFeedbackStatus } from './enum'
 
 export interface WebFeedbackEntity extends BaseEntity {

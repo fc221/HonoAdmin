@@ -1,4 +1,4 @@
-import type { PaginatedResult } from '../../../common'
+import type { PaginatedResult } from '../../../common/pagination'
 import type { ServiceContext } from '../../../types'
 import type {
   CreateWebFeedbackInput,
@@ -7,19 +7,17 @@ import type {
   WebFeedbackRecord,
 } from './dto'
 import type { WebFeedbackEntity } from './entity'
-import { NotFoundError } from '../../../../utils'
+import { NotFoundError } from '../../../../utils/errors'
 import {
-  buildKeywordCondition,
-  buildWhereClause,
   createPaginatedResult,
   getPaginationOffset,
   resolvePagination,
-} from '../../../common'
+} from '../../../common/pagination'
+import {
+  buildKeywordCondition,
+  buildWhereClause,
+} from '../../../common/query'
 import { listWebFeedbackSchema } from './dto'
-
-export * from './dto'
-export * from './entity'
-export * from './enum'
 
 const webFeedbackColumns = `
   id,

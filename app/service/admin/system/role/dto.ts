@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { paginationResultSchema, paginationSchema } from '../../../common'
-import { permissionCodeSchema } from '../permission'
+import { paginationResultSchema, paginationSchema } from '../../../common/pagination'
+import { permissionCodeSchema } from '../permission/dto'
 
 export const roleCodeSchema = z.string()
   .trim()

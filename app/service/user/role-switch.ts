@@ -1,14 +1,16 @@
 import type { ServiceRequestContext } from '../types'
 import { z } from 'zod'
-import { UnauthorizedError, ValidationError } from '../../utils'
+import { UnauthorizedError, ValidationError } from '../../utils/errors'
 import {
-  createRequestOperateLog,
   getAdminSessionUser,
-  getFirstAuthorizedAdminHref,
+  setSessionActiveRole,
+} from '../admin/session'
+import { createRequestOperateLog } from '../admin/system/operate-log'
+import { getFirstAuthorizedAdminHref } from '../admin/system/role'
+import {
   isUserAssignedRole,
   listUserSessionRoles,
-  setSessionActiveRole,
-} from '../admin'
+} from '../admin/system/user'
 
 export const switchSessionRoleSchema = z.object({
   roleId: z.coerce.number().int().positive('请选择有效角色。'),

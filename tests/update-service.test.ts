@@ -1,15 +1,21 @@
 import type { TestServiceContext } from './helpers/service-context'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import {
+  listPermissions,
+} from '../app/service/admin/system/permission'
+import {
   canAccessAdminPath,
   createRole,
-  createUser,
+} from '../app/service/admin/system/role'
+import {
   getDatabaseMigrationStatus,
   getUpdateStatus,
-  listPermissions,
   runDatabaseMigrations,
-  UserStatus,
-} from '../app/service'
+} from '../app/service/admin/system/update'
+import {
+  createUser,
+} from '../app/service/admin/system/user'
+import { UserStatus } from '../app/service/admin/system/user/enum'
 import { createTestServiceContext } from './helpers/service-context'
 
 let testContext: TestServiceContext

@@ -1,4 +1,4 @@
-import type { WebNotificationRecord } from '../../../../../service'
+import type { WebNotificationRecord } from '../../../../../service/admin/web/notification/dto'
 import RichTextEditor from '../../../../_components/_rich-text-editor'
 
 interface Props {

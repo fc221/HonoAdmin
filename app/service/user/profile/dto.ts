@@ -1,11 +1,8 @@
 import { z } from 'zod'
-import {
-  operateLogTypes,
-  updateUserSchema,
-  userGenders,
-  userGenderSchema,
-} from '../../admin'
-import { paginationSchema } from '../../common'
+import { operateLogTypes } from '../../admin/system/operate-log/enum'
+import { updateUserSchema, userGenderSchema } from '../../admin/system/user/dto'
+import { userGenders } from '../../admin/system/user/enum'
+import { paginationSchema } from '../../common/pagination'
 
 export const userProfileUpdateSchema = z.object({
   avatar: updateUserSchema.shape.avatar,

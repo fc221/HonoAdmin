@@ -1,6 +1,6 @@
 import { createRoute } from 'honox/factory'
-import { switchCurrentSessionRole } from '../../service'
-import { UnauthorizedError } from '../../utils'
+import { switchCurrentSessionRole } from '../../service/user/role-switch'
+import { UnauthorizedError } from '../../utils/errors'
 import {
   getFormValue,
   respondWithActionAlert,

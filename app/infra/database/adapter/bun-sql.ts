@@ -4,8 +4,8 @@ import type {
   QueryResult,
   QueryRow,
   SQLParameter,
-} from '..'
-import { DatabaseError } from '../../../utils'
+} from '../types'
+import { DatabaseError } from '../../../utils/errors'
 
 interface BunSqlClient {
   begin: <T>(callback: (tx: BunSqlClient) => Promise<T>) => Promise<T>

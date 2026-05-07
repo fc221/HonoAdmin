@@ -1,4 +1,4 @@
-import type { DatabaseDialect, DBAdapter } from '../database'
+import type { DatabaseDialect, DBAdapter } from '../database/types'
 
 export async function createLocalDatabaseAdapter(
   databaseUrl: string,

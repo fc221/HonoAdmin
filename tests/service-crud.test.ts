@@ -1,35 +1,44 @@
 import type { TestServiceContext } from './helpers/service-context'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import {
-  canAccessAdminPath,
-  createOperateLog,
-  createRole,
-  createUser,
-  createWebNotification,
-  createWebPage,
-  deleteRole,
-  deleteUser,
-  deleteWebNotification,
-  deleteWebPage,
   getSiteConfig,
-  getWebNotificationByAlias,
-  getWebPageByAlias,
+  listConfigs,
+  upsertConfig,
+} from '../app/service/admin/system/config'
+import {
+  createOperateLog,
+  listOperateLogs,
+} from '../app/service/admin/system/operate-log'
+import {
+  canAccessAdminPath,
+  createRole,
+  deleteRole,
   invalidateRoleAccessCache,
   listAuthorizedAdminMenus,
-  listConfigs,
-  listOperateLogs,
   listRoles,
-  listUsers,
-  listWebNotifications,
-  listWebPages,
   updateRole,
+} from '../app/service/admin/system/role'
+import {
+  createUser,
+  deleteUser,
+  listUsers,
   updateUser,
+} from '../app/service/admin/system/user'
+import { UserGender, UserStatus } from '../app/service/admin/system/user/enum'
+import {
+  createWebNotification,
+  deleteWebNotification,
+  getWebNotificationByAlias,
+  listWebNotifications,
   updateWebNotification,
+} from '../app/service/admin/web/notification'
+import {
+  createWebPage,
+  deleteWebPage,
+  getWebPageByAlias,
+  listWebPages,
   updateWebPage,
-  upsertConfig,
-  UserGender,
-  UserStatus,
-} from '../app/service'
+} from '../app/service/admin/web/page'
 import { createTestServiceContext } from './helpers/service-context'
 
 let testContext: TestServiceContext

@@ -1,4 +1,4 @@
-import type { BaseEntity } from '../../../../infra/database'
+import type { BaseEntity } from '../../../../infra/database/types'
 import type { ConfigType } from './enum'
 
 export interface ConfigEntity extends BaseEntity {

@@ -1,8 +1,6 @@
 import { createRoute } from 'honox/factory'
-import {
-  getAdminSessionUser,
-  getUpdateStatus,
-} from '../../../../service'
+import { getAdminSessionUser } from '../../../../service/admin/session'
+import { getUpdateStatus } from '../../../../service/admin/system/update'
 import Layout from '../../../_components/_layout/$index'
 import { getPageAlert } from '../../../_utils/form'
 import { getAdminLayoutData } from '../../_utils/layout'

@@ -1,7 +1,7 @@
+import type { WebNotificationRecord } from '../../../../../service/admin/web/notification/dto'
 import type {
   PaginatedResult,
-  WebNotificationRecord,
-} from '../../../../../service'
+} from '../../../../../service/common/pagination'
 import type { PageAlertState } from '../../../../_components/_page-alert'
 import PageAlert from '../../../../_components/_page-alert'
 import Pagination from '../../../../_components/_pagination'

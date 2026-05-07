@@ -2,9 +2,6 @@ import type { ServiceContext } from '../../../types'
 import type { PermissionRecord } from './dto'
 import type { PermissionEntity } from './entity'
 
-export * from './dto'
-export * from './entity'
-
 const permissionColumns = `
   id,
   code,

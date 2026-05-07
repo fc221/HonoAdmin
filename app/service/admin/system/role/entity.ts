@@ -1,4 +1,4 @@
-import type { BaseEntity } from '../../../../infra/database'
+import type { BaseEntity } from '../../../../infra/database/types'
 
 export interface RoleEntity extends BaseEntity {
   code: string

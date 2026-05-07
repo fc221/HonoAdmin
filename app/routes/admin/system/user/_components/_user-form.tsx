@@ -1,5 +1,9 @@
-import type { RoleOption, UserRecord } from '../../../../../service'
-import { UserStatus, userStatusOptions } from '../../../../../service'
+import type { RoleOption } from '../../../../../service/admin/system/role/dto'
+import type { UserRecord } from '../../../../../service/admin/system/user/dto'
+import {
+  UserStatus,
+  userStatusOptions,
+} from '../../../../../service/admin/system/user/enum'
 import FileUploadField from '../../../../_components/_file-upload-field'
 import RoleMultiSelectDropdown from './$role-multi-select-dropdown'
 

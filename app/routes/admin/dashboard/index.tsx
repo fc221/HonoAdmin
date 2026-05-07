@@ -1,5 +1,7 @@
 import { createRoute } from 'honox/factory'
 import Layout from '../../_components/_layout/$index'
+import PageAlert from '../../_components/_page-alert'
+import { getPageAlert } from '../../_utils/form'
 import { getAdminLayoutData } from '../_utils/layout'
 
 export default createRoute(async (c) => {
@@ -14,6 +16,7 @@ export default createRoute(async (c) => {
       user={layout.user}
     >
       <title>{`仪表盘 - ${layout.siteTitle}`}</title>
+      <PageAlert alert={getPageAlert(c)} />
       <section class="rounded-box border border-base-300 bg-base-100 p-4">
         <div>
           <h1 class="text-2xl font-bold">仪表盘</h1>

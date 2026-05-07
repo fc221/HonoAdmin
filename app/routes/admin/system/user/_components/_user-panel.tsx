@@ -1,8 +1,6 @@
-import type {
-  PaginatedResult,
-  RoleOption,
-  UserRecord,
-} from '../../../../../service'
+import type { RoleOption } from '../../../../../service/admin/system/role/dto'
+import type { UserRecord } from '../../../../../service/admin/system/user/dto'
+import type { PaginatedResult } from '../../../../../service/common/pagination'
 import type { PageAlertState } from '../../../../_components/_page-alert'
 import PageAlert from '../../../../_components/_page-alert'
 import Pagination from '../../../../_components/_pagination'

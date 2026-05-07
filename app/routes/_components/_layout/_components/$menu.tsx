@@ -1,4 +1,4 @@
-import type { MenuItem } from '../../../../service/admin/system/menu'
+import type { MenuItem } from '../../../../service/admin/system/menu/consts'
 import {
   isMenuItemActive,
   isMenuItemOpen,

@@ -3,8 +3,8 @@ import type {
   QueryResult,
   QueryRow,
   SQLParameter,
-} from '..'
-import { DatabaseError } from '../../../utils'
+} from '../types'
+import { DatabaseError } from '../../../utils/errors'
 
 interface SqliteRunResult {
   changes?: number

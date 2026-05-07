@@ -3,9 +3,9 @@ import {
   clearOperateLogs,
   createRequestOperateLog,
   deleteOperateLog,
-  idParamSchema,
-} from '../../../../service'
-import { ValidationError } from '../../../../utils'
+} from '../../../../service/admin/system/operate-log'
+import { idParamSchema } from '../../../../service/common/response'
+import { ValidationError } from '../../../../utils/errors'
 import {
   getFormValue,
   respondWithActionAlert,

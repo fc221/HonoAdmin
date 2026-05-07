@@ -1,4 +1,4 @@
-import type { AppEnv } from '../app/infra/runtime'
+import type { AppEnv } from '../app/infra/runtime/types'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { Hono } from 'hono'
 import { middleware } from '../app/service/middleware'

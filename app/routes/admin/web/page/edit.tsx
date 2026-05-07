@@ -1,5 +1,6 @@
 import { createRoute } from 'honox/factory'
-import { getWebPageById, idParamSchema } from '../../../../service'
+import { getWebPageById } from '../../../../service/admin/web/page'
+import { idParamSchema } from '../../../../service/common/response'
 import Layout from '../../../_components/_layout/$index'
 import PageAlert from '../../../_components/_page-alert'
 import PageHeader from '../../../_components/_page-header'

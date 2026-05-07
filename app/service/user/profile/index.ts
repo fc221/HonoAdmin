@@ -1,34 +1,35 @@
 import type {
   OperateLogRecord,
+} from '../../admin/system/operate-log/dto'
+import type {
   UserCredential,
-  UserRecord,
-} from '../../admin'
-import type { PaginatedResult } from '../../common'
+} from '../../admin/system/user'
+import type { UserRecord } from '../../admin/system/user/dto'
+import type { PaginatedResult } from '../../common/pagination'
 import type { ServiceRequestContext } from '../../types'
 import type {
   ListUserProfileOperateLogInput,
   UserPasswordUpdateInput,
   UserProfileUpdateInput,
 } from './dto'
-import { UnauthorizedError, ValidationError } from '../../../utils'
+import { UnauthorizedError, ValidationError } from '../../../utils/errors'
+import { getAdminSessionUser, setAdminSession } from '../../admin/session'
 import {
   createRequestOperateLog,
-  getAdminSessionUser,
+  listOperateLogs,
+} from '../../admin/system/operate-log'
+import {
   getUserById,
   getUserCredentialById,
-  listOperateLogs,
-  setAdminSession,
   updateUser,
-  updateUserSchema,
   verifyUserPassword,
-} from '../../admin'
+} from '../../admin/system/user'
+import { updateUserSchema } from '../../admin/system/user/dto'
 import {
   listUserProfileOperateLogSchema,
   userPasswordUpdateSchema,
   userProfileUpdateSchema,
 } from './dto'
-
-export * from './dto'
 
 export interface UserProfilePageData {
   logs: PaginatedResult<OperateLogRecord>

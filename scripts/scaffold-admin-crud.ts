@@ -1,5 +1,5 @@
 import { mkdir, writeFile } from 'node:fs/promises'
-import { dirname, join } from 'node:path'
+import { dirname, join, relative } from 'node:path'
 
 type FieldKind = 'boolean' | 'string' | 'text'
 
@@ -42,7 +42,7 @@ async function main() {
 
   console.log('')
   console.log('next steps:')
-  console.log(`- export ./system/${options.name} from app/service/admin/system/index.ts`)
+  console.log(`- import services directly from app/service/admin/system/${options.name}`)
   console.log('- add a migration for the new table and register it')
   console.log('- add a menu entry in app/consts/menu.ts')
   console.log('- run bun run check')
@@ -200,7 +200,7 @@ function createDto(options: CrudOptions): string {
     .join('\n')
 
   return `import { z } from 'zod'
-import { paginationSchema } from '../../common'
+import { paginationSchema } from '../../common/pagination'
 
 export const ${options.name}RecordSchema = z.object({
   id: z.number().int().positive(),
@@ -262,7 +262,7 @@ function createService(options: CrudOptions): string {
     .join('\n')
 
   return `import type { ServiceContext } from '../../../types'
-import type { PaginatedResult } from '../../common'
+import type { PaginatedResult } from '../../common/pagination'
 import type {
   Create${pascal}Input,
   List${pascal}Input,
@@ -270,18 +270,17 @@ import type {
   Update${pascal}Input,
 } from './dto'
 import type { ${pascal}Entity } from './entity'
-import { NotFoundError } from '../../../../utils'
+import { NotFoundError } from '../../../../utils/errors'
 import {
-  buildKeywordCondition,
-  buildWhereClause,
   createPaginatedResult,
   getPaginationOffset,
   resolvePagination,
-} from '../../common'
+} from '../../common/pagination'
+import {
+  buildKeywordCondition,
+  buildWhereClause,
+} from '../../common/query'
 import { list${pascal}Schema } from './dto'
-
-export * from './dto'
-export * from './entity'
 
 const ${options.name}Columns = \`
 ${selectColumns}
@@ -434,18 +433,29 @@ ${recordFields}
 
 function createActions(options: CrudOptions): string {
   const pascal = toPascalCase(options.name)
+  const actionsFile = `app/routes/admin/${options.route}/_actions.ts`
+  const serviceImport = createImportPath(
+    actionsFile,
+    `app/service/admin/system/${options.name}/index`,
+  )
+  const dtoImport = createImportPath(
+    actionsFile,
+    `app/service/admin/system/${options.name}/dto`,
+  )
   const formValues = options.fields
     .map((field) => `      ${field.name}: ${createFormValue(field)},`)
     .join('\n')
 
   return `import type { Context } from 'hono'
 import {
-  create${pascal},
   create${pascal}Schema,
+  update${pascal}Schema,
+} from '${dtoImport}'
+import {
+  create${pascal},
   delete${pascal},
   update${pascal},
-  update${pascal}Schema,
-} from '../../../service'
+} from '${serviceImport}'
 import {
   getFormValue,
   respondWithActionAlert,
@@ -517,9 +527,19 @@ ${formValues}
 function createIndexRoute(options: CrudOptions): string {
   const pascal = toPascalCase(options.name)
   const component = `${pascal}Panel`
+  const routeFile = `app/routes/admin/${options.route}/index.tsx`
+  const serviceImport = createImportPath(
+    routeFile,
+    `app/service/admin/system/${options.name}/index`,
+  )
+  const dtoImport = createImportPath(
+    routeFile,
+    `app/service/admin/system/${options.name}/dto`,
+  )
 
   return `import { createRoute } from 'honox/factory'
-import { list${pascal}s, list${pascal}Schema } from '../../../service'
+import { list${pascal}Schema } from '${dtoImport}'
+import { list${pascal}s } from '${serviceImport}'
 import { getPageAlert } from '../../_utils/form'
 import ${component} from './_components/_${toKebabCase(options.name)}-panel'
 import { handle${pascal}Action } from './_actions'
@@ -569,9 +589,14 @@ export default createRoute((c) => c.render(
 
 function createEditRoute(options: CrudOptions): string {
   const pascal = toPascalCase(options.name)
+  const routeFile = `app/routes/admin/${options.route}/edit.tsx`
+  const serviceImport = createImportPath(
+    routeFile,
+    `app/service/admin/system/${options.name}/index`,
+  )
 
   return `import { createRoute } from 'honox/factory'
-import { get${pascal}ById } from '../../../service'
+import { get${pascal}ById } from '${serviceImport}'
 import PageHeader from '../../_components/_page-header'
 import ${pascal}Form from './_components/_${toKebabCase(options.name)}-form'
 import { handle${pascal}UpdateAction } from './_actions'
@@ -597,9 +622,14 @@ export default createRoute(async (c) => {
 
 function createFormComponent(options: CrudOptions): string {
   const pascal = toPascalCase(options.name)
+  const componentFile = `app/routes/admin/${options.route}/_components/_${toKebabCase(options.name)}-form.tsx`
+  const dtoImport = createImportPath(
+    componentFile,
+    `app/service/admin/system/${options.name}/dto`,
+  )
   const inputs = options.fields.map(createFormField).join('\n\n')
 
-  return `import type { ${pascal}Record } from '../../../../service'
+  return `import type { ${pascal}Record } from '${dtoImport}'
 
 interface Props {
   mode: 'create' | 'update'
@@ -637,10 +667,15 @@ ${indent(inputs, 6)}
 
 function createPanelComponent(options: CrudOptions): string {
   const pascal = toPascalCase(options.name)
+  const componentFile = `app/routes/admin/${options.route}/_components/_${toKebabCase(options.name)}-panel.tsx`
+  const dtoImport = createImportPath(
+    componentFile,
+    `app/service/admin/system/${options.name}/dto`,
+  )
 
   return `import type { PageAlertState } from '../../../_components/_page-alert'
 import type { PaginationState } from '../../_utils/pagination'
-import type { ${pascal}Record } from '../../../../service'
+import type { ${pascal}Record } from '${dtoImport}'
 import PageAlert from '../../../_components/_page-alert'
 import PageHeader from '../../../_components/_page-header'
 import TableSearchForm from '../../../_components/_table-search-form'
@@ -681,10 +716,15 @@ export default function ${pascal}Panel({ alert, keyword, pagination }: Props) {
 
 function createTableComponent(options: CrudOptions): string {
   const pascal = toPascalCase(options.name)
+  const componentFile = `app/routes/admin/${options.route}/_components/_${toKebabCase(options.name)}-table.tsx`
+  const dtoImport = createImportPath(
+    componentFile,
+    `app/service/admin/system/${options.name}/dto`,
+  )
   const heads = options.fields.map((field) => `                <th>${field.name}</th>`).join('\n')
   const cells = options.fields.map((field) => `                  <td>{String(record.${field.name})}</td>`).join('\n')
 
-  return `import type { ${pascal}Record } from '../../../../service'
+  return `import type { ${pascal}Record } from '${dtoImport}'
 import { ConfirmActionModal } from '../../_components/_crud-action-modal'
 
 interface Props {
@@ -733,6 +773,11 @@ ${cells}
   )
 }
 `
+}
+
+function createImportPath(fromFile: string, toModule: string): string {
+  const value = relative(dirname(fromFile), toModule).replace(/\\/g, '/')
+  return value.startsWith('.') ? value : `./${value}`
 }
 
 function createZodField(field: CrudField): string {

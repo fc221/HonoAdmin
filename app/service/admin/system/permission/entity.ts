@@ -1,4 +1,4 @@
-import type { BaseEntity } from '../../../../infra/database'
+import type { BaseEntity } from '../../../../infra/database/types'
 
 export interface PermissionEntity extends BaseEntity {
   action_key: string

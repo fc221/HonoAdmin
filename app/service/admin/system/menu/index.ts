@@ -1,9 +1,6 @@
 import type { MenuBreadcrumbItem, MenuItem } from './consts'
 import { defaultMenus } from './consts'
 
-export type { MenuBreadcrumbItem, MenuItem } from './consts'
-export { adminMenus, defaultMenus, userMenus } from './consts'
-
 export function getMenuBreadcrumbs(
   currentMenuName: string,
   items: MenuItem[] = defaultMenus,

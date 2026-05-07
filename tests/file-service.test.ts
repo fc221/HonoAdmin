@@ -3,19 +3,23 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
+import { upsertConfig } from '../app/service/admin/system/config'
 import {
-  canAccessAdminPath,
-  createRole,
-  createUser,
   deleteFile,
   getFileAccess,
   getFileByStorageKey,
   listFiles,
   uploadFile,
+} from '../app/service/admin/system/file'
+import {
   uploadFileFormSchema,
-  upsertConfig,
-  UserStatus,
-} from '../app/service'
+} from '../app/service/admin/system/file/dto'
+import {
+  canAccessAdminPath,
+  createRole,
+} from '../app/service/admin/system/role'
+import { createUser } from '../app/service/admin/system/user'
+import { UserStatus } from '../app/service/admin/system/user/enum'
 import { createTestServiceContext } from './helpers/service-context'
 
 let testContext: TestServiceContext

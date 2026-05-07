@@ -1,5 +1,5 @@
 import { createRoute } from 'honox/factory'
-import { logoutUser } from '../../service'
+import { logoutUser } from '../../service/user/logout'
 
 const loginPath = '/user/login'
 

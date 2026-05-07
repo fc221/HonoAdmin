@@ -1,5 +1,5 @@
 import type { RuntimeBindings, RuntimeTarget } from './types'
-import { defaultTimezone } from '../../utils'
+import { defaultTimezone } from '../../utils/datetime'
 
 export type BootstrapConfigKey
   = | 'APP_TIMEZONE'

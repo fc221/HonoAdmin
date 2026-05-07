@@ -1,6 +1,6 @@
-import type { Migration, MigrationStatement } from '../../migrations'
+import type { Migration, MigrationStatement } from '../../migrations/types'
 import type { DBAdapter, SQLParameter } from './types'
-import { getMigrationsForDialect } from '../../migrations'
+import { getMigrationsForDialect } from '../../migrations/registry'
 
 interface MigrationRecord {
   id: string
@@ -21,7 +21,7 @@ export interface MigrationStatus {
   pendingMigrations: MigrationSummary[]
 }
 
-export type { Migration, MigrationStatement } from '../../migrations'
+export type { Migration, MigrationStatement } from '../../migrations/types'
 
 export async function runMigrations(
   db: DBAdapter,

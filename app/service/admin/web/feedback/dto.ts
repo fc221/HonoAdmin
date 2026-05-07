@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { paginationSchema } from '../../../common'
+import { paginationSchema } from '../../../common/pagination'
 import { webFeedbackStatuses } from './enum'
 
 export const webFeedbackStatusSchema = z.enum(webFeedbackStatuses)

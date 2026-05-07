@@ -1,5 +1,5 @@
 import type { AppRuntime, RuntimeBindings } from './types'
-import { normalizeTimezone } from '../../utils'
+import { normalizeTimezone } from '../../utils/datetime'
 import { MemoryCacheAdapter } from '../cache/adapter/memory'
 import { UnavailableDBAdapter } from '../database/adapter/unavailable'
 

@@ -1,6 +1,6 @@
 import type { Context } from 'hono'
-import type { MigrationStatus } from '../../infra/database'
-import type { AppEnv } from '../../infra/runtime'
+import type { MigrationStatus } from '../../infra/database/migrator'
+import type { AppEnv } from '../../infra/runtime/types'
 import { createMiddleware } from 'hono/factory'
 import { getDatabaseMigrationStatus } from '../admin/system/update'
 

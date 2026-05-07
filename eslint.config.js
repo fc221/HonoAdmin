@@ -5,18 +5,6 @@ const sharedRestrictedImportPatterns = [
     group: ['**/*.ts', '**/*.tsx'],
     message: 'Import specifiers must not include .ts or .tsx extensions.',
   },
-  {
-    group: [
-      '**/infra/cache/types',
-      '**/infra/database/types',
-      '**/utils/errors',
-      '../cache/types',
-      '../database/types',
-      '../../utils/errors',
-      '../../../utils/errors',
-    ],
-    message: 'Import from the directory index barrel instead.',
-  },
 ]
 
 const coreRestrictedImportPatterns = [

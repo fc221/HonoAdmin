@@ -1,7 +1,7 @@
-import type { SQLParameter } from '../../../../infra/database'
-import type { PaginatedResult } from '../../../common'
+import type { SQLParameter } from '../../../../infra/database/types'
+import type { PaginatedResult } from '../../../common/pagination'
 import type { ServiceContext } from '../../../types'
-import type { MenuItem } from '../menu'
+import type { MenuItem } from '../menu/consts'
 import type { UserCredential } from '../user'
 import type {
   CreateRoleInput,
@@ -18,20 +18,19 @@ import type {
   RolePolicyEntity,
 } from './entity'
 import { newEnforcer, newModelFromString } from 'casbin'
-import { buildCacheKey } from '../../../../infra/cache'
-import { NotFoundError, ValidationError } from '../../../../utils'
+import { buildCacheKey } from '../../../../infra/cache/types'
+import { NotFoundError, ValidationError } from '../../../../utils/errors'
 import {
-  buildKeywordCondition,
-  buildWhereClause,
   createPaginatedResult,
   getPaginationOffset,
   resolvePagination,
-} from '../../../common'
-import { adminMenus } from '../menu'
+} from '../../../common/pagination'
+import {
+  buildKeywordCondition,
+  buildWhereClause,
+} from '../../../common/query'
+import { adminMenus } from '../menu/consts'
 import { createRoleSchema, listRoleSchema, updateRoleSchema } from './dto'
-
-export * from './dto'
-export * from './entity'
 
 const adminRbacModel = `
 [request_definition]

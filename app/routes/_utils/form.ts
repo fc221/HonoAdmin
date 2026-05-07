@@ -1,7 +1,7 @@
 import type { Context } from 'hono'
 import type { PageAlertState } from '../_components/_page-alert'
 import { ZodError } from 'zod'
-import { AppError, toErrorShape } from '../../utils'
+import { AppError, toErrorShape } from '../../utils/errors'
 
 type FormBody = Record<string, unknown>
 type FieldErrors = Record<string, string[]>

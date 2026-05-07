@@ -1,5 +1,6 @@
 import { createRoute } from 'honox/factory'
-import { adminMenus, listPermissions } from '../../../../service'
+import { adminMenus } from '../../../../service/admin/system/menu/consts'
+import { listPermissions } from '../../../../service/admin/system/permission'
 import Layout from '../../../_components/_layout/$index'
 import PageAlert from '../../../_components/_page-alert'
 import PageHeader from '../../../_components/_page-header'

@@ -1,5 +1,5 @@
 import type { DBAdapter, QueryResult, QueryRow, SQLParameter } from '../types'
-import { ConfigurationError } from '../../../utils'
+import { ConfigurationError } from '../../../utils/errors'
 
 export class UnavailableDBAdapter implements DBAdapter {
   readonly dialect = 'sqlite' as const

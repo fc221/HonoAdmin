@@ -1,4 +1,4 @@
-import type { MenuItem } from '../../../../service/admin/system/menu'
+import type { MenuItem } from '../../../../service/admin/system/menu/consts'
 import type { ThemeName } from '../config'
 import { isMenuItemActive } from '../../../../service/admin/system/menu'
 import { getSiteLogoText } from '../../../_utils/branding'

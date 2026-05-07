@@ -1,4 +1,4 @@
-import type { PaginatedResult } from '../../../common'
+import type { PaginatedResult } from '../../../common/pagination'
 import type { ServiceContext } from '../../../types'
 import type {
   CreateWebNotificationInput,
@@ -7,18 +7,17 @@ import type {
   WebNotificationRecord,
 } from './dto'
 import type { WebNotificationEntity } from './entity'
-import { NotFoundError, ValidationError } from '../../../../utils'
+import { NotFoundError, ValidationError } from '../../../../utils/errors'
 import {
-  buildKeywordCondition,
-  buildWhereClause,
   createPaginatedResult,
   getPaginationOffset,
   resolvePagination,
-} from '../../../common'
+} from '../../../common/pagination'
+import {
+  buildKeywordCondition,
+  buildWhereClause,
+} from '../../../common/query'
 import { listWebNotificationSchema } from './dto'
-
-export * from './dto'
-export * from './entity'
 
 const webNotificationColumns = `
   id,

@@ -1,9 +1,9 @@
-import type { ServiceContext } from '../../app/service'
+import type { ServiceContext } from '../../app/service/types'
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { MemoryCacheAdapter } from '../../app/infra/cache/adapter/memory'
-import { runMigrations } from '../../app/infra/database'
+import { runMigrations } from '../../app/infra/database/migrator'
 import { createLocalSqliteAdapter } from '../../app/infra/runtime/local-sqlite'
 
 export interface TestServiceContext {

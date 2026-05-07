@@ -1,10 +1,10 @@
 import type { Context } from 'hono'
+import { getAdminSessionUser } from '../../../service/admin/session'
 import {
-  getAdminSessionUser,
   updateCurrentUserPassword,
   updateCurrentUserProfile,
-} from '../../../service'
-import { ValidationError } from '../../../utils'
+} from '../../../service/user/profile'
+import { ValidationError } from '../../../utils/errors'
 import {
   getFormValue,
   getNullableFormValue,

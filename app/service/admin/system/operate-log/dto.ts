@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { paginationSchema } from '../../../common'
+import { paginationSchema } from '../../../common/pagination'
 import { operateLogStatuses, operateLogTypes } from './enum'
 
 export const operateLogTypeSchema = z.enum(operateLogTypes)

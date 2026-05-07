@@ -1,5 +1,7 @@
 import { createRoute } from 'honox/factory'
-import { listRoleOptions, listUsers, listUserSchema } from '../../../../service'
+import { listRoleOptions } from '../../../../service/admin/system/role'
+import { listUsers } from '../../../../service/admin/system/user'
+import { listUserSchema } from '../../../../service/admin/system/user/dto'
 import Layout from '../../../_components/_layout/$index'
 import { getPageAlert } from '../../../_utils/form'
 import { getAdminLayoutData } from '../../_utils/layout'

@@ -1,4 +1,4 @@
-import type { SQLParameter } from '../../infra/database'
+import type { SQLParameter } from '../../infra/database/types'
 
 interface SQLCondition {
   params: SQLParameter[]

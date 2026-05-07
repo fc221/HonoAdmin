@@ -1,4 +1,4 @@
-import { wrapEnum } from '../../../../utils'
+import { wrapEnum } from '../../../../utils/enum'
 
 export enum UserStatus {
   NORMAL = 'normal',

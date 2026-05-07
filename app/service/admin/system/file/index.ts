@@ -1,28 +1,26 @@
-import type { FileStorageConfig } from '../../../../infra/file-storage'
-import type { PaginatedResult } from '../../../common'
+import type { FileStorageConfig } from '../../../../infra/file-storage/types'
+import type { PaginatedResult } from '../../../common/pagination'
 import type { ServiceContext } from '../../../types'
-import type { ConfigEntity } from '../config'
+import type { ConfigEntity } from '../config/entity'
 import type {
   FileRecord,
   ListFileInput,
 } from './dto'
 import type { FileEntity } from './entity'
 import type { FileStorageMode, FileUploadType } from './enum'
-import { createFileStorageAdapter } from '../../../../infra/file-storage'
-import { ConfigurationError, NotFoundError, ValidationError } from '../../../../utils'
+import { createFileStorageAdapter } from '../../../../infra/file-storage/factory'
+import { ConfigurationError, NotFoundError, ValidationError } from '../../../../utils/errors'
 import {
-  buildKeywordCondition,
-  buildWhereClause,
   createPaginatedResult,
   getPaginationOffset,
   resolvePagination,
-} from '../../../common'
+} from '../../../common/pagination'
+import {
+  buildKeywordCondition,
+  buildWhereClause,
+} from '../../../common/query'
 import { listFileSchema } from './dto'
 import { fileStorageModes, fileUploadTypes } from './enum'
-
-export * from './dto'
-export * from './entity'
-export * from './enum'
 
 export interface UploadFileInput {
   file: File

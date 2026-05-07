@@ -1,4 +1,4 @@
-import type { CacheAdapter, CacheSetOptions } from '..'
+import type { CacheAdapter, CacheSetOptions } from '../types'
 
 type MemoryEntry = {
   expiresAt?: number

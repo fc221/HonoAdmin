@@ -1,4 +1,4 @@
-import type { WebPageRecord } from '../../../../../service'
+import type { WebPageRecord } from '../../../../../service/admin/web/page/dto'
 import { ConfirmActionModal } from '../../../_components/_crud-action-modal'
 
 interface Props {

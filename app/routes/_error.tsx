@@ -1,6 +1,6 @@
 import type { ErrorHandler } from 'hono'
 import type { ContentfulStatusCode } from 'hono/utils/http-status'
-import { AppError } from '../utils'
+import { AppError } from '../utils/errors'
 import ErrorPage from './_components/_error-page'
 
 const handler: ErrorHandler = (e, c) => {

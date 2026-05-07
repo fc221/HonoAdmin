@@ -1,16 +1,21 @@
-import type { DatabaseDialect, DBAdapter, QueryResult, QueryRow } from '../app/infra/database'
+import type {
+  DatabaseDialect,
+  DBAdapter,
+  QueryResult,
+  QueryRow,
+} from '../app/infra/database/types'
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, test } from 'bun:test'
 import {
-  getMigrationStatus,
-  runMigrations,
-} from '../app/infra/database'
-import {
   normalizeBunSqlForDialect,
   normalizeBunSqlParamsForDialect,
 } from '../app/infra/database/adapter/bun-sql'
+import {
+  getMigrationStatus,
+  runMigrations,
+} from '../app/infra/database/migrator'
 import {
   createLocalDatabaseAdapter,
   createLocalSqliteAdapter,
@@ -21,7 +26,7 @@ import {
   mysqlMigrations,
   pgMigrations,
   sqliteMigrations,
-} from '../app/migrations'
+} from '../app/migrations/registry'
 
 describe('migration dialects', () => {
   test('migration registries keep matching id, name, and order', () => {

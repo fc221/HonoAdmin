@@ -1,15 +1,15 @@
 import type {
   FileRecord,
-  FileUploadType,
-  PaginatedResult,
-} from '../../../../../service'
+} from '../../../../../service/admin/system/file/dto'
+import type { FileUploadType } from '../../../../../service/admin/system/file/enum'
+import type { PaginatedResult } from '../../../../../service/common/pagination'
 import type { PageAlertState } from '../../../../_components/_page-alert'
 import {
   fileStorageModeLabels,
   fileUploadTypeLabels,
   fileUploadTypeOptions,
-} from '../../../../../service'
-import { formatDateTime } from '../../../../../utils'
+} from '../../../../../service/admin/system/file/enum'
+import { formatDateTime } from '../../../../../utils/datetime'
 import PageAlert from '../../../../_components/_page-alert'
 import Pagination from '../../../../_components/_pagination'
 import {

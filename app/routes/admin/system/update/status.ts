@@ -1,5 +1,5 @@
 import { createRoute } from 'honox/factory'
-import { getUpdateStatus } from '../../../../service'
+import { getUpdateStatus } from '../../../../service/admin/system/update'
 
 export default createRoute(async (c) =>
   c.json({

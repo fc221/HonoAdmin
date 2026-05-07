@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'bun:test'
+import { createRoleSchema } from '../app/service/admin/system/role/dto'
 import {
-  createRoleSchema,
   createUserSchema,
-  createWebNotificationSchema,
-  createWebPageSchema,
   updateUserSchema,
-} from '../app/service'
+} from '../app/service/admin/system/user/dto'
+import { createWebNotificationSchema } from '../app/service/admin/web/notification/dto'
+import { createWebPageSchema } from '../app/service/admin/web/page/dto'
 
 describe('service schemas', () => {
   test('web page schema returns field-level Chinese messages', () => {

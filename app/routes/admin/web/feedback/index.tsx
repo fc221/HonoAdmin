@@ -1,5 +1,6 @@
 import { createRoute } from 'honox/factory'
-import { listWebFeedbacks, listWebFeedbackSchema } from '../../../../service'
+import { listWebFeedbacks } from '../../../../service/admin/web/feedback'
+import { listWebFeedbackSchema } from '../../../../service/admin/web/feedback/dto'
 import Layout from '../../../_components/_layout/$index'
 import { getPageAlert } from '../../../_utils/form'
 import { getAdminLayoutData } from '../../_utils/layout'

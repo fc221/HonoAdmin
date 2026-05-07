@@ -1,9 +1,9 @@
 import type { ServiceRequestContext } from '../types'
 import {
   clearAdminSession,
-  createRequestOperateLog,
   getAdminSessionUser,
-} from '../admin'
+} from '../admin/session'
+import { createRequestOperateLog } from '../admin/system/operate-log'
 
 export async function logoutUser(c: ServiceRequestContext): Promise<void> {
   const user = await getAdminSessionUser(c)

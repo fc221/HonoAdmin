@@ -1,4 +1,4 @@
-import type { FileUploadType } from '../../service'
+import type { FileUploadType } from '../../service/admin/system/file/enum'
 
 interface Props {
   help?: string

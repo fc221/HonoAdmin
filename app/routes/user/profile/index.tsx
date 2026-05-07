@@ -1,9 +1,7 @@
 import { createRoute } from 'honox/factory'
-import {
-  getCurrentUserProfilePageData,
-  listUserProfileOperateLogSchema,
-} from '../../../service'
-import { UnauthorizedError } from '../../../utils'
+import { getCurrentUserProfilePageData } from '../../../service/user/profile'
+import { listUserProfileOperateLogSchema } from '../../../service/user/profile/dto'
+import { UnauthorizedError } from '../../../utils/errors'
 import Layout from '../../_components/_layout/$index'
 import { getPageAlert } from '../../_utils/form'
 import { getUserLayoutData } from '../../admin/_utils/layout'

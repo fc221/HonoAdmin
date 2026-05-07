@@ -1,4 +1,4 @@
-import type { WebPageRecord } from '../../../../../service'
+import type { WebPageRecord } from '../../../../../service/admin/web/page/dto'
 import RichTextEditor from '../../../../_components/_rich-text-editor'
 
 interface Props {

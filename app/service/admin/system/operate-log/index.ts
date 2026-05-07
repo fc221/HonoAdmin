@@ -1,4 +1,4 @@
-import type { PaginatedResult } from '../../../common'
+import type { PaginatedResult } from '../../../common/pagination'
 import type { ServiceContext, ServiceRequestContext } from '../../../types'
 import type {
   CreateOperateLogInput,
@@ -6,20 +6,18 @@ import type {
   OperateLogRecord,
 } from './dto'
 import type { OperateLogEntity } from './entity'
-import { NotFoundError } from '../../../../utils'
+import { NotFoundError } from '../../../../utils/errors'
 import {
-  buildKeywordCondition,
-  buildWhereClause,
   createPaginatedResult,
   getPaginationOffset,
   resolvePagination,
-} from '../../../common'
+} from '../../../common/pagination'
+import {
+  buildKeywordCondition,
+  buildWhereClause,
+} from '../../../common/query'
 import { getAdminSessionUser } from '../../session'
 import { listOperateLogSchema } from './dto'
-
-export * from './dto'
-export * from './entity'
-export * from './enum'
 
 const operateLogColumns = `
   id,

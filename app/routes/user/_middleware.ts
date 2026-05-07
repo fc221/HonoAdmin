@@ -1,8 +1,6 @@
 import { createRoute } from 'honox/factory'
-import {
-  getAdminSessionUser,
-  isAdminInstalled,
-} from '../../service'
+import { getAdminSessionUser } from '../../service/admin/session'
+import { isAdminInstalled } from '../../service/admin/system/user'
 
 const loginPath = '/user/login'
 const publicPaths = new Set([loginPath])

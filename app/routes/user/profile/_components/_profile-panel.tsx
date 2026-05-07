@@ -1,18 +1,23 @@
 import type {
   OperateLogRecord,
+} from '../../../../service/admin/system/operate-log/dto'
+import type {
   OperateLogType,
-  PaginatedResult,
-  UserRecord,
-} from '../../../../service'
+} from '../../../../service/admin/system/operate-log/enum'
+import type { UserRecord } from '../../../../service/admin/system/user/dto'
+import type { PaginatedResult } from '../../../../service/common/pagination'
 import type { PageAlertState } from '../../../_components/_page-alert'
 import {
   operateLogTypeLabels,
   operateLogTypeOptions,
+} from '../../../../service/admin/system/operate-log/enum'
+import {
   userGenderOptions,
   UserGenderUtils,
   UserStatusUtils,
-} from '../../../../service'
-import { formatDateTime, getAvatarText } from '../../../../utils'
+} from '../../../../service/admin/system/user/enum'
+import { getAvatarText } from '../../../../utils/avatar'
+import { formatDateTime } from '../../../../utils/datetime'
 import PageAlert from '../../../_components/_page-alert'
 import Pagination from '../../../_components/_pagination'
 

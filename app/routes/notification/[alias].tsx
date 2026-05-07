@@ -1,6 +1,8 @@
 import { createRoute } from 'honox/factory'
-import { getSiteConfig, getWebNotificationByAlias } from '../../service'
-import { NotFoundError, sanitizeRichTextHtml } from '../../utils'
+import { getSiteConfig } from '../../service/admin/system/config'
+import { getWebNotificationByAlias } from '../../service/admin/web/notification'
+import { NotFoundError } from '../../utils/errors'
+import { sanitizeRichTextHtml } from '../../utils/html'
 import ErrorPage from '../_components/_error-page'
 
 export default createRoute(async (c) => {

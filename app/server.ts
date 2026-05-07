@@ -7,9 +7,9 @@ import { logger } from 'hono/logger'
 import { requestId } from 'hono/request-id'
 import { timing } from 'hono/timing'
 import { createApp } from 'honox/server'
-import { getFileAccess } from './service'
+import { getFileAccess } from './service/admin/system/file'
 import { middleware } from './service/middleware'
-import { toErrorShape } from './utils'
+import { toErrorShape } from './utils/errors'
 
 const app = createApp({
   init(app) {

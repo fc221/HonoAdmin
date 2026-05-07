@@ -1,5 +1,6 @@
 import { createRoute } from 'honox/factory'
-import { listOperateLogs, listOperateLogSchema } from '../../../../service'
+import { listOperateLogs } from '../../../../service/admin/system/operate-log'
+import { listOperateLogSchema } from '../../../../service/admin/system/operate-log/dto'
 import Layout from '../../../_components/_layout/$index'
 import { getPageAlert } from '../../../_utils/form'
 import { getAdminLayoutData } from '../../_utils/layout'

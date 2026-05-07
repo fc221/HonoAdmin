@@ -1,5 +1,6 @@
 import { createRoute } from 'honox/factory'
-import { getWebNotificationById, idParamSchema } from '../../../../service'
+import { getWebNotificationById } from '../../../../service/admin/web/notification'
+import { idParamSchema } from '../../../../service/common/response'
 import Layout from '../../../_components/_layout/$index'
 import PageAlert from '../../../_components/_page-alert'
 import PageHeader from '../../../_components/_page-header'

@@ -1,5 +1,5 @@
 import type { AppRuntime, RuntimeBindings } from './types'
-import { normalizeTimezone } from '../../utils'
+import { normalizeTimezone } from '../../utils/datetime'
 import { KVCacheAdapter } from '../cache/adapter/kv'
 import { NoopCacheAdapter } from '../cache/adapter/noop'
 import { D1Adapter } from '../database/adapter/d1'

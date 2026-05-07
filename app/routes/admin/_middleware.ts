@@ -1,10 +1,8 @@
 import type { Context } from 'hono'
 import { createRoute } from 'honox/factory'
-import {
-  canAccessAdminPath,
-  getAdminSessionUser,
-  isAdminInstalled,
-} from '../../service'
+import { getAdminSessionUser } from '../../service/admin/session'
+import { canAccessAdminPath } from '../../service/admin/system/role'
+import { isAdminInstalled } from '../../service/admin/system/user'
 
 const publicPaths = new Set(['/admin/login'])
 const loginPath = '/user/login'

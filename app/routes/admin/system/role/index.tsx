@@ -1,5 +1,6 @@
 import { createRoute } from 'honox/factory'
-import { listPaginatedRoles, listRoleSchema } from '../../../../service'
+import { listPaginatedRoles } from '../../../../service/admin/system/role'
+import { listRoleSchema } from '../../../../service/admin/system/role/dto'
 import Layout from '../../../_components/_layout/$index'
 import { getPageAlert } from '../../../_utils/form'
 import { getAdminLayoutData } from '../../_utils/layout'

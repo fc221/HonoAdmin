@@ -1,8 +1,12 @@
 import type {
   MenuItem,
+} from '../../../../../service/admin/system/menu/consts'
+import type {
   PermissionRecord,
+} from '../../../../../service/admin/system/permission/dto'
+import type {
   RoleRecord,
-} from '../../../../../service'
+} from '../../../../../service/admin/system/role/dto'
 
 interface Props {
   menus: MenuItem[]

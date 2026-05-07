@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { paginationResultSchema, paginationSchema } from '../../../common'
+import { paginationResultSchema, paginationSchema } from '../../../common/pagination'
 import { userGenders, UserStatus, userStatuses } from './enum'
 
 export const userStatusSchema = z.enum(userStatuses)
@@ -103,3 +103,18 @@ export type CreateUserResult = z.infer<typeof userRecordSchema>
 export type ListUserInput = z.input<typeof listUserSchema>
 export type UpdateUserInput = z.infer<typeof updateUserSchema>
 export type UserRecord = z.infer<typeof userRecordSchema>
+
+export interface UserSessionRole {
+  code: string
+  id: number
+  name: string
+}
+
+export interface UserHeaderProfile {
+  activeRoleId: number | null
+  avatar: string | null
+  id: number
+  nickname: string | null
+  roles: UserSessionRole[]
+  username: string
+}

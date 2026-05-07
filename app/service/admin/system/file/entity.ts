@@ -1,4 +1,4 @@
-import type { BaseEntity } from '../../../../infra/database'
+import type { BaseEntity } from '../../../../infra/database/types'
 import type { FileStorageMode, FileUploadType } from './enum'
 
 export interface FileEntity extends BaseEntity {

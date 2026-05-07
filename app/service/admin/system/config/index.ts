@@ -7,8 +7,8 @@ import type {
 } from './dto'
 import type { ConfigEntity } from './entity'
 import type { ConfigType } from './enum'
-import { buildCacheKey } from '../../../../infra/cache'
-import { NotFoundError, ValidationError } from '../../../../utils'
+import { buildCacheKey } from '../../../../infra/cache/types'
+import { NotFoundError, ValidationError } from '../../../../utils/errors'
 import {
   builtInConfigDefinitions,
   siteDescriptionConfig,
@@ -17,11 +17,6 @@ import {
   siteSubtitleConfig,
 } from './constants'
 import { configRecordSchema, siteConfigSchema } from './dto'
-
-export * from './constants'
-export * from './dto'
-export * from './entity'
-export * from './enum'
 
 const configCacheTtlSeconds = 300
 const configListCacheKey = buildCacheKey('system', 'config', 'list')
