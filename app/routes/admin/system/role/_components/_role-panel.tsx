@@ -36,6 +36,7 @@ export default function RolePanel({
             action={pagePath}
             keyword={keyword}
             pageSize={pagination.pageSize}
+            placeholder="角色名 / 编码"
           />
         </div>
         <div class="overflow-x-auto">

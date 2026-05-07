@@ -82,12 +82,8 @@ export async function listPaginatedRoles(
   const listInput = listRoleSchema.parse(input)
   const whereClause = buildWhereClause([
     buildKeywordCondition(listInput.keyword, [
-      'CAST(id AS TEXT)',
       'code',
       'name',
-      'description',
-      'created_at',
-      'updated_at',
     ]),
   ])
   const total = await countRoles(ctx, whereClause.sql, whereClause.params)

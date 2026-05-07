@@ -40,6 +40,7 @@ export default function WebNotificationPanel({
             action="/admin/web/notification"
             keyword={keyword}
             pageSize={pagination.pageSize}
+            placeholder="标题 / 别名"
           />
         </div>
         <WebNotificationTable notifications={notifications} />

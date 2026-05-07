@@ -51,20 +51,13 @@ export async function listOperateLogs(
       ? { params: [listInput.userId], sql: 'user_id = ?' }
       : null,
     buildKeywordCondition(listInput.keyword, [
-      'CAST(id AS TEXT)',
-      'CAST(user_id AS TEXT)',
-      'log_type',
       'status',
       'log_msg',
       'error_msg',
       'action_key',
       'method',
       'request_method',
-      'log_data',
-      'req_data',
-      'res_data',
       'client_ip',
-      'created_at',
     ]),
   ])
   const total = await countOperateLogs(ctx, whereClause.sql, whereClause.params)

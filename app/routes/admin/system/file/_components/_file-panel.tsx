@@ -173,7 +173,7 @@ function FileFilterForm({
       <input
         class="input input-sm w-56"
         name="keyword"
-        placeholder="文件名 / 类型 / 用户 ID"
+        placeholder="文件名 / 存储键 / MIME"
         value={keyword}
       />
       <button class="btn btn-ghost btn-sm" type="submit">

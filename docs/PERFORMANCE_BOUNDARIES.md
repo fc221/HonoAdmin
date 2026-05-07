@@ -19,6 +19,10 @@ code.
 - Current keyword search uses portable `LIKE` conditions and is suitable for
   small admin datasets.
 - Treat `LIKE` search as a convenience filter, not a full-text search system.
+- Keyword fields must be curated per list. Prefer short, user-facing text
+  columns such as names, codes, phone numbers, and email addresses; avoid IDs,
+  timestamps, status fields with dedicated filters, rich text, JSON, logs, and
+  other large columns in generic keyword search.
 - Once a table reaches about `50k` rows, review the search columns. Narrow the
   searchable columns first; introduce database-specific full-text search only
   behind an adapter or service strategy.

@@ -159,7 +159,7 @@ function OperateLogFilterForm({
         <input
           class="grow"
           name="keyword"
-          placeholder="关键词搜索"
+          placeholder="消息 / 方法 / IP / 状态"
           type="search"
           value={keyword}
         />

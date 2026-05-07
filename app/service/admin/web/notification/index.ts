@@ -38,14 +38,8 @@ export async function listWebNotifications(
   const listInput = listWebNotificationSchema.parse(input)
   const whereClause = buildWhereClause([
     buildKeywordCondition(listInput.keyword, [
-      'CAST(id AS TEXT)',
       'alias',
       'title',
-      'content',
-      'CAST(is_top AS TEXT)',
-      'CAST(is_important AS TEXT)',
-      'created_at',
-      'updated_at',
     ]),
   ])
   const total = await countWebNotifications(

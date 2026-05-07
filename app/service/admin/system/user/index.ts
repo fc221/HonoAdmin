@@ -97,17 +97,10 @@ export async function listUsers(
   const listInput = listUserSchema.parse(input)
   const whereClause = buildWhereClause([
     buildKeywordCondition(listInput.keyword, [
-      'CAST(id AS TEXT)',
       'username',
       'nickname',
-      'avatar',
-      'gender',
-      'bio',
       'mail',
       'phone',
-      'status',
-      'created_at',
-      'updated_at',
     ]),
   ])
   const total = await countUsers(ctx, whereClause.sql, whereClause.params)

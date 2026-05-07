@@ -41,16 +41,9 @@ export async function listWebFeedbacks(
   const listInput = listWebFeedbackSchema.parse(input)
   const whereClause = buildWhereClause([
     buildKeywordCondition(listInput.keyword, [
-      'CAST(id AS TEXT)',
       'title',
-      'content',
       'contact',
-      'images',
-      'CAST(user_id AS TEXT)',
-      'reply',
       'status',
-      'created_at',
-      'updated_at',
     ]),
   ])
   const total = await countWebFeedbacks(ctx, whereClause.sql, whereClause.params)

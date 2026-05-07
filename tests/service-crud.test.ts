@@ -109,14 +109,23 @@ describe('service CRUD', () => {
       gender: UserGender.OTHER,
       mail: 'editor@example.com',
       nickname: 'Editor',
+      phone: '13800000000',
       roleIds: [adminRoleId],
     })
     expect(updated.bio).toBe('Writes and reviews content.')
     expect(updated.gender).toBe(UserGender.OTHER)
     expect(updated.mail).toBe('editor@example.com')
     expect(updated.nickname).toBe('Editor')
+    expect(updated.phone).toBe('13800000000')
     expect(updated.roleId).toBe(adminRoleId)
     expect(updated.roleIds).toEqual([adminRoleId])
+
+    const byMail = await listUsers(ctx, { keyword: 'editor@example.com' })
+    expect(byMail.total).toBe(1)
+    const byPhone = await listUsers(ctx, { keyword: '13800000000' })
+    expect(byPhone.total).toBe(1)
+    const byBio = await listUsers(ctx, { keyword: 'reviews' })
+    expect(byBio.total).toBe(0)
 
     await deleteUser(ctx, created.id)
     const afterDelete = await listUsers(ctx, { keyword: 'editor' })

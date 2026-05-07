@@ -37,6 +37,7 @@ export default function WebPagePanel({
             action="/admin/web/page"
             keyword={keyword}
             pageSize={pagination.pageSize}
+            placeholder="标题 / 别名 / 分类"
           />
         </div>
         <WebPageTable pages={pages} />

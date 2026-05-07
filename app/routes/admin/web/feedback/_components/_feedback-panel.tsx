@@ -28,6 +28,7 @@ export default function WebFeedbackPanel({
             action="/admin/web/feedback"
             keyword={keyword}
             pageSize={pagination.pageSize}
+            placeholder="标题 / 联系方式 / 状态"
           />
         </div>
         <div class="overflow-x-auto">

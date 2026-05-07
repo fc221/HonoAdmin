@@ -52,6 +52,7 @@ export default function UserPanel({
             action="/admin/system/user"
             keyword={keyword}
             pageSize={pagination.pageSize}
+            placeholder="用户名 / 昵称 / 手机 / 邮箱"
           />
         </div>
         <UserTable roles={roles} timezone={timezone} users={users} />

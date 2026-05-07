@@ -79,16 +79,9 @@ export async function listFiles(
       ? { params: [listInput.uploadType], sql: 'upload_type = ?' }
       : null,
     buildKeywordCondition(listInput.keyword, [
-      'CAST(id AS TEXT)',
-      'upload_type',
-      'storage_mode',
       'storage_key',
       'original_name',
       'mime_type',
-      'CAST(file_size AS TEXT)',
-      'CAST(user_id AS TEXT)',
-      'created_at',
-      'updated_at',
     ]),
   ])
   const total = await countFiles(ctx, whereClause.sql, whereClause.params)

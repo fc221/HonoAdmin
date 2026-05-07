@@ -38,14 +38,10 @@ export async function listWebPages(
   const listInput = listWebPageSchema.parse(input)
   const whereClause = buildWhereClause([
     buildKeywordCondition(listInput.keyword, [
-      'CAST(id AS TEXT)',
       'title',
       'alias',
       'category',
       'summary',
-      'content',
-      'created_at',
-      'updated_at',
     ]),
   ])
   const total = await countWebPages(ctx, whereClause.sql, whereClause.params)
