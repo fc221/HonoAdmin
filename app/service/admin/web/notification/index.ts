@@ -74,7 +74,7 @@ export async function createWebNotification(
   await assertNotificationAliasAvailable(ctx, input.alias)
 
   const now = ctx.now()
-  const result = await ctx.db.execute(
+  const notificationId = await ctx.db.insertAndGetId(
     `
       INSERT INTO web_notification (
         alias,
@@ -98,7 +98,7 @@ export async function createWebNotification(
     ],
   )
 
-  return getWebNotificationById(ctx, Number(result.lastInsertId))
+  return getWebNotificationById(ctx, notificationId)
 }
 
 export async function updateWebNotification(

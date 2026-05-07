@@ -1,4 +1,4 @@
-import type { Migration } from './types'
+import type { Migration } from '../types'
 
 export const migration0012UserMultiRoles: Migration = {
   id: '0012_user_multi_roles',
@@ -6,16 +6,17 @@ export const migration0012UserMultiRoles: Migration = {
   statements: [
     `
       CREATE TABLE IF NOT EXISTS sys_user_role (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        role_id INTEGER NOT NULL,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL,
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        role_id INT NOT NULL,
+        created_at DATETIME(3) NOT NULL,
+        updated_at DATETIME(3) NOT NULL,
         UNIQUE (user_id, role_id)
       )
+    
     `,
     `
-      INSERT OR IGNORE INTO sys_user_role (
+      INSERT IGNORE INTO sys_user_role (
         user_id,
         role_id,
         created_at,
@@ -26,16 +27,19 @@ export const migration0012UserMultiRoles: Migration = {
         role_id,
         created_at,
         updated_at
-      FROM "user"
+      FROM sys_user
       WHERE role_id IS NOT NULL
+    
     `,
     `
-      CREATE INDEX IF NOT EXISTS idx_user_role_user_id
+      CREATE INDEX idx_user_role_user_id
       ON sys_user_role (user_id)
+    
     `,
     `
-      CREATE INDEX IF NOT EXISTS idx_user_role_role_id
+      CREATE INDEX idx_user_role_role_id
       ON sys_user_role (role_id)
-    `,
+    
+    `
   ],
 }

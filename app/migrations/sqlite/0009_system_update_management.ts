@@ -1,22 +1,20 @@
-import type { Migration, MigrationStatement } from './types'
+import type { Migration, MigrationStatement } from '../types'
 
 const seedTime = '2026-01-01T00:00:00.000Z'
 
-const configSeeds: Array<{
+const updateConfigSeeds: Array<{
   configKey: string
   configValue: string
 }> = [
-  { configKey: 'file_storage_driver', configValue: 'local' },
-  { configKey: 'file_local_root', configValue: './uploads' },
-  { configKey: 'file_s3_endpoint', configValue: '' },
-  { configKey: 'file_s3_region', configValue: 'auto' },
-  { configKey: 'file_s3_bucket', configValue: '' },
-  { configKey: 'file_s3_access_key_id', configValue: '' },
-  { configKey: 'file_s3_secret_access_key', configValue: '' },
-  { configKey: 'file_s3_signed_url_ttl_seconds', configValue: '300' },
+  { configKey: 'update_check_url', configValue: '' },
+  { configKey: 'update_latest_version', configValue: '' },
+  { configKey: 'update_release_url', configValue: '' },
+  { configKey: 'update_release_notes', configValue: '' },
+  { configKey: 'update_checked_at', configValue: '' },
+  { configKey: 'update_ignored_version', configValue: '' },
 ]
 
-const permissionSeeds: Array<{
+const updatePermissionSeeds: Array<{
   actionKey: string
   code: string
   methodPattern: string
@@ -24,18 +22,45 @@ const permissionSeeds: Array<{
   pathPattern: string
   sortOrder: number
 }> = [
-  permission('admin.system.file.view', '查看文件列表', 'GET', '/admin/system/file', '*', 800),
-  permission('admin.system.file.upload', '上传文件', 'POST', '/admin/system/file', 'upload', 801),
-  permission('admin.system.file.delete', '删除文件', 'POST', '/admin/system/file', 'delete', 802),
+  permission('admin.system.update.view', '查看更新管理', 'GET', '/admin/system/update', '*', 820),
+  permission('admin.system.update.status', '查看更新状态', 'GET', '/admin/system/update/status', '*', 821),
+  permission('admin.system.update.check', '检测更新', 'POST', '/admin/system/update', 'check', 822),
+  permission('admin.system.update.handle', '处理更新', 'POST', '/admin/system/update', 'handle', 823),
 ]
 
-export const migration0008SystemFileManagement: Migration = {
-  id: '0008_system_file_management',
-  name: 'add system file management',
+export const migration0009SystemUpdateManagement: Migration = {
+  id: '0009_system_update_management',
+  name: 'add system update management',
   statements: [
-    ...rebuildConfigTableForFileType(),
+    ...ensureConfigTableSupportsFileType(),
     `
-      CREATE TABLE IF NOT EXISTS sys_file (
+      UPDATE sys_config
+      SET config_type = 'file'
+      WHERE config_type = 'system'
+        AND config_key LIKE 'file_%'
+    `,
+    ...rebuildFileTableForShortUploadTypes(),
+    ...updateConfigSeeds.map(createSystemConfigInsert),
+    `
+      INSERT OR IGNORE INTO sys_role_menu (
+        role_id,
+        menu_name,
+        created_at,
+        updated_at
+      )
+      VALUES (1, 'admin.system.update', '${seedTime}', '${seedTime}')
+    `,
+    ...updatePermissionSeeds.map(createPermissionInsert),
+    ...updatePermissionSeeds.map((permission) =>
+      createRolePermissionInsert(1, permission.code)
+    ),
+  ],
+}
+
+function rebuildFileTableForShortUploadTypes(): MigrationStatement[] {
+  return [
+    `
+      CREATE TABLE IF NOT EXISTS sys_file_next (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         upload_type TEXT NOT NULL CHECK (
           upload_type IN ('avatar', 'notification', 'page')
@@ -51,6 +76,45 @@ export const migration0008SystemFileManagement: Migration = {
       )
     `,
     `
+      INSERT OR IGNORE INTO sys_file_next (
+        id,
+        upload_type,
+        storage_mode,
+        storage_key,
+        original_name,
+        mime_type,
+        file_size,
+        user_id,
+        created_at,
+        updated_at
+      )
+      SELECT
+        id,
+        CASE upload_type
+          WHEN 'notification_attachment' THEN 'notification'
+          WHEN 'page_attachment' THEN 'page'
+          ELSE upload_type
+        END AS upload_type,
+        storage_mode,
+        storage_key,
+        original_name,
+        mime_type,
+        file_size,
+        user_id,
+        created_at,
+        updated_at
+      FROM sys_file
+      WHERE upload_type IN (
+        'avatar',
+        'notification',
+        'page',
+        'notification_attachment',
+        'page_attachment'
+      )
+    `,
+    'DROP TABLE sys_file',
+    'ALTER TABLE sys_file_next RENAME TO sys_file',
+    `
       CREATE INDEX IF NOT EXISTS idx_sys_file_upload_type_created_at
       ON sys_file (upload_type, created_at, id)
     `,
@@ -58,24 +122,10 @@ export const migration0008SystemFileManagement: Migration = {
       CREATE INDEX IF NOT EXISTS idx_sys_file_user_id_created_at
       ON sys_file (user_id, created_at, id)
     `,
-    ...configSeeds.map(createFileConfigInsert),
-    `
-      INSERT OR IGNORE INTO sys_role_menu (
-        role_id,
-        menu_name,
-        created_at,
-        updated_at
-      )
-      VALUES (1, 'admin.system.file', '${seedTime}', '${seedTime}')
-    `,
-    ...permissionSeeds.map(createPermissionInsert),
-    ...permissionSeeds.map((permission) =>
-      createRolePermissionInsert(1, permission.code)
-    ),
-  ],
+  ]
 }
 
-function rebuildConfigTableForFileType(): MigrationStatement[] {
+function ensureConfigTableSupportsFileType(): MigrationStatement[] {
   return [
     `
       CREATE TABLE IF NOT EXISTS config_next (
@@ -104,26 +154,27 @@ function rebuildConfigTableForFileType(): MigrationStatement[] {
         config_value,
         created_at,
         updated_at
-      FROM config
+      FROM sys_config
+      WHERE config_type IN ('site', 'system', 'file')
     `,
-    'DROP TABLE config',
-    'ALTER TABLE config_next RENAME TO config',
+    'DROP TABLE sys_config',
+    'ALTER TABLE config_next RENAME TO sys_config',
   ]
 }
 
-function createFileConfigInsert(
+function createSystemConfigInsert(
   seed: { configKey: string, configValue: string },
 ): MigrationStatement {
   return {
     sql: `
-      INSERT OR IGNORE INTO config (
+      INSERT OR IGNORE INTO sys_config (
         config_type,
         config_key,
         config_value,
         created_at,
         updated_at
       )
-      VALUES ('file', ?, ?, ?, ?)
+      VALUES ('system', ?, ?, ?, ?)
     `,
     params: [seed.configKey, seed.configValue, seedTime, seedTime],
   }
@@ -163,7 +214,7 @@ function createPermissionInsert(
         created_at,
         updated_at
       )
-      VALUES (?, ?, '文件管理', ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, '更新管理', ?, ?, ?, ?, ?, ?)
     `,
     params: [
       seed.code,

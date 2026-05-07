@@ -4,7 +4,7 @@ import { MemoryCacheAdapter } from '../cache/adapter/memory'
 import { UnavailableDBAdapter } from '../database/adapter/unavailable'
 
 import { getBunBootstrapConfigStatus } from './bootstrap'
-import { createLocalSqliteAdapter } from './local-sqlite'
+import { createLocalDatabaseAdapter } from './local-sqlite'
 
 export async function createBunRuntime(
   bindings: RuntimeBindings = {},
@@ -22,7 +22,7 @@ export async function createBunRuntime(
     || getBootstrapValue(bootstrap, 'APP_TIMEZONE'),
   )
   const db = bootstrap.isConfigured
-    ? await createLocalSqliteAdapter(databaseUrl)
+    ? await createLocalDatabaseAdapter(databaseUrl)
     : new UnavailableDBAdapter('Bun 运行时配置尚未完成。')
 
   return {

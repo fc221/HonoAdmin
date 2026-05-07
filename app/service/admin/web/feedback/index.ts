@@ -72,7 +72,7 @@ export async function createWebFeedback(
   input: CreateWebFeedbackInput,
 ): Promise<WebFeedbackRecord> {
   const now = ctx.now()
-  const result = await ctx.db.execute(
+  const feedbackId = await ctx.db.insertAndGetId(
     `
       INSERT INTO web_feedback (
         title,
@@ -98,7 +98,7 @@ export async function createWebFeedback(
     ],
   )
 
-  return getWebFeedbackById(ctx, Number(result.lastInsertId))
+  return getWebFeedbackById(ctx, feedbackId)
 }
 
 export async function updateWebFeedback(

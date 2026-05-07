@@ -36,3 +36,7 @@ Field format is `name:kind:flags`.
 The generator intentionally uses portable native SQL patterns only. For MySQL,
 PostgreSQL, SQLite, and D1 compatibility, keep generated queries behind the
 project `DBAdapter` instead of introducing an ORM or query builder.
+
+When a CRUD adds schema, create the same migration id/name/order in
+`app/migrations/sqlite`, `app/migrations/mysql`, and `app/migrations/pg`.
+Use explicit SQL for each dialect; D1 reuses the SQLite migration set.

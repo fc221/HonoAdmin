@@ -1,4 +1,5 @@
-export type DBType = 'd1' | 'sqlite'
+export type DBType = 'd1' | 'mysql' | 'pg' | 'sqlite'
+export type DatabaseDialect = 'mysql' | 'pg' | 'sqlite'
 
 export type SQLParameter = string | number | null
 export type QueryRow = object
@@ -10,6 +11,7 @@ export interface QueryResult<T extends QueryRow = QueryRow> {
 }
 
 export interface DBAdapter {
+  readonly dialect: DatabaseDialect
   readonly kind: DBType
   query: <T extends QueryRow = QueryRow>(
     sql: string,
@@ -20,6 +22,7 @@ export interface DBAdapter {
     params?: SQLParameter[],
   ) => Promise<T | null>
   execute: (sql: string, params?: SQLParameter[]) => Promise<QueryResult>
+  insertAndGetId: (sql: string, params?: SQLParameter[]) => Promise<number>
   transaction: <T>(callback: (db: DBAdapter) => Promise<T>) => Promise<T>
   batch: (
     statements: Array<{ sql: string, params?: SQLParameter[] }>,

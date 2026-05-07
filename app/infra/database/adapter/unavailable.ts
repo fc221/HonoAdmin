@@ -2,6 +2,7 @@ import type { DBAdapter, QueryResult, QueryRow, SQLParameter } from '../types'
 import { ConfigurationError } from '../../../utils'
 
 export class UnavailableDBAdapter implements DBAdapter {
+  readonly dialect = 'sqlite' as const
   readonly kind = 'sqlite' as const
 
   constructor(private readonly reason: string) {}
@@ -24,6 +25,13 @@ export class UnavailableDBAdapter implements DBAdapter {
     sql: string,
     params?: SQLParameter[],
   ): Promise<QueryResult> {
+    throw this.createError(sql, params)
+  }
+
+  insertAndGetId(
+    sql: string,
+    params?: SQLParameter[],
+  ): Promise<number> {
     throw this.createError(sql, params)
   }
 

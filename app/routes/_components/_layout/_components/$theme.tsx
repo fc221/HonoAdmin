@@ -1,40 +1,40 @@
-import type { ThemeName } from "../config";
-import { useEffect, useState } from "hono/jsx";
+import type { ThemeName } from '../config'
+import { useEffect, useState } from 'hono/jsx'
 
 const themeOptions = [
   {
-    label: "系统",
-    value: "system",
-    icon: "icon-[ri--computer-line]",
+    label: '系统',
+    value: 'system',
+    icon: 'icon-[ri--computer-line]',
   },
   {
-    label: "亮色",
-    value: "light",
-    icon: "icon-[ri--sun-line]",
+    label: '亮色',
+    value: 'light',
+    icon: 'icon-[ri--sun-line]',
   },
   {
-    label: "暗色",
-    value: "dark",
-    icon: "icon-[ri--moon-clear-line]",
+    label: '暗色',
+    value: 'dark',
+    icon: 'icon-[ri--moon-clear-line]',
   },
   {
-    label: "纯黑",
-    value: "black",
-    icon: "icon-[ri--contrast-2-line]",
+    label: '纯黑',
+    value: 'black',
+    icon: 'icon-[ri--contrast-2-line]',
   },
-] as const;
+] as const
 
 interface Props {
-  theme: ThemeName;
-  onThemeChange: (theme: ThemeName) => void;
+  theme: ThemeName
+  onThemeChange: (theme: ThemeName) => void
 }
 
 export default function Theme({ theme, onThemeChange }: Props) {
-  const [selectedTheme, setSelectedTheme] = useState(theme);
+  const [selectedTheme, setSelectedTheme] = useState(theme)
 
   useEffect(() => {
-    setSelectedTheme(theme);
-  }, [theme]);
+    setSelectedTheme(theme)
+  }, [theme])
 
   return (
     <div>
@@ -57,31 +57,33 @@ export default function Theme({ theme, onThemeChange }: Props) {
           <li key={option.value}>
             <button
               aria-pressed={selectedTheme === option.value}
-              class={`justify-start gap-2 ${selectedTheme === option.value ? "menu-active" : ""}`}
+              class={`justify-start gap-2 ${selectedTheme === option.value ? 'menu-active' : ''}`}
               type="button"
               onClick={() => {
-                setSelectedTheme(option.value);
-                onThemeChange(option.value);
-                hideThemePopover();
+                setSelectedTheme(option.value)
+                onThemeChange(option.value)
+                hideThemePopover()
               }}
             >
               <i class={option.icon}></i>
               <span class="flex-1 text-left">{option.label}</span>
-              {selectedTheme === option.value ? (
-                <i class="icon-[ri--check-line] ml-auto" />
-              ) : null}
+              {selectedTheme === option.value
+                ? (
+                    <i class="icon-[ri--check-line] ml-auto" />
+                  )
+                : null}
             </button>
           </li>
         ))}
       </ul>
     </div>
-  );
+  )
 }
 
 function hideThemePopover() {
-  const popover = document.getElementById("aside-theme-dropdown") as
+  const popover = document.getElementById('aside-theme-dropdown') as
     | (HTMLElement & { hidePopover?: () => void })
-    | null;
+    | null
 
-  popover?.hidePopover?.();
+  popover?.hidePopover?.()
 }

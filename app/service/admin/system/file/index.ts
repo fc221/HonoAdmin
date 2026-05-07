@@ -132,7 +132,7 @@ export async function uploadFile(
 
   try {
     const now = ctx.now()
-    const result = await ctx.db.execute(
+    const fileId = await ctx.db.insertAndGetId(
       `
         INSERT INTO sys_file (
           upload_type,
@@ -160,7 +160,7 @@ export async function uploadFile(
       ],
     )
 
-    return getFileById(ctx, Number(result.lastInsertId))
+    return getFileById(ctx, fileId)
   } catch (error) {
     await adapter.delete(storageKey).catch(() => {})
     throw error
@@ -293,7 +293,7 @@ async function listFileConfigValues(
   const rows = await ctx.db.query<Pick<ConfigEntity, 'config_key' | 'config_value'>>(
     `
       SELECT config_key, config_value
-      FROM config
+      FROM sys_config
       WHERE config_type = 'file'
         AND config_key IN (
           'file_storage_driver',

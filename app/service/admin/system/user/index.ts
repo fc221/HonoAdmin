@@ -82,11 +82,11 @@ const userColumns = `
 `
 
 const userCredentialColumns = `
-  "user".id,
-  "user".username,
-  "user".password,
-  "user".is_root,
-  "user".role_id,
+  sys_user.id,
+  sys_user.username,
+  sys_user.password,
+  sys_user.is_root,
+  sys_user.role_id,
   role.code AS role_code
 `
 
@@ -107,7 +107,7 @@ export async function listUsers(
   const pagination = resolvePagination(listInput, total)
   const rows = await ctx.db.query<UserEntity>(`
     SELECT ${userColumns}
-    FROM "user"
+    FROM sys_user
     ${whereClause.sql}
     ORDER BY id ASC
     LIMIT ? OFFSET ?
@@ -132,7 +132,7 @@ export async function listUsers(
 
 export async function isAdminInstalled(ctx: ServiceContext): Promise<boolean> {
   const row = await ctx.db.first<{ count: number }>(
-    'SELECT COUNT(*) AS count FROM "user" WHERE is_root = 1 AND status = ?',
+    'SELECT COUNT(*) AS count FROM sys_user WHERE is_root = 1 AND status = ?',
     [UserStatus.NORMAL],
   )
 
@@ -153,11 +153,11 @@ export async function createUser(
   await assertRolesExist(ctx, roleIds)
 
   const now = ctx.now()
-  const result = await ctx.db.transaction(async (db) => {
+  const userId = await ctx.db.transaction(async (db) => {
     const txCtx = { ...ctx, db }
-    const result = await db.execute(
+    const userId = await db.insertAndGetId(
       `
-        INSERT INTO "user" (
+        INSERT INTO sys_user (
           username,
           password,
           nickname,
@@ -191,11 +191,11 @@ export async function createUser(
       ],
     )
 
-    await replaceUserRoles(txCtx, Number(result.lastInsertId), roleIds)
-    return result
+    await replaceUserRoles(txCtx, userId, roleIds)
+    return userId
   })
 
-  return getUserById(ctx, Number(result.lastInsertId))
+  return getUserById(ctx, userId)
 }
 
 export async function updateUser(
@@ -246,7 +246,7 @@ export async function updateUser(
     const txCtx = { ...ctx, db }
     await db.execute(
       `
-        UPDATE "user"
+        UPDATE sys_user
         SET username = ?,
             password = ?,
             nickname = ?,
@@ -297,7 +297,7 @@ export async function deleteUser(ctx: ServiceContext, id: number): Promise<void>
 
   await ctx.db.transaction(async (db) => {
     await db.execute('DELETE FROM sys_user_role WHERE user_id = ?', [id])
-    await db.execute('DELETE FROM "user" WHERE id = ?', [id])
+    await db.execute('DELETE FROM sys_user WHERE id = ?', [id])
   })
 }
 
@@ -308,10 +308,10 @@ export async function getUserCredentialById(
   const row = await ctx.db.first<UserCredentialEntity>(
     `
       SELECT ${userCredentialColumns}
-      FROM "user"
+      FROM sys_user
       LEFT JOIN sys_role role
-        ON role.id = "user".role_id
-      WHERE "user".id = ? AND "user".status = ?
+        ON role.id = sys_user.role_id
+      WHERE sys_user.id = ? AND sys_user.status = ?
     `,
     [id, UserStatus.NORMAL],
   )
@@ -333,10 +333,10 @@ export async function getUserCredentialByUsername(
   const row = await ctx.db.first<UserCredentialEntity>(
     `
       SELECT ${userCredentialColumns}
-      FROM "user"
+      FROM sys_user
       LEFT JOIN sys_role role
-        ON role.id = "user".role_id
-      WHERE "user".username = ? AND "user".status = ?
+        ON role.id = sys_user.role_id
+      WHERE sys_user.username = ? AND sys_user.status = ?
     `,
     [username, UserStatus.NORMAL],
   )
@@ -358,7 +358,7 @@ export async function getUserHeaderProfileById(
   const row = await ctx.db.first<UserHeaderProfileEntity>(
     `
       SELECT id, username, nickname, avatar
-      FROM "user"
+      FROM sys_user
       WHERE id = ? AND status = ?
     `,
     [id, UserStatus.NORMAL],
@@ -423,7 +423,7 @@ async function assertCanRemoveRoot(
   id: number,
 ): Promise<void> {
   const rootCount = await ctx.db.first<{ count: number }>(
-    'SELECT COUNT(*) AS count FROM "user" WHERE is_root = 1 AND status = ?',
+    'SELECT COUNT(*) AS count FROM sys_user WHERE is_root = 1 AND status = ?',
     [UserStatus.NORMAL],
   )
 
@@ -434,7 +434,7 @@ async function assertCanRemoveRoot(
 
 async function assertCanCreateRoot(ctx: ServiceContext): Promise<void> {
   const rootCount = await ctx.db.first<{ count: number }>(
-    'SELECT COUNT(*) AS count FROM "user" WHERE is_root = 1',
+    'SELECT COUNT(*) AS count FROM sys_user WHERE is_root = 1',
   )
 
   if ((rootCount?.count ?? 0) > 0) {
@@ -450,7 +450,7 @@ async function countUsers(
   const row = await ctx.db.first<{ count: number }>(
     `
       SELECT COUNT(*) AS count
-      FROM "user"
+      FROM sys_user
       ${whereSql}
     `,
     params,
@@ -471,7 +471,7 @@ async function requireUser(ctx: ServiceContext, id: number): Promise<UserEntity>
   const row = await ctx.db.first<UserEntity>(
     `
       SELECT ${userColumns}
-      FROM "user"
+      FROM sys_user
       WHERE id = ?
     `,
     [id],
@@ -491,11 +491,11 @@ async function assertUsernameAvailable(
 ): Promise<void> {
   const row = exceptId
     ? await ctx.db.first<{ id: number }>(
-        'SELECT id FROM "user" WHERE username = ? AND id <> ?',
+        'SELECT id FROM sys_user WHERE username = ? AND id <> ?',
         [username, exceptId],
       )
     : await ctx.db.first<{ id: number }>(
-        'SELECT id FROM "user" WHERE username = ?',
+        'SELECT id FROM sys_user WHERE username = ?',
         [username],
       )
 
@@ -566,7 +566,7 @@ async function listUserSessionRolesFromLegacyRole(
   userId: number,
 ): Promise<UserSessionRole[]> {
   const user = await ctx.db.first<{ role_id: number | null }>(
-    'SELECT role_id FROM "user" WHERE id = ?',
+    'SELECT role_id FROM sys_user WHERE id = ?',
     [userId],
   )
 

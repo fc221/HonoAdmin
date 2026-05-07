@@ -8,13 +8,13 @@ It is not a template locked to one platform. HonoAdmin is a Hono-based framework
 
 ## Keywords
 
-AnyAdmin, CloudflareAdmin, HonoxAdmin, HonoAdmin, Hono, HonoX, Cloudflare Workers, Bun, D1, SQLite, native SQL, runtime agnostic admin framework.
+AnyAdmin, CloudflareAdmin, HonoxAdmin, HonoAdmin, Hono, HonoX, Cloudflare Workers, Bun, D1, SQLite, MySQL, PostgreSQL, native SQL, runtime agnostic admin framework.
 
 ## Features
 
 - Server-rendered HonoX pages with same-route actions.
 - Bun for local development and Cloudflare Workers for deployment.
-- Adapter-based SQLite, Cloudflare D1, cache, and file storage support.
+- Adapter-based SQLite, Cloudflare D1, MySQL, PostgreSQL, cache, and file storage support.
 - Native SQL by default, with no ORM lock-in.
 - Online database migrations checked before business handlers run.
 - Built-in admin modules for users, roles, permissions, menus, configs, files, operation logs, and updates.
@@ -30,7 +30,7 @@ app/routes      HonoX routes, pages, actions, layouts, and components
 app/service     Business services, DTOs, permissions, sessions, migrations, responses
 app/infra       Database, cache, file storage, and runtime adapters
 app/utils       Framework-independent utilities, errors, and formatting helpers
-app/migrations  Append-only database migrations
+app/migrations  Append-only database migrations split by sqlite/mysql/pg dialect
 docs            Architecture, CRUD, and performance boundary notes
 ```
 
@@ -71,7 +71,7 @@ For Cloudflare Workers deployment, see the [deployment guide](./docs/CLOUDFLARE_
 - Add a runtime: create a runtime factory under `app/infra/runtime` and expose resources through context.
 - Add a database: implement `DBAdapter` and wire it into the runtime factory.
 - Add a cache: implement `CacheAdapter` and register it with the runtime.
-- Add a migration: create a new migration in `app/migrations` and append it to the registry.
+- Add a migration: create matching migration ids/names/orders in `app/migrations/sqlite`, `app/migrations/mysql`, and `app/migrations/pg`, then append them to each registry.
 - Add an admin CRUD: start with `bun run scaffold:crud`, then add migration, menu entry, service export, and tests.
 - Add a normal admin form: prefer HonoX `GET` render + same-route `POST` action before adding an API.
 

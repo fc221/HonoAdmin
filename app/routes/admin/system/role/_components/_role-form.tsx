@@ -2,19 +2,19 @@ import type {
   MenuItem,
   PermissionRecord,
   RoleRecord,
-} from "../../../../../service";
+} from '../../../../../service'
 
 interface Props {
-  menus: MenuItem[];
-  mode: "create" | "update";
-  permissions: PermissionRecord[];
-  role?: RoleRecord;
+  menus: MenuItem[]
+  mode: 'create' | 'update'
+  permissions: PermissionRecord[]
+  role?: RoleRecord
 }
 
 export default function RoleForm({ menus, mode, permissions, role }: Props) {
-  const isUpdate = mode === "update";
-  const selectedMenuNames = new Set(role?.menuNames ?? []);
-  const selectedPermissionCodes = new Set(role?.permissionCodes ?? []);
+  const isUpdate = mode === 'update'
+  const selectedMenuNames = new Set(role?.menuNames ?? [])
+  const selectedPermissionCodes = new Set(role?.permissionCodes ?? [])
 
   return (
     <form
@@ -37,7 +37,7 @@ export default function RoleForm({ menus, mode, permissions, role }: Props) {
             name="name"
             placeholder="请输入角色名称"
             required
-            value={role?.name ?? ""}
+            value={role?.name ?? ''}
           />
           <p class="label">用于后台展示。</p>
         </fieldset>
@@ -52,7 +52,7 @@ export default function RoleForm({ menus, mode, permissions, role }: Props) {
             pattern="^[\\w.-]+$"
             placeholder="admin"
             required
-            value={role?.code ?? ""}
+            value={role?.code ?? ''}
           />
           <p class="label">用于权限识别，创建后建议保持稳定。</p>
         </fieldset>
@@ -65,7 +65,7 @@ export default function RoleForm({ menus, mode, permissions, role }: Props) {
             name="description"
             placeholder="请输入角色说明"
           >
-            {role?.description ?? ""}
+            {role?.description ?? ''}
           </textarea>
         </fieldset>
       </div>
@@ -116,53 +116,55 @@ export default function RoleForm({ menus, mode, permissions, role }: Props) {
           取消
         </a>
         <button class="btn btn-primary btn-sm" type="submit">
-          {isUpdate ? "保存修改" : "新增角色"}
+          {isUpdate ? '保存修改' : '新增角色'}
         </button>
       </div>
     </form>
-  );
+  )
 }
 
 function MenuCheckboxes({
   items,
   selectedMenuNames,
 }: {
-  items: MenuItem[];
-  selectedMenuNames: Set<string>;
+  items: MenuItem[]
+  selectedMenuNames: Set<string>
 }) {
   return (
     <ul class="space-y-3">
       {items.map((item) => (
         <li key={item.name}>
-          {item.children?.length ? (
-            <div class="space-y-2" data-checkbox-group="true">
-              <div class="flex flex-wrap items-center gap-2 text-sm font-semibold">
-                <i class={`${item.icon} shrink-0`}></i>
-                <span>{item.label}</span>
-                <CheckboxGroupActions label={item.label} />
-              </div>
-              <div class="pl-4">
-                <MenuCheckboxes
-                  items={item.children}
-                  selectedMenuNames={selectedMenuNames}
-                />
-              </div>
-            </div>
-          ) : (
-            <MenuCheckbox item={item} selectedMenuNames={selectedMenuNames} />
-          )}
+          {item.children?.length
+            ? (
+                <div class="space-y-2" data-checkbox-group="true">
+                  <div class="flex flex-wrap items-center gap-2 text-sm font-semibold">
+                    <i class={`${item.icon} shrink-0`}></i>
+                    <span>{item.label}</span>
+                    <CheckboxGroupActions label={item.label} />
+                  </div>
+                  <div class="pl-4">
+                    <MenuCheckboxes
+                      items={item.children}
+                      selectedMenuNames={selectedMenuNames}
+                    />
+                  </div>
+                </div>
+              )
+            : (
+                <MenuCheckbox item={item} selectedMenuNames={selectedMenuNames} />
+              )}
         </li>
       ))}
     </ul>
-  );
+  )
 }
 
 function MenuCheckbox({
   item,
   selectedMenuNames,
 }: {
-  item: MenuItem;
-  selectedMenuNames: Set<string>;
+  item: MenuItem
+  selectedMenuNames: Set<string>
 }) {
   return (
     <label class="label cursor-pointer justify-start gap-3 rounded-box px-2 py-2 hover:bg-base-200">
@@ -180,15 +182,15 @@ function MenuCheckbox({
         <span class="text-xs text-base-content/45">{item.href}</span>
       ) : null} */}
     </label>
-  );
+  )
 }
 
 function PermissionCheckboxes({
   permissions,
   selectedPermissionCodes,
 }: {
-  permissions: PermissionRecord[];
-  selectedPermissionCodes: Set<string>;
+  permissions: PermissionRecord[]
+  selectedPermissionCodes: Set<string>
 }) {
   return (
     <ul class="space-y-3">
@@ -226,7 +228,7 @@ function PermissionCheckboxes({
         </li>
       ))}
     </ul>
-  );
+  )
 }
 
 function CheckboxGroupActions({ label }: { label: string }) {
@@ -249,23 +251,17 @@ function CheckboxGroupActions({ label }: { label: string }) {
         反选
       </button>
     </span>
-  );
-}
-
-function getPermissionBadge(permission: PermissionRecord): string {
-  return permission.actionKey === "*"
-    ? permission.methodPattern
-    : `${permission.methodPattern}:${permission.actionKey}`;
+  )
 }
 
 function groupPermissions(permissions: PermissionRecord[]) {
-  const groups = new Map<string, PermissionRecord[]>();
+  const groups = new Map<string, PermissionRecord[]>()
 
   for (const permission of permissions) {
-    const items = groups.get(permission.groupName) ?? [];
-    items.push(permission);
-    groups.set(permission.groupName, items);
+    const items = groups.get(permission.groupName) ?? []
+    items.push(permission)
+    groups.set(permission.groupName, items)
   }
 
-  return [...groups.entries()].map(([name, items]) => ({ items, name }));
+  return [...groups.entries()].map(([name, items]) => ({ items, name }))
 }

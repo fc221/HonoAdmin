@@ -1,4 +1,4 @@
-import type { Migration } from './types'
+import type { Migration } from '../types'
 
 const seedTime = '2026-01-01T00:00:00.000Z'
 
@@ -37,7 +37,7 @@ export const migration0005AdminRbac: Migration = {
         UNIQUE (role_id, path_pattern, method_pattern)
       )
     `,
-    'ALTER TABLE "user" ADD COLUMN role_id INTEGER',
+    'ALTER TABLE sys_user ADD COLUMN role_id INTEGER',
     `
       INSERT OR IGNORE INTO sys_role (
         id,
@@ -88,13 +88,13 @@ export const migration0005AdminRbac: Migration = {
         (1, '/admin/*', '*', '${seedTime}', '${seedTime}')
     `,
     `
-      UPDATE "user"
+      UPDATE sys_user
       SET role_id = 1
       WHERE is_root = 1 AND role_id IS NULL
     `,
     `
       CREATE INDEX IF NOT EXISTS idx_user_role_id
-      ON "user" (role_id)
+      ON sys_user (role_id)
     `,
     `
       CREATE INDEX IF NOT EXISTS idx_role_menu_role_id

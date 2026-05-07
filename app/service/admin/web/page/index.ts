@@ -72,7 +72,7 @@ export async function createWebPage(
   await assertPageAliasAvailable(ctx, input.alias)
 
   const now = ctx.now()
-  const result = await ctx.db.execute(
+  const pageId = await ctx.db.insertAndGetId(
     `
       INSERT INTO web_page (
         title,
@@ -96,7 +96,7 @@ export async function createWebPage(
     ],
   )
 
-  return getWebPageById(ctx, Number(result.lastInsertId))
+  return getWebPageById(ctx, pageId)
 }
 
 export async function updateWebPage(

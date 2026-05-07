@@ -49,7 +49,7 @@ export async function getBunBootstrapConfigStatus(
   const values = envFile.values
   const requirements: BootstrapConfigRequirement[] = [
     {
-      description: 'SQLite 数据库文件路径。',
+      description: 'SQLite 文件路径，或 mysql://、mysql2://、postgres://、postgresql:// 数据库地址。',
       isConfigured: hasConfigValue(values.DATABASE_URL),
       key: 'DATABASE_URL',
       label: '数据库地址',

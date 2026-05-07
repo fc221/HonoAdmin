@@ -1,4 +1,4 @@
-import type { Migration, MigrationStatement } from './types'
+import type { Migration, MigrationStatement } from '../types'
 
 const seedTime = '2026-01-01T00:00:00.000Z'
 
@@ -43,7 +43,7 @@ function createSiteConfigInsert(
 ): MigrationStatement {
   return {
     sql: `
-      INSERT OR IGNORE INTO config (
+      INSERT OR IGNORE INTO sys_config (
         config_type,
         config_key,
         config_value,
@@ -59,7 +59,7 @@ function createSiteConfigInsert(
 function createDeleteConfigByKeys(keys: string[]): MigrationStatement {
   return {
     sql: `
-      DELETE FROM config
+      DELETE FROM sys_config
       WHERE config_type = 'system'
         AND config_key IN (${createPlaceholders(keys)})
     `,

@@ -1,4 +1,4 @@
-import type { Migration, MigrationStatement } from './types'
+import type { Migration, MigrationStatement } from '../types'
 
 const permissionActions: Array<[code: string, actionKey: string]> = [
   ['admin.web.page.create', 'create'],

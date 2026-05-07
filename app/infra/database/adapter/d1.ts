@@ -7,6 +7,7 @@ import type {
 import { DatabaseError } from '../../../utils'
 
 export class D1Adapter implements DBAdapter {
+  readonly dialect = 'sqlite' as const
   readonly kind = 'd1' as const
   private readonly database: D1Database
 
@@ -85,6 +86,14 @@ export class D1Adapter implements DBAdapter {
         sql,
       })
     }
+  }
+
+  async insertAndGetId(
+    sql: string,
+    params: SQLParameter[] = [],
+  ): Promise<number> {
+    const result = await this.execute(sql, params)
+    return Number(result.lastInsertId)
   }
 
   /** 在 D1 环境下复用回调形式，保持与其他适配器一致的调用面。 */

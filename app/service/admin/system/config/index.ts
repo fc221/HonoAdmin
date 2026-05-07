@@ -45,7 +45,7 @@ export async function listConfigs(ctx: ServiceContext): Promise<ConfigRecord[]> 
 
   const rows = await ctx.db.query<ConfigEntity>(`
     SELECT id, config_type, config_key, config_value, created_at, updated_at
-    FROM config
+    FROM sys_config
     ORDER BY config_type ASC, config_key ASC
   `)
   const configs = rows.map(toConfigRecord).sort(compareConfigRecords)
@@ -67,7 +67,7 @@ export async function getConfigValue(
   const row = await ctx.db.first<Pick<ConfigEntity, 'config_value'>>(
     `
       SELECT config_value
-      FROM config
+      FROM sys_config
       WHERE config_type = ? AND config_key = ?
     `,
     [configType, configKey],
@@ -115,9 +115,9 @@ export async function createConfig(
   }
 
   const now = ctx.now()
-  const result = await ctx.db.execute(
+  const configId = await ctx.db.insertAndGetId(
     `
-      INSERT INTO config (
+      INSERT INTO sys_config (
         config_type,
         config_key,
         config_value,
@@ -129,7 +129,7 @@ export async function createConfig(
     [input.configType, input.configKey, input.configValue, now, now],
   )
 
-  const config = await getConfigById(ctx, Number(result.lastInsertId))
+  const config = await getConfigById(ctx, configId)
   await invalidateConfigCache(ctx, input.configType, input.configKey)
   return config
 }
@@ -164,7 +164,7 @@ export async function updateConfig(
     const duplicate = await ctx.db.first<ConfigEntity>(
       `
         SELECT id, config_type, config_key, config_value, created_at, updated_at
-        FROM config
+        FROM sys_config
         WHERE config_type = ? AND config_key = ? AND id <> ?
       `,
       [nextType, nextKey, id],
@@ -180,7 +180,7 @@ export async function updateConfig(
 
   await ctx.db.execute(
     `
-      UPDATE config
+      UPDATE sys_config
       SET config_type = ?, config_key = ?, config_value = ?, updated_at = ?
       WHERE id = ?
     `,
@@ -203,7 +203,7 @@ export async function updateConfig(
 
 export async function deleteConfig(ctx: ServiceContext, id: number): Promise<void> {
   const current = await requireConfig(ctx, id)
-  const result = await ctx.db.execute('DELETE FROM config WHERE id = ?', [id])
+  const result = await ctx.db.execute('DELETE FROM sys_config WHERE id = ?', [id])
 
   if (result.rowsAffected === 0) {
     throw new NotFoundError('配置项不存在。', { id })
@@ -227,7 +227,7 @@ async function requireConfig(
   const row = await ctx.db.first<ConfigEntity>(
     `
       SELECT id, config_type, config_key, config_value, created_at, updated_at
-      FROM config
+      FROM sys_config
       WHERE id = ?
     `,
     [id],
@@ -248,7 +248,7 @@ async function findConfig(
   return ctx.db.first<ConfigEntity>(
     `
       SELECT id, config_type, config_key, config_value, created_at, updated_at
-      FROM config
+      FROM sys_config
       WHERE config_type = ? AND config_key = ?
     `,
     [configType, configKey],

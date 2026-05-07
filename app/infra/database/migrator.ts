@@ -1,6 +1,6 @@
 import type { Migration, MigrationStatement } from '../../migrations'
 import type { DBAdapter, SQLParameter } from './types'
-import { migrations } from '../../migrations'
+import { getMigrationsForDialect } from '../../migrations'
 
 interface MigrationRecord {
   id: string
@@ -25,22 +25,16 @@ export type { Migration, MigrationStatement } from '../../migrations'
 
 export async function runMigrations(
   db: DBAdapter,
-  migrationList: Migration[] = migrations,
+  migrationList: Migration[] = getMigrationsForDialect(db.dialect),
 ): Promise<void> {
   await runPendingMigrations(db, migrationList)
 }
 
 export async function runPendingMigrations(
   db: DBAdapter,
-  migrationList: Migration[] = migrations,
+  migrationList: Migration[] = getMigrationsForDialect(db.dialect),
 ): Promise<MigrationStatus> {
-  await db.execute(`
-    CREATE TABLE IF NOT EXISTS _migrations (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      applied_at TEXT NOT NULL
-    )
-  `)
+  await db.execute(getMigrationTableCreateSql(db))
 
   const appliedRows = await db.query<MigrationRecord>(
     'SELECT id FROM _migrations',
@@ -66,7 +60,7 @@ export async function runPendingMigrations(
 
 export async function getMigrationStatus(
   db: DBAdapter,
-  migrationList: Migration[] = migrations,
+  migrationList: Migration[] = getMigrationsForDialect(db.dialect),
 ): Promise<MigrationStatus> {
   const hasMigrationTable = await hasMigrationsTable(db)
 
@@ -92,13 +86,55 @@ function normalizeMigrationStatement(
 }
 
 async function hasMigrationsTable(db: DBAdapter): Promise<boolean> {
-  const row = await db.first<{ name: string }>(`
+  const row = await db.first<{ name: string }>(getMigrationTableExistsSql(db))
+
+  return !!row
+}
+
+function getMigrationTableCreateSql(db: DBAdapter): string {
+  if (db.dialect === 'sqlite') {
+    return `
+      CREATE TABLE IF NOT EXISTS _migrations (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        applied_at TEXT NOT NULL
+      )
+    `
+  }
+
+  return `
+    CREATE TABLE IF NOT EXISTS _migrations (
+      id VARCHAR(100) PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      applied_at VARCHAR(30) NOT NULL
+    )
+  `
+}
+
+function getMigrationTableExistsSql(db: DBAdapter): string {
+  if (db.dialect === 'mysql') {
+    return `
+      SELECT TABLE_NAME AS name
+      FROM information_schema.TABLES
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = '_migrations'
+    `
+  }
+
+  if (db.dialect === 'pg') {
+    return `
+      SELECT tablename AS name
+      FROM pg_catalog.pg_tables
+      WHERE schemaname = current_schema()
+        AND tablename = '_migrations'
+    `
+  }
+
+  return `
     SELECT name
     FROM sqlite_master
     WHERE type = 'table' AND name = '_migrations'
-  `)
-
-  return !!row
+  `
 }
 
 function createMigrationStatus(

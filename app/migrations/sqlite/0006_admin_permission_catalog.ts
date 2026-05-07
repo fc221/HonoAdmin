@@ -1,4 +1,4 @@
-import type { Migration, MigrationStatement } from './types'
+import type { Migration, MigrationStatement } from '../types'
 
 const seedTime = '2026-01-01T00:00:00.000Z'
 
@@ -111,7 +111,7 @@ export const migration0006AdminPermissionCatalog: Migration = {
     ),
     createRolePermissionInsert(2, 'admin.dashboard.view'),
     `
-      UPDATE "user"
+      UPDATE sys_user
       SET role_id = 2
       WHERE is_root = 0 AND role_id IS NULL
     `,

@@ -1,4 +1,4 @@
-import type { Migration } from './types'
+import type { Migration } from '../types'
 
 const seedTime = '2026-01-01T00:00:00.000Z'
 
@@ -7,7 +7,7 @@ export const migration0001AdminCore: Migration = {
   name: 'create admin core tables',
   statements: [
     `
-      CREATE TABLE IF NOT EXISTS config (
+      CREATE TABLE IF NOT EXISTS sys_config (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         config_type TEXT NOT NULL CHECK (config_type IN ('site', 'system')),
         config_key TEXT NOT NULL,
@@ -18,7 +18,7 @@ export const migration0001AdminCore: Migration = {
       )
     `,
     `
-      CREATE TABLE IF NOT EXISTS "user" (
+      CREATE TABLE IF NOT EXISTS sys_user (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT NOT NULL UNIQUE,
         password TEXT NOT NULL,
@@ -31,7 +31,7 @@ export const migration0001AdminCore: Migration = {
     `,
     {
       sql: `
-        INSERT OR IGNORE INTO config (
+        INSERT OR IGNORE INTO sys_config (
           config_type,
           config_key,
           config_value,
@@ -50,7 +50,7 @@ export const migration0001AdminCore: Migration = {
     },
     {
       sql: `
-        INSERT OR IGNORE INTO config (
+        INSERT OR IGNORE INTO sys_config (
           config_type,
           config_key,
           config_value,

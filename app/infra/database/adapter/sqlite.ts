@@ -82,6 +82,7 @@ function isBunRuntime(): boolean {
 }
 
 export class SqliteAdapter implements DBAdapter {
+  readonly dialect = 'sqlite' as const
   readonly kind = 'sqlite' as const
   private readonly database: SqliteDatabase
 
@@ -156,6 +157,14 @@ export class SqliteAdapter implements DBAdapter {
         sql,
       })
     }
+  }
+
+  async insertAndGetId(
+    sql: string,
+    params: SQLParameter[] = [],
+  ): Promise<number> {
+    const result = await this.execute(sql, params)
+    return Number(result.lastInsertId)
   }
 
   /** 用显式 BEGIN/COMMIT/ROLLBACK 包装事务回调。 */

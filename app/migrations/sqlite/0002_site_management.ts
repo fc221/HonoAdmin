@@ -1,4 +1,4 @@
-import type { Migration } from './types'
+import type { Migration } from '../types'
 
 export const migration0002SiteManagement: Migration = {
   id: '0002_site_management',

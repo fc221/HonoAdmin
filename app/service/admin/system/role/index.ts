@@ -142,7 +142,7 @@ export async function createRole(
   const role = await ctx.db.transaction(async (db) => {
     const txCtx = { ...ctx, db }
     const now = ctx.now()
-    const result = await db.execute(
+    const roleId = await db.insertAndGetId(
       `
         INSERT INTO sys_role (
           code,
@@ -161,7 +161,6 @@ export async function createRole(
         now,
       ],
     )
-    const roleId = Number(result.lastInsertId)
     await replaceRoleAccess(txCtx, roleId, parsedInput)
     return getRoleById(txCtx, roleId)
   })
@@ -219,7 +218,7 @@ export async function deleteRole(
   }
 
   const assigned = await ctx.db.first<{ count: number }>(
-    'SELECT COUNT(*) AS count FROM "user" WHERE role_id = ?',
+    'SELECT COUNT(*) AS count FROM sys_user WHERE role_id = ?',
     [id],
   )
 

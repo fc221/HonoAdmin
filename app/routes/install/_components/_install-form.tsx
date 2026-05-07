@@ -107,7 +107,9 @@ export function RuntimeConfigStep({
           required
           value={values.databaseUrl}
         />
-        <p class="label">SQLite 数据库文件路径。</p>
+        <p class="label">
+          支持 SQLite 文件路径、mysql://、mysql2://、postgres://、postgresql://。
+        </p>
       </fieldset>
       <div class="grid gap-4 sm:grid-cols-2">
         <fieldset class="fieldset">

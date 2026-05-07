@@ -55,10 +55,10 @@ The database layer uses native SQL behind `DBAdapter`.
 
 Current targets:
 
-- Bun local/runtime development: SQLite.
+- Bun local/runtime development: SQLite, MySQL, and PostgreSQL.
 - Cloudflare Workers deployment: D1.
 
-The database adapter exposes query, first-row query, execute, transaction-like callback, batch, and optional close behavior. SQL should stay explicit and close to the feature that owns it.
+The database adapter exposes dialect, query, first-row query, execute, insert-and-return-id, transaction-like callback, batch, and optional close behavior. SQL should stay explicit and close to the feature that owns it.
 
 ## Online Migrations
 
@@ -70,7 +70,8 @@ Migration rules:
 - Never edit an already-applied migration.
 - Store applied migrations in `_migrations`.
 - Make each migration deterministic and idempotent at the application level.
-- Keep migration SQL runtime-compatible with SQLite and D1 unless a migration is explicitly runtime-specific.
+- Add new migrations to `app/migrations/sqlite`, `app/migrations/mysql`, and `app/migrations/pg` with the same id, name, and order.
+- D1 uses the SQLite migration dialect. MySQL and PostgreSQL migrations are Bun runtime only.
 
 ## OpenAPI And Validation
 
@@ -124,9 +125,10 @@ Adapter implementations may be imported directly only by runtime factories or ad
 
 ### Add A Migration
 
-1. Add a new migration entry with a unique ordered id.
-2. Use SQL that works in both SQLite and D1 when possible.
-3. Verify repeated startup does not rerun the migration.
+1. Add the same ordered id and name under `app/migrations/sqlite`, `app/migrations/mysql`, and `app/migrations/pg`.
+2. Keep D1 compatible with the SQLite migration.
+3. Register each dialect file in its local registry.
+4. Verify repeated startup does not rerun the migration.
 
 ### Add An API Route
 
