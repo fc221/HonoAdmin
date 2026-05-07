@@ -40,11 +40,13 @@ describe('bootstrap runtime config', () => {
         cacheNamespace: 'hono-admin',
         databaseUrl: './data.sqlite',
         jwtSecret: '1234567890abcdef',
+        sessionSecret: 'session-secret-1234567890',
       })
 
       const content = await readFile(envPath, 'utf8')
       expect(content).toContain('DATABASE_URL="./data.sqlite"')
       expect(content).toContain('APP_TIMEZONE="Asia/Shanghai"')
+      expect(content).toContain('SESSION_SECRET="session-secret-1234567890"')
     } finally {
       restoreEnvFile(originalEnvFile)
       await rm(dir, { force: true, recursive: true })
@@ -62,6 +64,7 @@ describe('bootstrap runtime config', () => {
         cacheNamespace: 'hono-admin',
         databaseUrl: './data.sqlite',
         jwtSecret: '1234567890abcdef',
+        sessionSecret: 'session-secret-1234567890',
       }, envPath)
 
       const content = await readFile(envPath, 'utf8')
@@ -70,6 +73,7 @@ describe('bootstrap runtime config', () => {
       expect(content).toContain('CACHE_NAMESPACE="hono-admin"')
       expect(content).toContain('DATABASE_URL="./data.sqlite"')
       expect(content).toContain('JWT_SECRET="1234567890abcdef"')
+      expect(content).toContain('SESSION_SECRET="session-secret-1234567890"')
     } finally {
       await rm(dir, { force: true, recursive: true })
     }
@@ -87,6 +91,7 @@ describe('bootstrap runtime config', () => {
         cacheNamespace: 'hono-admin',
         databaseUrl: firstDbPath,
         jwtSecret: '1234567890abcdef',
+        sessionSecret: 'session-secret-1234567890',
       }, envPath)
 
       const firstRuntime = await reloadBunRuntime({
@@ -104,6 +109,7 @@ describe('bootstrap runtime config', () => {
         cacheNamespace: 'hono-admin-next',
         databaseUrl: secondDbPath,
         jwtSecret: 'abcdef1234567890',
+        sessionSecret: 'session-secret-abcdef1234',
       }, envPath)
 
       const secondRuntime = await reloadBunRuntime({
@@ -126,7 +132,12 @@ describe('bootstrap runtime config', () => {
 
     expect(status.isConfigured).toBe(false)
     expect(status.canWriteConfig).toBe(false)
-    expect(status.missingKeys).toEqual(['DB', 'APP_TIMEZONE', 'JWT_SECRET'])
+    expect(status.missingKeys).toEqual([
+      'DB',
+      'APP_TIMEZONE',
+      'JWT_SECRET',
+      'SESSION_SECRET',
+    ])
   })
 })
 

@@ -42,7 +42,6 @@ export type FileAccessResult
     url: string
   }
 
-const maxFileSizeBytes = 5 * 1024 * 1024
 const allowedMimeTypes = new Map<string, string>([
   ['image/gif', 'gif'],
   ['image/jpeg', 'jpg'],
@@ -113,7 +112,10 @@ export async function uploadFile(
     })
   }
 
-  const normalizedFile = await normalizeUploadedFile(input.file)
+  const normalizedFile = await normalizeUploadedFile(
+    input.file,
+    ctx.config.security.maxUploadImageSizeBytes,
+  )
   const config = await resolveFileStorageConfig(ctx)
   const adapter = await createFileStorageAdapter(config)
   const storageKey = createStorageKey(
@@ -204,7 +206,10 @@ export async function getFileAccess(
   })
 }
 
-async function normalizeUploadedFile(file: File): Promise<{
+async function normalizeUploadedFile(
+  file: File,
+  maxFileSizeBytes: number,
+): Promise<{
   body: ArrayBuffer
   extension: string
   mimeType: string
@@ -220,7 +225,7 @@ async function normalizeUploadedFile(file: File): Promise<{
   }
 
   if (file.size > maxFileSizeBytes) {
-    throw new ValidationError('图片不能超过 5MB。', {
+    throw new ValidationError(`图片不能超过 ${formatSize(maxFileSizeBytes)}。`, {
       field: 'file',
       maxFileSizeBytes,
     })
@@ -239,14 +244,72 @@ async function normalizeUploadedFile(file: File): Promise<{
       field: 'file',
     })
   }
+  const body = await file.arrayBuffer()
+  const detectedMimeType = detectImageMimeType(new Uint8Array(body))
+  if (!detectedMimeType || detectedMimeType !== mimeType) {
+    throw new ValidationError('图片文件内容和类型不匹配。', {
+      detectedMimeType,
+      field: 'file',
+      mimeType,
+    })
+  }
 
   return {
-    body: await file.arrayBuffer(),
-    extension: allowedMimeTypes.get(mimeType) ?? extension,
+    body,
+    extension: allowedMimeTypes.get(detectedMimeType) ?? extension,
     mimeType,
     originalName,
     size: file.size,
   }
+}
+
+function formatSize(bytes: number): string {
+  const mb = bytes / 1024 / 1024
+  return Number.isInteger(mb) ? `${mb}MB` : `${bytes} bytes`
+}
+
+function detectImageMimeType(bytes: Uint8Array): string | null {
+  if (bytes.length >= 8 && hasBytes(bytes, [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])) {
+    return 'image/png'
+  }
+
+  if (bytes.length >= 3 && hasBytes(bytes, [0xFF, 0xD8, 0xFF])) {
+    return 'image/jpeg'
+  }
+
+  if (
+    bytes.length >= 6
+    && (
+      hasAscii(bytes, 'GIF87a', 0)
+      || hasAscii(bytes, 'GIF89a', 0)
+    )
+  ) {
+    return 'image/gif'
+  }
+
+  if (
+    bytes.length >= 12
+    && hasAscii(bytes, 'RIFF', 0)
+    && hasAscii(bytes, 'WEBP', 8)
+  ) {
+    return 'image/webp'
+  }
+
+  return null
+}
+
+function hasBytes(bytes: Uint8Array, expected: number[]): boolean {
+  return expected.every((byte, index) => bytes[index] === byte)
+}
+
+function hasAscii(bytes: Uint8Array, value: string, offset: number): boolean {
+  for (let index = 0; index < value.length; index += 1) {
+    if (bytes[offset + index] !== value.charCodeAt(index)) {
+      return false
+    }
+  }
+
+  return true
 }
 
 async function resolveFileStorageConfig(

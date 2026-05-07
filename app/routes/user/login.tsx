@@ -1,6 +1,13 @@
 import { createRoute } from 'honox/factory'
 import { verifyAdminSession } from '../../service/admin/session'
+import {
+  clearRateLimit,
+  consumeRateLimit,
+  createRateLimitKey,
+  getClientIp,
+} from '../../service/security/rate-limit'
 import { loginUser } from '../../service/user/login'
+import { TooManyRequestsError } from '../../utils/errors'
 import { getSiteLogoText } from '../_utils/branding'
 import {
   formatPageTitle,
@@ -17,6 +24,32 @@ export const POST = createRoute(async (c) => {
   const username = getFormValue(body, 'username')
   const password = getFormValue(body, 'password')
   const returnTo = normalizeReturnTo(getFormValue(body, 'returnTo'))
+  const clientIp = getClientIp(c)
+  const ipRateLimitKey = await createRateLimitKey('login-ip', clientIp)
+  const accountRateLimitKey = await createRateLimitKey(
+    'login-account',
+    clientIp,
+    username.trim().toLowerCase(),
+  )
+
+  try {
+    await consumeRateLimit(c, {
+      key: ipRateLimitKey,
+      limit: c.config.security.loginRateLimitIpMax,
+      windowSeconds: c.config.security.loginRateLimitWindowSeconds,
+    })
+    await consumeRateLimit(c, {
+      key: accountRateLimitKey,
+      limit: c.config.security.loginRateLimitAccountMax,
+      windowSeconds: c.config.security.loginRateLimitWindowSeconds,
+    })
+  } catch (error) {
+    if (error instanceof TooManyRequestsError) {
+      return redirectToLogin(returnTo, error.message)
+    }
+
+    throw error
+  }
 
   if (!await loginUser(c, {
     password,
@@ -26,6 +59,10 @@ export const POST = createRoute(async (c) => {
     return redirectToLogin(returnTo, '账号或密码不正确。')
   }
 
+  await Promise.all([
+    clearRateLimit(c, accountRateLimitKey),
+    clearRateLimit(c, ipRateLimitKey),
+  ])
   return c.redirect(returnTo, 303)
 })
 

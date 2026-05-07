@@ -18,7 +18,7 @@ export async function setAdminSession(
   remember: boolean,
 ): Promise<void> {
   const issuedAt = Date.now().toString()
-  const value = await signAdminSession(user, issuedAt)
+  const value = await signAdminSession(c, user, issuedAt)
 
   setCookie(c, adminSessionCookieName, value, {
     httpOnly: true,
@@ -108,7 +108,7 @@ export async function getAdminSessionUser(
     return null
   }
 
-  const expectedSession = await signAdminSession(user, issuedAt)
+  const expectedSession = await signAdminSession(c, user, issuedAt)
   const expectedSignature = expectedSession.split('.')[2]
   if (!constantTimeEqual(signature, expectedSignature ?? '')) {
     return null
@@ -128,12 +128,18 @@ export function clearAdminSession(c: ServiceRequestContext): void {
 }
 
 async function signAdminSession(
+  c: ServiceRequestContext,
   user: UserCredential,
   issuedAt: string,
 ): Promise<string> {
+  const sessionSecret = c.config.sessionSecret?.trim()
+  const secret = sessionSecret || user.password
+  const payload = sessionSecret
+    ? `admin:${user.id}:${issuedAt}:${user.password}`
+    : `admin:${user.id}:${issuedAt}`
   const key = await crypto.subtle.importKey(
     'raw',
-    new TextEncoder().encode(user.password),
+    new TextEncoder().encode(secret),
     { hash: 'SHA-256', name: 'HMAC' },
     false,
     ['sign'],
@@ -141,7 +147,7 @@ async function signAdminSession(
   const signature = await crypto.subtle.sign(
     'HMAC',
     key,
-    new TextEncoder().encode(`admin:${user.id}:${issuedAt}`),
+    new TextEncoder().encode(payload),
   )
 
   return `${user.id}.${issuedAt}.${toHex(new Uint8Array(signature))}`

@@ -8,6 +8,7 @@ import type {
 } from './dto'
 import type { WebNotificationEntity } from './entity'
 import { NotFoundError, ValidationError } from '../../../../utils/errors'
+import { sanitizeRichTextHtml } from '../../../../utils/html'
 import {
   createPaginatedResult,
   getPaginationOffset,
@@ -73,6 +74,7 @@ export async function createWebNotification(
   await assertNotificationAliasAvailable(ctx, input.alias)
 
   const now = ctx.now()
+  const content = sanitizeRichTextHtml(input.content)
   const notificationId = await ctx.db.insertAndGetId(
     `
       INSERT INTO web_notification (
@@ -89,7 +91,7 @@ export async function createWebNotification(
     [
       input.alias,
       input.title,
-      input.content,
+      content,
       input.isTop ? 1 : 0,
       input.isImportant ? 1 : 0,
       now,
@@ -107,6 +109,9 @@ export async function updateWebNotification(
 ): Promise<WebNotificationRecord> {
   const current = await requireWebNotification(ctx, id)
   const nextAlias = input.alias ?? current.alias
+  const nextContent = input.content === undefined
+    ? current.content
+    : sanitizeRichTextHtml(input.content)
 
   if (nextAlias !== current.alias) {
     await assertNotificationAliasAvailable(ctx, nextAlias, id)
@@ -126,7 +131,7 @@ export async function updateWebNotification(
     [
       nextAlias,
       input.title ?? current.title,
-      input.content ?? current.content,
+      nextContent,
       hasField(input, 'isTop') ? input.isTop ? 1 : 0 : current.is_top,
       hasField(input, 'isImportant')
         ? input.isImportant ? 1 : 0

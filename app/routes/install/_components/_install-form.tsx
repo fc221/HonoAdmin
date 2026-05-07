@@ -86,15 +86,27 @@ export default function InstallForm({ alert }: Props) {
 export function RuntimeConfigStep({
   bootstrap,
   generatedSecret,
+  generatedSessionSecret,
 }: {
   bootstrap: BootstrapConfigStatus
   generatedSecret: string
+  generatedSessionSecret: string
 }) {
   if (bootstrap.runtimeTarget === 'cloudflare-workers') {
-    return <WorkerConfigNotice bootstrap={bootstrap} generatedSecret={generatedSecret} />
+    return (
+      <WorkerConfigNotice
+        bootstrap={bootstrap}
+        generatedSecret={generatedSecret}
+        generatedSessionSecret={generatedSessionSecret}
+      />
+    )
   }
 
-  const values = getBunRuntimeConfigValues(bootstrap, generatedSecret)
+  const values = getBunRuntimeConfigValues(
+    bootstrap,
+    generatedSecret,
+    generatedSessionSecret,
+  )
 
   return (
     <form class="space-y-5" method="post">
@@ -146,6 +158,17 @@ export function RuntimeConfigStep({
           。
         </p>
       </fieldset>
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend">Session Secret</legend>
+        <input
+          class="input w-full font-mono"
+          name="sessionSecret"
+          required
+          minlength={16}
+          value={values.sessionSecret}
+        />
+        <p class="label">用于后台登录 cookie 签名，和 JWT Secret 分开维护。</p>
+      </fieldset>
       <button class="btn btn-primary w-full" type="submit">
         <i class="icon-[ri--save-3-line]" />
         写入配置文件
@@ -190,9 +213,11 @@ export function MigrationStep({ migration }: { migration: MigrationStatus }) {
 function WorkerConfigNotice({
   bootstrap,
   generatedSecret,
+  generatedSessionSecret,
 }: {
   bootstrap: BootstrapConfigStatus
   generatedSecret: string
+  generatedSessionSecret: string
 }) {
   const missingLabels = bootstrap.requirements
     .filter((requirement) => !requirement.isConfigured)
@@ -231,7 +256,10 @@ function WorkerConfigNotice({
         <pre class="mt-3 overflow-auto rounded-box bg-base-100 p-3 text-xs">
           <code>
             {`wrangler secret put JWT_SECRET
-${generatedSecret}`}
+${generatedSecret}
+
+wrangler secret put SESSION_SECRET
+${generatedSessionSecret}`}
           </code>
         </pre>
       </div>
@@ -257,9 +285,13 @@ function MigrationStat({
 function getBunRuntimeConfigValues(
   bootstrap: BootstrapConfigStatus,
   generatedSecret: string,
+  generatedSessionSecret: string,
 ) {
   const jwtSecret = bootstrap.requirements.find((requirement) =>
     requirement.key === 'JWT_SECRET'
+  )
+  const sessionSecret = bootstrap.requirements.find((requirement) =>
+    requirement.key === 'SESSION_SECRET'
   )
 
   return {
@@ -269,6 +301,9 @@ function getBunRuntimeConfigValues(
     jwtSecret: jwtSecret?.isConfigured
       ? jwtSecret.value ?? ''
       : generatedSecret,
+    sessionSecret: sessionSecret?.isConfigured
+      ? sessionSecret.value ?? ''
+      : generatedSessionSecret,
   }
 }
 

@@ -21,8 +21,11 @@ import {
 import {
   createUser,
   deleteUser,
+  getUserCredentialByUsername,
   listUsers,
+  needsPasswordRehash,
   updateUser,
+  verifyUserPassword,
 } from '../app/service/admin/system/user'
 import { UserGender, UserStatus } from '../app/service/admin/system/user/enum'
 import {
@@ -107,6 +110,10 @@ describe('service CRUD', () => {
     expect(created.id).toBeGreaterThan(0)
     expect(created.username).toBe('editor')
     expect(created.roleIds).toEqual([userRoleId, adminRoleId])
+    const credential = await getUserCredentialByUsername(ctx, 'editor')
+    expect(credential?.password.startsWith('pbkdf2-sha256:')).toBe(true)
+    expect(needsPasswordRehash(credential?.password ?? '')).toBe(false)
+    expect(await verifyUserPassword('secret123', credential?.password ?? '')).toBe(true)
 
     const list = await listUsers(ctx, { keyword: 'edit' })
     expect(list.total).toBe(1)

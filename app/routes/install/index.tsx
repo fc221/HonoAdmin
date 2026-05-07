@@ -132,6 +132,7 @@ export default createRoute(async (c) => {
         <RuntimeConfigStep
           bootstrap={c.config.bootstrap}
           generatedSecret={generateBootstrapSecret()}
+          generatedSessionSecret={generateBootstrapSecret()}
         />
       ),
     })
@@ -183,6 +184,12 @@ async function handleSaveRuntimeConfig(
       cacheNamespace: getFormValue(body, 'cacheNamespace'),
       databaseUrl: getFormValue(body, 'databaseUrl'),
       jwtSecret,
+      sessionSecret: getFormValue(body, 'sessionSecret').trim(),
+    }
+    if (runtimeConfig.sessionSecret.length < 16) {
+      throw new ValidationError('Session Secret 至少需要 16 个字符。', {
+        field: 'sessionSecret',
+      })
     }
     const configPath = c.config.bootstrap.configPath ?? getBunConfigPath()
 
@@ -193,6 +200,7 @@ async function handleSaveRuntimeConfig(
       DATABASE_URL: runtimeConfig.databaseUrl,
       HONO_ADMIN_ENV_FILE: configPath,
       JWT_SECRET: runtimeConfig.jwtSecret,
+      SESSION_SECRET: runtimeConfig.sessionSecret,
     })
 
     return redirectWithAlert(c, '/install', {

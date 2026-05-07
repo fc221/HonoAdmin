@@ -1,3 +1,5 @@
+import { sanitizeRichTextHtml } from '../../utils/html'
+
 interface Props {
   label: string
   name: string
@@ -23,6 +25,8 @@ export default function RichTextEditor({
   uploadType,
   value = '',
 }: Props) {
+  const sanitizedValue = sanitizeRichTextHtml(value)
+
   return (
     <fieldset class="fieldset lg:col-span-2" data-form-field={name}>
       <legend class="fieldset-legend">{label}</legend>
@@ -75,14 +79,14 @@ export default function RichTextEditor({
           contentEditable={true}
           data-placeholder={placeholder}
           data-rich-text-body="true"
-          dangerouslySetInnerHTML={{ __html: value }}
+          dangerouslySetInnerHTML={{ __html: sanitizedValue }}
         />
         <textarea
           class="hidden"
           data-rich-text-input="true"
           name={name}
         >
-          {value}
+          {sanitizedValue}
         </textarea>
       </div>
       <p class="label">支持加粗、列表和链接，内容将以 HTML 保存。</p>

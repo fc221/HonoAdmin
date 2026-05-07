@@ -38,6 +38,11 @@ import {
   errorResponseSchema,
   idParamSchema,
 } from '../../../service/common/response'
+import {
+  consumeRateLimit,
+  createRateLimitKey,
+  getClientIp,
+} from '../../../service/security/rate-limit'
 import { toErrorShape } from '../../../utils/errors'
 
 const app = new Hono<AppEnv>()
@@ -60,6 +65,24 @@ app.onError((error, c) => {
 
   const { body, status } = toErrorShape(error)
   return c.json(body, status as ContentfulStatusCode)
+})
+
+app.use('*', async (c, next) => {
+  const key = await createRateLimitKey('api-admin', getClientIp(c))
+
+  try {
+    await consumeRateLimit(c, {
+      key,
+      limit: c.config.security.apiRateLimitMax,
+      windowSeconds: c.config.security.apiRateLimitWindowSeconds,
+    })
+  } catch (error) {
+    const { body, status } = toErrorShape(error)
+    c.header('Retry-After', String(getRetryAfterSeconds(body.error.details)))
+    return c.json(body, status as ContentfulStatusCode)
+  }
+
+  await next()
 })
 
 app.use('*', bearerAuth({
@@ -293,3 +316,13 @@ app.delete(
 )
 
 export default app
+
+function getRetryAfterSeconds(details: unknown): number {
+  if (!details || typeof details !== 'object') {
+    return 60
+  }
+
+  const retryAfterSeconds = (details as { retryAfterSeconds?: unknown })
+    .retryAfterSeconds
+  return typeof retryAfterSeconds === 'number' ? retryAfterSeconds : 60
+}

@@ -67,14 +67,15 @@ export class CacheError extends AppError {
 /** 把异常对象收敛成统一的 HTTP 错误响应结构。 */
 export function toErrorShape(error: unknown) {
   if (error instanceof AppError) {
+    const isInternalError = error.status >= 500
     return {
       status: error.status,
       body: {
         ok: false,
         error: {
           code: error.code,
-          message: error.message,
-          details: error.details,
+          message: isInternalError ? '服务暂时不可用。' : error.message,
+          details: isInternalError ? undefined : error.details,
         },
       },
     }
@@ -86,7 +87,7 @@ export function toErrorShape(error: unknown) {
       ok: false,
       error: {
         code: 'INTERNAL_SERVER_ERROR',
-        message: error instanceof Error ? error.message : 'unexpected error',
+        message: '服务暂时不可用。',
       },
     },
   }

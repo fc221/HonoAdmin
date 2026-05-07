@@ -74,6 +74,8 @@ const userCredentialColumns = `
   sys_user.role_id,
   role.code AS role_code
 `
+const passwordHashAlgorithm = 'pbkdf2-sha256'
+const passwordHashIterations = 120000
 
 export async function listUsers(
   ctx: ServiceContext,
@@ -392,14 +394,54 @@ export async function verifyUserPassword(
   password: string,
   hashedPassword: string,
 ): Promise<boolean> {
-  const [algorithm, salt, digest] = hashedPassword.split(':')
-  if (algorithm !== 'sha256' || !salt || !digest) {
+  const parts = hashedPassword.split(':')
+  const algorithm = parts[0]
+  if (!algorithm) {
+    return false
+  }
+
+  if (algorithm === passwordHashAlgorithm) {
+    const [, rawIterations, salt, digest] = parts
+    const iterations = Number(rawIterations)
+
+    if (
+      parts.length !== 4
+      || !Number.isInteger(iterations)
+      || iterations <= 0
+      || !salt
+      || !digest
+    ) {
+      return false
+    }
+
+    return constantTimeEqual(
+      await pbkdf2Hex(password, salt, iterations),
+      digest,
+    )
+  }
+
+  if (algorithm !== 'sha256' || parts.length !== 3) {
+    return false
+  }
+
+  const [, salt, digest] = parts
+  if (!salt || !digest) {
     return false
   }
 
   return constantTimeEqual(
     await sha256Hex(`${salt}:${password}`),
     digest,
+  )
+}
+
+export function needsPasswordRehash(hashedPassword: string): boolean {
+  const [algorithm, rawIterations] = hashedPassword.split(':')
+  const iterations = Number(rawIterations)
+  return (
+    algorithm !== passwordHashAlgorithm
+    || !Number.isInteger(iterations)
+    || iterations < passwordHashIterations
   )
 }
 
@@ -718,8 +760,33 @@ function createPlaceholders(values: unknown[]): string {
 
 async function hashPassword(password: string): Promise<string> {
   const salt = randomHex(16)
-  const digest = await sha256Hex(`${salt}:${password}`)
-  return `sha256:${salt}:${digest}`
+  const digest = await pbkdf2Hex(password, salt, passwordHashIterations)
+  return `${passwordHashAlgorithm}:${passwordHashIterations}:${salt}:${digest}`
+}
+
+async function pbkdf2Hex(
+  password: string,
+  salt: string,
+  iterations: number,
+): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(password),
+    'PBKDF2',
+    false,
+    ['deriveBits'],
+  )
+  const bits = await crypto.subtle.deriveBits(
+    {
+      hash: 'SHA-256',
+      iterations,
+      name: 'PBKDF2',
+      salt: new TextEncoder().encode(salt),
+    },
+    key,
+    256,
+  )
+  return toHex(new Uint8Array(bits))
 }
 
 async function sha256Hex(value: string): Promise<string> {

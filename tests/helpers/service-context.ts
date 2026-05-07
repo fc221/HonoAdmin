@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { MemoryCacheAdapter } from '../../app/infra/cache/adapter/memory'
 import { runMigrations } from '../../app/infra/database/migrator'
 import { createLocalSqliteAdapter } from '../../app/infra/runtime/local-sqlite'
+import { defaultSecurityRuntimeConfig } from '../../app/infra/runtime/security-config'
 
 export interface TestServiceContext {
   cleanup: () => Promise<void>
@@ -34,7 +35,9 @@ export async function createTestServiceContext(options: {
         requirements: [],
         runtimeTarget: 'bun' as const,
       },
+      sessionSecret: 'test-session-secret-1234567890',
       runtimeTarget: 'bun' as const,
+      security: defaultSecurityRuntimeConfig,
       timezone: 'Asia/Shanghai',
     },
     db,

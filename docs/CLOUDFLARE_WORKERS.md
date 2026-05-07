@@ -1,6 +1,6 @@
 # Cloudflare Workers 部署
 
-HonoAdmin 的 Workers 运行时通过 Hono Context 注入 `DB`、`CACHE`、`APP_TIMEZONE` 和 `JWT_SECRET`。业务代码不直接读取平台全局对象，部署时只需要把绑定名称配置成框架约定的名字。
+HonoAdmin 的 Workers 运行时通过 Hono Context 注入 `DB`、`CACHE`、`APP_TIMEZONE`、`JWT_SECRET` 和 `SESSION_SECRET`。业务代码不直接读取平台全局对象，部署时只需要把绑定名称配置成框架约定的名字。
 
 ## 绑定示例
 
@@ -32,10 +32,11 @@ HonoAdmin 的 Workers 运行时通过 Hono Context 注入 `DB`、`CACHE`、`APP_
 }
 ```
 
-`DB` 是必需的 D1 数据库绑定。`CACHE` 是可选 KV 绑定；没有配置时会使用 noop cache adapter。`APP_TIMEZONE` 用于后台展示时间和 `c.now()`。`JWT_SECRET` 必须通过 secret 配置：
+`DB` 是必需的 D1 数据库绑定。`CACHE` 是可选 KV 绑定；没有配置时会使用 noop cache adapter。`APP_TIMEZONE` 用于后台展示时间和 `c.now()`。`JWT_SECRET` 和 `SESSION_SECRET` 必须通过 secret 配置：
 
 ```bash
 wrangler secret put JWT_SECRET
+wrangler secret put SESSION_SECRET
 ```
 
 ## 部署流程

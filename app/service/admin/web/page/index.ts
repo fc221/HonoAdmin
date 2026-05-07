@@ -8,6 +8,7 @@ import type {
 } from './dto'
 import type { WebPageEntity } from './entity'
 import { NotFoundError, ValidationError } from '../../../../utils/errors'
+import { sanitizeRichTextHtml } from '../../../../utils/html'
 import {
   createPaginatedResult,
   getPaginationOffset,
@@ -71,6 +72,7 @@ export async function createWebPage(
   await assertPageAliasAvailable(ctx, input.alias)
 
   const now = ctx.now()
+  const content = sanitizeRichTextHtml(input.content)
   const pageId = await ctx.db.insertAndGetId(
     `
       INSERT INTO web_page (
@@ -89,7 +91,7 @@ export async function createWebPage(
       input.alias,
       input.category ?? null,
       input.summary ?? null,
-      input.content,
+      content,
       now,
       now,
     ],
@@ -105,6 +107,9 @@ export async function updateWebPage(
 ): Promise<WebPageRecord> {
   const current = await requireWebPage(ctx, id)
   const nextAlias = input.alias ?? current.alias
+  const nextContent = input.content === undefined
+    ? current.content
+    : sanitizeRichTextHtml(input.content)
 
   if (nextAlias !== current.alias) {
     await assertPageAliasAvailable(ctx, nextAlias, id)
@@ -126,7 +131,7 @@ export async function updateWebPage(
       nextAlias,
       hasField(input, 'category') ? input.category ?? null : current.category,
       hasField(input, 'summary') ? input.summary ?? null : current.summary,
-      input.content ?? current.content,
+      nextContent,
       ctx.now(),
       id,
     ],

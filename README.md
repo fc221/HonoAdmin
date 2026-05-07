@@ -40,10 +40,11 @@ docs         架构、CRUD 和性能边界文档
 
 ```bash
 bun install
+cp .env.example .env
 bun run dev
 ```
 
-打开本地地址后进入 `/install` 完成运行时配置、数据库迁移和管理员创建。
+按需调整 `.env` 后打开本地地址，进入 `/install` 完成运行时配置、数据库迁移和管理员创建。
 
 常用命令：
 

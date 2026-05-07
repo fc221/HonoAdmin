@@ -1,6 +1,6 @@
 # Cloudflare Workers Deployment
 
-The HonoAdmin Workers runtime injects `DB`, `CACHE`, `APP_TIMEZONE`, and `JWT_SECRET` through the Hono Context. Business code does not read platform globals directly, so deployment only needs to use the binding names expected by the runtime adapter.
+The HonoAdmin Workers runtime injects `DB`, `CACHE`, `APP_TIMEZONE`, `JWT_SECRET`, and `SESSION_SECRET` through the Hono Context. Business code does not read platform globals directly, so deployment only needs to use the binding names expected by the runtime adapter.
 
 ## Binding Example
 
@@ -32,10 +32,11 @@ The HonoAdmin Workers runtime injects `DB`, `CACHE`, `APP_TIMEZONE`, and `JWT_SE
 }
 ```
 
-`DB` is the required D1 database binding. `CACHE` is an optional KV binding; when it is not configured, HonoAdmin uses the noop cache adapter. `APP_TIMEZONE` controls admin time display and `c.now()`. Configure `JWT_SECRET` as a Worker secret:
+`DB` is the required D1 database binding. `CACHE` is an optional KV binding; when it is not configured, HonoAdmin uses the noop cache adapter. `APP_TIMEZONE` controls admin time display and `c.now()`. Configure `JWT_SECRET` and `SESSION_SECRET` as Worker secrets:
 
 ```bash
 wrangler secret put JWT_SECRET
+wrangler secret put SESSION_SECRET
 ```
 
 ## Deploy

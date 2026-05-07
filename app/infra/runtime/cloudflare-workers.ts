@@ -6,6 +6,7 @@ import { D1Adapter } from '../database/adapter/d1'
 
 import { UnavailableDBAdapter } from '../database/adapter/unavailable'
 import { getCloudflareWorkersBootstrapConfigStatus } from './bootstrap'
+import { resolveSecurityRuntimeConfig } from './security-config'
 
 export async function createCloudflareWorkersRuntime(
   bindings: RuntimeBindings,
@@ -25,6 +26,8 @@ export async function createCloudflareWorkersRuntime(
       bootstrap,
       jwtSecret: bindings.JWT_SECRET?.trim() || undefined,
       runtimeTarget: 'cloudflare-workers',
+      security: resolveSecurityRuntimeConfig((key) => bindings[key]?.trim()),
+      sessionSecret: bindings.SESSION_SECRET?.trim() || undefined,
       timezone: normalizeTimezone(bindings.APP_TIMEZONE),
     },
     db,

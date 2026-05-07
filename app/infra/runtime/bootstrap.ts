@@ -7,6 +7,7 @@ export type BootstrapConfigKey
     | 'DATABASE_URL'
     | 'DB'
     | 'JWT_SECRET'
+    | 'SESSION_SECRET'
 
 export interface BootstrapConfigRequirement {
   description: string
@@ -31,6 +32,7 @@ export interface SaveBunRuntimeConfigInput {
   cacheNamespace: string
   databaseUrl: string
   jwtSecret: string
+  sessionSecret: string
 }
 
 const bunManagedKeys: BootstrapConfigKey[] = [
@@ -38,6 +40,7 @@ const bunManagedKeys: BootstrapConfigKey[] = [
   'APP_TIMEZONE',
   'CACHE_NAMESPACE',
   'JWT_SECRET',
+  'SESSION_SECRET',
 ]
 const nodeFsPromisesSpecifier = 'node:fs/promises'
 
@@ -77,6 +80,14 @@ export async function getBunBootstrapConfigStatus(
       label: 'JWT Secret',
       value: values.JWT_SECRET ?? bindings.JWT_SECRET,
     },
+    {
+      description: '用于浏览器后台 session cookie 签名的强随机字符串。',
+      isConfigured: hasSecretValue(values.SESSION_SECRET),
+      isSecret: true,
+      key: 'SESSION_SECRET',
+      label: 'Session Secret',
+      value: values.SESSION_SECRET ?? bindings.SESSION_SECRET,
+    },
   ]
 
   return createBootstrapStatus({
@@ -112,6 +123,14 @@ export function getCloudflareWorkersBootstrapConfigStatus(
       label: 'JWT Secret',
       value: bindings.JWT_SECRET,
     },
+    {
+      description: 'Worker secret，用 wrangler secret put SESSION_SECRET 配置。',
+      isConfigured: hasSecretValue(bindings.SESSION_SECRET),
+      isSecret: true,
+      key: 'SESSION_SECRET',
+      label: 'Session Secret',
+      value: bindings.SESSION_SECRET,
+    },
   ]
 
   return createBootstrapStatus({
@@ -132,6 +151,7 @@ export async function saveBunRuntimeConfig(
     DATABASE_URL: input.databaseUrl.trim() || './honox-admin.sqlite',
     DB: undefined,
     JWT_SECRET: input.jwtSecret.trim(),
+    SESSION_SECRET: input.sessionSecret.trim(),
   }
   const lines = envFile.content ? envFile.content.split(/\r?\n/) : []
   const seenKeys = new Set<BootstrapConfigKey>()

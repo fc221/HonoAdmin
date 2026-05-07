@@ -40,10 +40,11 @@ Runtime resources are created in `app/infra/runtime` and attached to the Hono Co
 
 ```bash
 bun install
+cp .env.example .env
 bun run dev
 ```
 
-Open the local app and visit `/install` to complete runtime configuration, database migrations, and administrator creation.
+Adjust `.env` as needed, then open the local app and visit `/install` to complete runtime configuration, database migrations, and administrator creation.
 
 Useful commands:
 

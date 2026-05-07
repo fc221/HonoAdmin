@@ -5,6 +5,7 @@ import { UnavailableDBAdapter } from '../database/adapter/unavailable'
 
 import { getBunBootstrapConfigStatus } from './bootstrap'
 import { createLocalDatabaseAdapter } from './local-sqlite'
+import { resolveSecurityRuntimeConfig } from './security-config'
 
 export async function createBunRuntime(
   bindings: RuntimeBindings = {},
@@ -16,6 +17,9 @@ export async function createBunRuntime(
     || getBootstrapValue(bootstrap, 'CACHE_NAMESPACE')
   const jwtSecret = readLocalBinding(bindings, 'JWT_SECRET')
     || getBootstrapValue(bootstrap, 'JWT_SECRET')
+    || undefined
+  const sessionSecret = readLocalBinding(bindings, 'SESSION_SECRET')
+    || getBootstrapValue(bootstrap, 'SESSION_SECRET')
     || undefined
   const timezone = normalizeTimezone(
     readLocalBinding(bindings, 'APP_TIMEZONE')
@@ -33,6 +37,8 @@ export async function createBunRuntime(
       bootstrap,
       jwtSecret,
       runtimeTarget: 'bun',
+      security: resolveSecurityRuntimeConfig((key) => readLocalBinding(bindings, key)),
+      sessionSecret,
       timezone,
     },
     db,
@@ -41,9 +47,12 @@ export async function createBunRuntime(
 
 function readLocalBinding(
   bindings: RuntimeBindings,
-  key: 'APP_TIMEZONE' | 'CACHE_NAMESPACE' | 'DATABASE_URL' | 'JWT_SECRET',
+  key: string,
 ): string {
-  return bindings[key]?.trim() || process.env[key]?.trim() || ''
+  const bindingValue = bindings[key as keyof RuntimeBindings]
+  return (
+    typeof bindingValue === 'string' ? bindingValue.trim() : ''
+  ) || process.env[key]?.trim() || ''
 }
 
 function getBootstrapValue(

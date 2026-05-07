@@ -23,6 +23,16 @@ import { UserStatus } from '../app/service/admin/system/user/enum'
 import { createTestServiceContext } from './helpers/service-context'
 
 let testContext: TestServiceContext
+const pngBytes = new Uint8Array([
+  0x89,
+  0x50,
+  0x4E,
+  0x47,
+  0x0D,
+  0x0A,
+  0x1A,
+  0x0A,
+])
 
 beforeEach(async () => {
   testContext = await createTestServiceContext()
@@ -45,7 +55,7 @@ describe('file service', () => {
       })
 
       const uploaded = await uploadFile(ctx, {
-        file: new File([new Uint8Array([1, 2, 3])], 'avatar.png', {
+        file: new File([pngBytes], 'avatar.png', {
           type: 'image/png',
         }),
         uploadType: 'avatar',
@@ -64,7 +74,7 @@ describe('file service', () => {
       expect(access.kind).toBe('body')
       if (access.kind === 'body') {
         expect(access.contentType).toBe('image/png')
-        expect(access.body.byteLength).toBe(3)
+        expect(access.body.byteLength).toBe(pngBytes.byteLength)
       }
 
       const byKey = await getFileByStorageKey(ctx, uploaded.storageKey)
@@ -94,6 +104,16 @@ describe('file service', () => {
       uploadType: 'page',
       userId: null,
     })).rejects.toThrow('仅支持 JPG、PNG、WEBP、GIF 图片。')
+  })
+
+  test('rejects images whose declared mime type does not match content', async () => {
+    const { ctx } = testContext
+
+    await expect(uploadFile(ctx, {
+      file: new File(['not a png'], 'avatar.png', { type: 'image/png' }),
+      uploadType: 'avatar',
+      userId: null,
+    })).rejects.toThrow('图片文件内容和类型不匹配。')
   })
 
   test('S3 file access creates a temporary redirect URL', async () => {

@@ -32,6 +32,7 @@
   //   }
   // ]
   //
-  // Configure the session secret outside this file:
+  // Configure secrets outside this file:
   // wrangler secret put JWT_SECRET
+  // wrangler secret put SESSION_SECRET
 }
