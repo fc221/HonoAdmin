@@ -10,12 +10,12 @@ export const notificationAliasSchema = z.string()
 export const webNotificationRecordSchema = z.object({
   alias: z.string(),
   content: z.string(),
-  created_at: z.string(),
+  createdAt: z.number().int().nonnegative(),
   id: z.number().int().positive(),
-  is_important: z.number().int(),
-  is_top: z.number().int(),
+  isImportant: z.number().int(),
+  isTop: z.number().int(),
   title: z.string(),
-  updated_at: z.string(),
+  updatedAt: z.number().int().nonnegative(),
 })
 
 export const createWebNotificationSchema = z.object({

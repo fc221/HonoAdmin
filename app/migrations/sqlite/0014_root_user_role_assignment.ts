@@ -1,6 +1,6 @@
 import type { Migration } from '../types'
 
-const seedTime = '2026-01-01T00:00:00.000Z'
+const seedTime = 1767225600000
 
 export const migration0014RootUserRoleAssignment: Migration = {
   id: '0014_root_user_role_assignment',

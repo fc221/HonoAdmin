@@ -357,7 +357,7 @@ describe('service CRUD', () => {
       title: 'Release',
     })
 
-    expect(created.is_top).toBe(1)
+    expect(created.isTop).toBe(1)
     expect(await getWebNotificationByAlias(ctx, 'release')).toMatchObject({
       title: 'Release',
     })
@@ -369,7 +369,7 @@ describe('service CRUD', () => {
       isImportant: true,
       title: 'Release updated',
     })
-    expect(updated.is_important).toBe(1)
+    expect(updated.isImportant).toBe(1)
     expect(updated.title).toBe('Release updated')
 
     await deleteWebNotification(ctx, created.id)

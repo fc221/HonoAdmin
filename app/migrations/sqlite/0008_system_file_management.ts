@@ -1,6 +1,6 @@
 import type { Migration, MigrationStatement } from '../types'
 
-const seedTime = '2026-01-01T00:00:00.000Z'
+const seedTime = 1767225600000
 
 const configSeeds: Array<{
   configKey: string
@@ -46,8 +46,8 @@ export const migration0008SystemFileManagement: Migration = {
         mime_type TEXT NOT NULL,
         file_size INTEGER NOT NULL,
         user_id INTEGER,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
       )
     `,
     `
@@ -83,8 +83,8 @@ function rebuildConfigTableForFileType(): MigrationStatement[] {
         config_type TEXT NOT NULL CHECK (config_type IN ('site', 'system', 'file')),
         config_key TEXT NOT NULL,
         config_value TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
         UNIQUE (config_type, config_key)
       )
     `,

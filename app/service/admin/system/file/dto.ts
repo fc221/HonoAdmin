@@ -6,14 +6,14 @@ export const fileUploadTypeSchema = z.enum(fileUploadTypes)
 export const fileStorageModeSchema = z.enum(fileStorageModes)
 
 export const fileRecordSchema = z.object({
-  createdAt: z.string(),
+  createdAt: z.number().int().nonnegative(),
   fileSize: z.number().int().nonnegative(),
   id: z.number().int().positive(),
   mimeType: z.string(),
   originalName: z.string(),
   storageKey: z.string(),
   storageMode: fileStorageModeSchema,
-  updatedAt: z.string(),
+  updatedAt: z.number().int().nonnegative(),
   uploadType: fileUploadTypeSchema,
   url: z.string(),
   userId: z.number().int().positive().nullable(),

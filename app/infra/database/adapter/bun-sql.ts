@@ -91,12 +91,7 @@ class BunSqlAdapter implements DBAdapter {
   ): Promise<T[]> {
     try {
       const normalizedSql = normalizeBunSqlForDialect(sql, this.dialect)
-      const normalizedParams = normalizeBunSqlParamsForDialect(
-        sql,
-        params,
-        this.dialect,
-      )
-      const rows = await this.client.unsafe<T>(normalizedSql, normalizedParams)
+      const rows = await this.client.unsafe<T>(normalizedSql, params)
       return Array.from(rows).map(normalizeDateRow)
     } catch (error) {
       throw createDatabaseError(error, 'failed to execute Bun SQL query', sql)
@@ -117,12 +112,7 @@ class BunSqlAdapter implements DBAdapter {
   ): Promise<QueryResult> {
     try {
       const normalizedSql = normalizeBunSqlForDialect(sql, this.dialect)
-      const normalizedParams = normalizeBunSqlParamsForDialect(
-        sql,
-        params,
-        this.dialect,
-      )
-      const result = await this.client.unsafe(normalizedSql, normalizedParams)
+      const result = await this.client.unsafe(normalizedSql, params)
       return {
         lastInsertId: result.lastInsertRowid,
         rows: Array.from(result).map(normalizeDateRow),
@@ -222,29 +212,6 @@ function normalizeMysqlSql(sql: string): string {
   return normalized
 }
 
-export function normalizeBunSqlParamsForDialect(
-  sql: string,
-  params: SQLParameter[],
-  dialect: DatabaseDialect,
-): SQLParameter[] {
-  if (dialect !== 'mysql' || params.length === 0) {
-    return params
-  }
-
-  const temporalParamIndexes = getMysqlTemporalParamIndexes(sql)
-  if (temporalParamIndexes.size === 0) {
-    return params
-  }
-
-  return params.map((param, index) => {
-    if (!temporalParamIndexes.has(index) || typeof param !== 'string') {
-      return param
-    }
-
-    return toMysqlDateTimeValue(param)
-  })
-}
-
 function convertQuestionPlaceholders(sql: string): string {
   let normalized = ''
   let index = 0
@@ -282,20 +249,27 @@ function convertQuestionPlaceholders(sql: string): string {
 }
 
 function normalizeDateRow<T extends QueryRow>(row: T): T {
-  let hasDate = false
+  let hasNormalizedValue = false
   const nextRow: Record<string, unknown> = {}
 
   for (const [key, value] of Object.entries(row)) {
+    if (isTimestampColumn(key)) {
+      const timestamp = normalizeTimestampValue(value)
+      nextRow[key] = timestamp
+      hasNormalizedValue ||= timestamp !== value
+      continue
+    }
+
     if (value instanceof Date) {
       nextRow[key] = value.toISOString()
-      hasDate = true
+      hasNormalizedValue = true
       continue
     }
 
     nextRow[key] = value
   }
 
-  return hasDate ? nextRow as T : row
+  return hasNormalizedValue ? nextRow as T : row
 }
 
 function appendReturningId(sql: string): string {
@@ -306,314 +280,30 @@ function appendReturningId(sql: string): string {
   return `${sql.trimEnd()} RETURNING id`
 }
 
-function getMysqlTemporalParamIndexes(sql: string): Set<number> {
-  const indexes = new Set<number>()
-
-  for (const index of getMysqlInsertTemporalParamIndexes(sql)) {
-    indexes.add(index)
-  }
-
-  for (const index of getMysqlUpdateTemporalParamIndexes(sql)) {
-    indexes.add(index)
-  }
-
-  return indexes
+function isTimestampColumn(key: string): boolean {
+  return key === 'applied_at' || key === 'created_at' || key === 'updated_at'
 }
 
-function getMysqlInsertTemporalParamIndexes(sql: string): number[] {
-  const insertIndex = findSqlKeyword(sql, 'INSERT')
-  if (insertIndex < 0) {
-    return []
-  }
-
-  const valuesIndex = findSqlKeyword(sql, 'VALUES', insertIndex)
-  if (valuesIndex < 0) {
-    return []
-  }
-
-  const columnsStart = findSqlChar(sql, '(', insertIndex, valuesIndex)
-  const valuesStart = findSqlChar(sql, '(', valuesIndex)
-
-  if (columnsStart < 0 || valuesStart < 0) {
-    return []
-  }
-
-  const [columnsSql] = readParenthesizedValue(sql, columnsStart)
-  const [valuesSql] = readParenthesizedValue(sql, valuesStart)
-  const columns = splitTopLevelSqlList(columnsSql).map(getColumnName)
-  const values = splitTopLevelSqlList(valuesSql)
-  const indexes: number[] = []
-  let paramIndex = countQuestionPlaceholders(sql.slice(0, valuesStart))
-
-  values.forEach((value, valueIndex) => {
-    const placeholderCount = countQuestionPlaceholders(value)
-    if (
-      placeholderCount === 1
-      && value.trim() === '?'
-      && isTemporalColumn(columns[valueIndex] ?? '')
-    ) {
-      indexes.push(paramIndex)
-    }
-
-    paramIndex += placeholderCount
-  })
-
-  return indexes
-}
-
-function getMysqlUpdateTemporalParamIndexes(sql: string): number[] {
-  const updateIndex = findSqlKeyword(sql, 'UPDATE')
-  if (updateIndex < 0) {
-    return []
-  }
-
-  const setIndex = findSqlKeyword(sql, 'SET', updateIndex)
-  if (setIndex < 0) {
-    return []
-  }
-
-  const assignmentStart = setIndex + 'SET'.length
-  const whereIndex = findSqlKeyword(sql, 'WHERE', assignmentStart)
-  const assignments = splitTopLevelSqlList(
-    sql.slice(assignmentStart, whereIndex < 0 ? sql.length : whereIndex),
-  )
-  const indexes: number[] = []
-  let paramIndex = countQuestionPlaceholders(sql.slice(0, assignmentStart))
-
-  for (const assignment of assignments) {
-    const column = getAssignmentColumnName(assignment)
-    const placeholderCount = countQuestionPlaceholders(assignment)
-
-    if (
-      placeholderCount === 1
-      && assignment.includes('?')
-      && isTemporalColumn(column)
-    ) {
-      indexes.push(paramIndex)
-    }
-
-    paramIndex += placeholderCount
-  }
-
-  return indexes
-}
-
-function findSqlKeyword(
-  value: string,
-  keyword: string,
-  start = 0,
-): number {
-  const normalizedKeyword = keyword.toLowerCase()
-  let index = start
-
-  while (index < value.length) {
-    const char = value[index]
-
-    if (char === '\'') {
-      const [, nextIndex] = readSingleQuotedString(value, index)
-      index = nextIndex
-      continue
-    }
-
-    if (char === '"' || char === '`') {
-      const [, nextIndex] = readDelimitedValue(value, index, char)
-      index = nextIndex
-      continue
-    }
-
-    if (
-      value.slice(index, index + keyword.length).toLowerCase()
-      === normalizedKeyword
-      && !isIdentifierChar(value[index - 1] ?? '')
-      && !isIdentifierChar(value[index + keyword.length] ?? '')
-    ) {
-      return index
-    }
-
-    index += 1
-  }
-
-  return -1
-}
-
-function findSqlChar(
-  value: string,
-  target: string,
-  start: number,
-  end = value.length,
-): number {
-  let index = start
-
-  while (index < end) {
-    const char = value[index]
-
-    if (char === '\'') {
-      const [, nextIndex] = readSingleQuotedString(value, index)
-      index = nextIndex
-      continue
-    }
-
-    if (char === '"' || char === '`') {
-      const [, nextIndex] = readDelimitedValue(value, index, char)
-      index = nextIndex
-      continue
-    }
-
-    if (char === target) {
-      return index
-    }
-
-    index += 1
-  }
-
-  return -1
-}
-
-function readParenthesizedValue(
-  value: string,
-  start: number,
-): [string, number] {
-  let index = start + 1
-  let depth = 1
-
-  while (index < value.length) {
-    const char = value[index]
-
-    if (char === '\'') {
-      const [, nextIndex] = readSingleQuotedString(value, index)
-      index = nextIndex
-      continue
-    }
-
-    if (char === '"' || char === '`') {
-      const [, nextIndex] = readDelimitedValue(value, index, char)
-      index = nextIndex
-      continue
-    }
-
-    if (char === '(') {
-      depth += 1
-      index += 1
-      continue
-    }
-
-    if (char === ')') {
-      depth -= 1
-      if (depth === 0) {
-        return [value.slice(start + 1, index), index + 1]
-      }
-    }
-
-    index += 1
-  }
-
-  return [value.slice(start + 1), value.length]
-}
-
-function splitTopLevelSqlList(value: string): string[] {
-  const parts: string[] = []
-  let start = 0
-  let index = 0
-  let depth = 0
-
-  while (index < value.length) {
-    const char = value[index]
-
-    if (char === '\'') {
-      const [, nextIndex] = readSingleQuotedString(value, index)
-      index = nextIndex
-      continue
-    }
-
-    if (char === '"' || char === '`') {
-      const [, nextIndex] = readDelimitedValue(value, index, char)
-      index = nextIndex
-      continue
-    }
-
-    if (char === '(') {
-      depth += 1
-      index += 1
-      continue
-    }
-
-    if (char === ')') {
-      depth = Math.max(0, depth - 1)
-      index += 1
-      continue
-    }
-
-    if (char === ',' && depth === 0) {
-      parts.push(value.slice(start, index).trim())
-      start = index + 1
-    }
-
-    index += 1
-  }
-
-  parts.push(value.slice(start).trim())
-  return parts.filter(Boolean)
-}
-
-function getColumnName(value: string | undefined): string {
-  if (!value) {
-    return ''
-  }
-
-  const segments = value.trim().split('.')
-  return segments.at(-1)
-    ?.replace(/^["`]|["`]$/g, '')
-    .trim()
-    .toLowerCase() ?? ''
-}
-
-function getAssignmentColumnName(assignment: string): string {
-  const [left] = assignment.split('=')
-  return getColumnName(left)
-}
-
-function isTemporalColumn(value: string): boolean {
-  return value === 'created_at' || value === 'updated_at'
-}
-
-function countQuestionPlaceholders(sql: string): number {
-  let count = 0
-  let index = 0
-
-  while (index < sql.length) {
-    const char = sql[index]
-
-    if (char === '\'') {
-      const [, nextIndex] = readSingleQuotedString(sql, index)
-      index = nextIndex
-      continue
-    }
-
-    if (char === '"' || char === '`') {
-      const [, nextIndex] = readDelimitedValue(sql, index, char)
-      index = nextIndex
-      continue
-    }
-
-    if (char === '?') {
-      count += 1
-    }
-
-    index += 1
-  }
-
-  return count
-}
-
-function toMysqlDateTimeValue(value: string): string {
-  const match = (/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2})(\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})$/)
-    .exec(value)
-
-  if (!match) {
+function normalizeTimestampValue(value: unknown): unknown {
+  if (typeof value === 'number') {
     return value
   }
 
-  return `${match[1]} ${match[2]}${match[3] ?? ''}`
+  if (typeof value === 'bigint') {
+    const numberValue = Number(value)
+    return Number.isSafeInteger(numberValue) ? numberValue : value
+  }
+
+  if (value instanceof Date) {
+    return value.getTime()
+  }
+
+  if (typeof value === 'string' && (/^\d+$/).test(value)) {
+    const numberValue = Number(value)
+    return Number.isSafeInteger(numberValue) ? numberValue : value
+  }
+
+  return value
 }
 
 function readSingleQuotedString(

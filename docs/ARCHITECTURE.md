@@ -24,7 +24,7 @@ Handlers should read:
 - `c.db` for SQL access.
 - `c.cache` for cache access.
 - `c.config` for runtime configuration.
-- `c.now()` for request-time timestamps.
+- `c.now()` for request-time epoch millisecond timestamps.
 
 Business code must not inspect `Bun`, Cloudflare bindings, or environment globals directly. Runtime detection belongs in runtime factories and adapters.
 

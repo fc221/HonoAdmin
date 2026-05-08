@@ -7,9 +7,9 @@ export const configRecordSchema = z.object({
   configKey: z.string(),
   configType: configTypeSchema,
   configValue: z.string(),
-  createdAt: z.string(),
+  createdAt: z.number().int().nonnegative(),
   id: z.number().int().positive(),
-  updatedAt: z.string(),
+  updatedAt: z.number().int().nonnegative(),
 })
 
 export const createConfigSchema = z.object({

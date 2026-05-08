@@ -11,11 +11,11 @@ export const webPageRecordSchema = z.object({
   alias: z.string(),
   category: z.string().nullable(),
   content: z.string(),
-  created_at: z.string(),
+  createdAt: z.number().int().nonnegative(),
   id: z.number().int().positive(),
   summary: z.string().nullable(),
   title: z.string(),
-  updated_at: z.string(),
+  updatedAt: z.number().int().nonnegative(),
 })
 
 export const createWebPageSchema = z.object({

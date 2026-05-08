@@ -36,10 +36,10 @@ export default createRoute(async (c) => {
           : null}
         <article class="mx-auto max-w-3xl rounded-box border border-base-300 bg-base-100 p-6 shadow-sm">
           <div class="flex flex-wrap items-center gap-2">
-            {announcement.is_top === 1
+            {announcement.isTop === 1
               ? <span class="badge badge-primary">置顶</span>
               : null}
-            {announcement.is_important === 1
+            {announcement.isImportant === 1
               ? <span class="badge badge-secondary">弹窗</span>
               : null}
           </div>

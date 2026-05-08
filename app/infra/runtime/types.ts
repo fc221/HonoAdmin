@@ -44,7 +44,7 @@ export type AppContext = {
   cache: CacheAdapter
   config: AppRuntimeConfig
   db: DBAdapter
-  now: () => string
+  now: () => number
   runtime: AppRuntime
 }
 

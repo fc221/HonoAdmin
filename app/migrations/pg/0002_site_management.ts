@@ -12,8 +12,8 @@ export const migration0002SiteManagement: Migration = {
         category VARCHAR(80),
         summary TEXT,
         content TEXT NOT NULL,
-        created_at TIMESTAMPTZ NOT NULL,
-        updated_at TIMESTAMPTZ NOT NULL
+        created_at BIGINT NOT NULL,
+        updated_at BIGINT NOT NULL
       )
     
     `,
@@ -25,8 +25,8 @@ export const migration0002SiteManagement: Migration = {
         content TEXT NOT NULL,
         is_top INT NOT NULL DEFAULT 0,
         is_important INT NOT NULL DEFAULT 0,
-        created_at TIMESTAMPTZ NOT NULL,
-        updated_at TIMESTAMPTZ NOT NULL
+        created_at BIGINT NOT NULL,
+        updated_at BIGINT NOT NULL
       )
     
     `,
@@ -40,8 +40,8 @@ export const migration0002SiteManagement: Migration = {
         user_id INT,
         reply TEXT,
         status VARCHAR(30) NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'close')),
-        created_at TIMESTAMPTZ NOT NULL,
-        updated_at TIMESTAMPTZ NOT NULL
+        created_at BIGINT NOT NULL,
+        updated_at BIGINT NOT NULL
       )
     
     `,
@@ -78,7 +78,7 @@ export const migration0002SiteManagement: Migration = {
         status VARCHAR(30) NOT NULL DEFAULT 'success' CHECK (
           status IN ('active', 'inactive', 'success', 'error', 'unknown')
         ),
-        created_at TIMESTAMPTZ NOT NULL
+        created_at BIGINT NOT NULL
       )
     
     `,

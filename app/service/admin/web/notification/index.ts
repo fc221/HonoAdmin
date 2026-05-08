@@ -61,7 +61,7 @@ export async function listWebNotifications(
   ])
 
   return createPaginatedResult(
-    rows,
+    rows.map(toWebNotificationRecord),
     total,
     pagination,
   )
@@ -175,14 +175,14 @@ export async function getWebNotificationByAlias(
     throw new NotFoundError('公告不存在。', { alias })
   }
 
-  return row
+  return toWebNotificationRecord(row)
 }
 
 export async function getWebNotificationById(
   ctx: ServiceContext,
   id: number,
 ): Promise<WebNotificationRecord> {
-  return requireWebNotification(ctx, id)
+  return toWebNotificationRecord(await requireWebNotification(ctx, id))
 }
 
 async function countWebNotifications(
@@ -220,6 +220,21 @@ async function requireWebNotification(
   }
 
   return row
+}
+
+function toWebNotificationRecord(
+  row: WebNotificationEntity,
+): WebNotificationRecord {
+  return {
+    alias: row.alias,
+    content: row.content,
+    createdAt: row.created_at,
+    id: row.id,
+    isImportant: row.is_important,
+    isTop: row.is_top,
+    title: row.title,
+    updatedAt: row.updated_at,
+  }
 }
 
 async function assertNotificationAliasAvailable(

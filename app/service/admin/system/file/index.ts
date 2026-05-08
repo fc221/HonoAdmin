@@ -482,7 +482,7 @@ function normalizeStorageKey(storageKey: string): string {
 function createStorageKey(
   uploadType: FileUploadType,
   extension: string,
-  now: string,
+  now: number,
 ): string {
   const date = new Date(now)
   const year = Number.isFinite(date.getTime())

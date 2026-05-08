@@ -20,7 +20,7 @@ const nullablePhoneSchema = z.string()
 export const userRecordSchema = z.object({
   avatar: z.string().nullable(),
   bio: z.string().nullable(),
-  createdAt: z.string(),
+  createdAt: z.number().int().nonnegative(),
   gender: userGenderSchema.nullable(),
   id: z.number().int().positive(),
   isRoot: z.boolean(),
@@ -30,7 +30,7 @@ export const userRecordSchema = z.object({
   roleId: z.number().int().positive().nullable(),
   roleIds: z.array(z.number().int().positive()),
   status: userStatusSchema,
-  updatedAt: z.string(),
+  updatedAt: z.number().int().nonnegative(),
   username: z.string(),
 })
 

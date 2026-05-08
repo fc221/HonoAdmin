@@ -1,6 +1,6 @@
 import type { Migration, MigrationStatement } from '../types'
 
-const seedTime = '2026-01-01T00:00:00.000Z'
+const seedTime = 1767225600000
 
 const siteConfigSeeds: Array<{
   configKey: string

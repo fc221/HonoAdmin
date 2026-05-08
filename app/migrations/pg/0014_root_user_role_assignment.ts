@@ -14,8 +14,8 @@ export const migration0014RootUserRoleAssignment: Migration = {
       SELECT
         sys_user.id,
         role.id,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       FROM sys_user
       INNER JOIN sys_role role
         ON role.code = 'admin'
@@ -32,8 +32,8 @@ export const migration0014RootUserRoleAssignment: Migration = {
       SELECT
         sys_user.id,
         role.id,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       FROM sys_user
       INNER JOIN sys_role role
         ON role.code = 'user'

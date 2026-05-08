@@ -19,8 +19,8 @@ export const migration0010SiteConfigAndMigrationUpdate: Migration = {
       params: [
         'site_subtitle',
         '',
-        '2026-01-01 00:00:00.000',
-        '2026-01-01 00:00:00.000'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -38,8 +38,8 @@ export const migration0010SiteConfigAndMigrationUpdate: Migration = {
       params: [
         'site_keywords',
         '',
-        '2026-01-01 00:00:00.000',
-        '2026-01-01 00:00:00.000'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -57,8 +57,8 @@ export const migration0010SiteConfigAndMigrationUpdate: Migration = {
       params: [
         'site_description',
         '',
-        '2026-01-01 00:00:00.000',
-        '2026-01-01 00:00:00.000'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -126,8 +126,8 @@ export const migration0010SiteConfigAndMigrationUpdate: Migration = {
     
       `,
       params: [
-        '2026-01-01 00:00:00.000',
-        '2026-01-01 00:00:00.000'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -144,8 +144,8 @@ export const migration0010SiteConfigAndMigrationUpdate: Migration = {
       params: [
         1,
         'admin.system.update.migrate',
-        '2026-01-01 00:00:00.000',
-        '2026-01-01 00:00:00.000'
+        1767225600000,
+        1767225600000
       ],
     }
   ],

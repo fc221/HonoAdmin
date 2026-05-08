@@ -59,7 +59,7 @@ export async function listWebFeedbacks(
   ])
 
   return createPaginatedResult(
-    rows,
+    rows.map(toWebFeedbackRecord),
     total,
     pagination,
   )
@@ -143,7 +143,7 @@ async function getWebFeedbackById(
   ctx: ServiceContext,
   id: number,
 ): Promise<WebFeedbackRecord> {
-  return requireWebFeedback(ctx, id)
+  return toWebFeedbackRecord(await requireWebFeedback(ctx, id))
 }
 
 async function countWebFeedbacks(
@@ -181,6 +181,21 @@ async function requireWebFeedback(
   }
 
   return row
+}
+
+function toWebFeedbackRecord(row: WebFeedbackEntity): WebFeedbackRecord {
+  return {
+    contact: row.contact,
+    content: row.content,
+    createdAt: row.created_at,
+    id: row.id,
+    images: row.images,
+    reply: row.reply,
+    status: row.status,
+    title: row.title,
+    updatedAt: row.updated_at,
+    userId: row.user_id,
+  }
 }
 
 function hasField<T extends object>(value: T, key: keyof T): boolean {

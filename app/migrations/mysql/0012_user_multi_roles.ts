@@ -9,8 +9,8 @@ export const migration0012UserMultiRoles: Migration = {
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT NOT NULL,
         role_id INT NOT NULL,
-        created_at DATETIME(3) NOT NULL,
-        updated_at DATETIME(3) NOT NULL,
+        created_at BIGINT NOT NULL,
+        updated_at BIGINT NOT NULL,
         UNIQUE (user_id, role_id)
       )
     

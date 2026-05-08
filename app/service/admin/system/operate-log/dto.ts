@@ -8,7 +8,7 @@ export const operateLogStatusSchema = z.enum(operateLogStatuses)
 export const operateLogRecordSchema = z.object({
   actionKey: z.string().nullable(),
   clientIp: z.string().nullable(),
-  createdAt: z.string(),
+  createdAt: z.number().int().nonnegative(),
   errorMsg: z.string().nullable(),
   id: z.number().int().positive(),
   logData: z.string().nullable(),

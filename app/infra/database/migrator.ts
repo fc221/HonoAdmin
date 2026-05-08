@@ -50,7 +50,7 @@ export async function runPendingMigrations(
       ...migration.statements.map(normalizeMigrationStatement),
       {
         sql: 'INSERT INTO _migrations (id, name, applied_at) VALUES (?, ?, ?)',
-        params: [migration.id, migration.name, new Date().toISOString()],
+        params: [migration.id, migration.name, Date.now()],
       },
     ])
   }
@@ -97,7 +97,7 @@ function getMigrationTableCreateSql(db: DBAdapter): string {
       CREATE TABLE IF NOT EXISTS _migrations (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
-        applied_at TEXT NOT NULL
+        applied_at INTEGER NOT NULL
       )
     `
   }
@@ -106,7 +106,7 @@ function getMigrationTableCreateSql(db: DBAdapter): string {
     CREATE TABLE IF NOT EXISTS _migrations (
       id VARCHAR(100) PRIMARY KEY,
       name VARCHAR(255) NOT NULL,
-      applied_at VARCHAR(30) NOT NULL
+      applied_at BIGINT NOT NULL
     )
   `
 }

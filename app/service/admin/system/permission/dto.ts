@@ -9,14 +9,14 @@ export const permissionCodeSchema = z.string()
 export const permissionRecordSchema = z.object({
   actionKey: z.string(),
   code: permissionCodeSchema,
-  createdAt: z.string(),
+  createdAt: z.number().int().nonnegative(),
   groupName: z.string(),
   id: z.number().int().positive(),
   methodPattern: z.string(),
   name: z.string(),
   pathPattern: z.string(),
   sortOrder: z.number().int().nonnegative(),
-  updatedAt: z.string(),
+  updatedAt: z.number().int().nonnegative(),
 })
 
 export type PermissionRecord = z.infer<typeof permissionRecordSchema>

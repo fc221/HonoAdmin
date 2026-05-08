@@ -7,14 +7,14 @@ export const webFeedbackStatusSchema = z.enum(webFeedbackStatuses)
 export const webFeedbackRecordSchema = z.object({
   contact: z.string().nullable(),
   content: z.string(),
-  created_at: z.string(),
+  createdAt: z.number().int().nonnegative(),
   id: z.number().int().positive(),
   images: z.string().nullable(),
   reply: z.string().nullable(),
   status: webFeedbackStatusSchema,
   title: z.string(),
-  updated_at: z.string(),
-  user_id: z.number().int().positive().nullable(),
+  updatedAt: z.number().int().nonnegative(),
+  userId: z.number().int().positive().nullable(),
 })
 
 export const createWebFeedbackSchema = z.object({

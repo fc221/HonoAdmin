@@ -32,7 +32,7 @@ HonoAdmin 的 Workers 运行时通过 Hono Context 注入 `DB`、`CACHE`、`APP_
 }
 ```
 
-`DB` 是必需的 D1 数据库绑定。`CACHE` 是可选 KV 绑定；没有配置时会使用 noop cache adapter。`APP_TIMEZONE` 用于后台展示时间和 `c.now()`。`JWT_SECRET` 和 `SESSION_SECRET` 必须通过 secret 配置：
+`DB` 是必需的 D1 数据库绑定。`CACHE` 是可选 KV 绑定；没有配置时会使用 noop cache adapter。`APP_TIMEZONE` 用于后台展示时间；`c.now()` 使用统一毫秒时间戳。`JWT_SECRET` 和 `SESSION_SECRET` 必须通过 secret 配置：
 
 ```bash
 wrangler secret put JWT_SECRET

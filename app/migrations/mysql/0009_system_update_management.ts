@@ -10,8 +10,8 @@ export const migration0009SystemUpdateManagement: Migration = {
         config_type VARCHAR(30) NOT NULL CHECK (config_type IN ('site', 'system', 'file')),
         config_key VARCHAR(255) NOT NULL,
         config_value TEXT NOT NULL,
-        created_at DATETIME(3) NOT NULL,
-        updated_at DATETIME(3) NOT NULL,
+        created_at BIGINT NOT NULL,
+        updated_at BIGINT NOT NULL,
         UNIQUE (config_type, config_key)
       )
     
@@ -59,8 +59,8 @@ export const migration0009SystemUpdateManagement: Migration = {
         mime_type VARCHAR(255) NOT NULL,
         file_size INT NOT NULL,
         user_id INT,
-        created_at DATETIME(3) NOT NULL,
-        updated_at DATETIME(3) NOT NULL
+        created_at BIGINT NOT NULL,
+        updated_at BIGINT NOT NULL
       )
     
     `,
@@ -131,8 +131,8 @@ export const migration0009SystemUpdateManagement: Migration = {
       params: [
         'update_check_url',
         '',
-        '2026-01-01 00:00:00.000',
-        '2026-01-01 00:00:00.000'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -150,8 +150,8 @@ export const migration0009SystemUpdateManagement: Migration = {
       params: [
         'update_latest_version',
         '',
-        '2026-01-01 00:00:00.000',
-        '2026-01-01 00:00:00.000'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -169,8 +169,8 @@ export const migration0009SystemUpdateManagement: Migration = {
       params: [
         'update_release_url',
         '',
-        '2026-01-01 00:00:00.000',
-        '2026-01-01 00:00:00.000'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -188,8 +188,8 @@ export const migration0009SystemUpdateManagement: Migration = {
       params: [
         'update_release_notes',
         '',
-        '2026-01-01 00:00:00.000',
-        '2026-01-01 00:00:00.000'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -207,8 +207,8 @@ export const migration0009SystemUpdateManagement: Migration = {
       params: [
         'update_checked_at',
         '',
-        '2026-01-01 00:00:00.000',
-        '2026-01-01 00:00:00.000'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -226,8 +226,8 @@ export const migration0009SystemUpdateManagement: Migration = {
       params: [
         'update_ignored_version',
         '',
-        '2026-01-01 00:00:00.000',
-        '2026-01-01 00:00:00.000'
+        1767225600000,
+        1767225600000
       ],
     },
     `
@@ -237,7 +237,7 @@ export const migration0009SystemUpdateManagement: Migration = {
         created_at,
         updated_at
       )
-      VALUES (1, 'admin.system.update', '2026-01-01 00:00:00.000', '2026-01-01 00:00:00.000')
+      VALUES (1, 'admin.system.update', 1767225600000, 1767225600000)
     
     `,
     {
@@ -263,8 +263,8 @@ export const migration0009SystemUpdateManagement: Migration = {
         '/admin/system/update',
         '*',
         820,
-        '2026-01-01 00:00:00.000',
-        '2026-01-01 00:00:00.000'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -290,8 +290,8 @@ export const migration0009SystemUpdateManagement: Migration = {
         '/admin/system/update/status',
         '*',
         821,
-        '2026-01-01 00:00:00.000',
-        '2026-01-01 00:00:00.000'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -317,8 +317,8 @@ export const migration0009SystemUpdateManagement: Migration = {
         '/admin/system/update',
         'check',
         822,
-        '2026-01-01 00:00:00.000',
-        '2026-01-01 00:00:00.000'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -344,8 +344,8 @@ export const migration0009SystemUpdateManagement: Migration = {
         '/admin/system/update',
         'handle',
         823,
-        '2026-01-01 00:00:00.000',
-        '2026-01-01 00:00:00.000'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -362,8 +362,8 @@ export const migration0009SystemUpdateManagement: Migration = {
       params: [
         1,
         'admin.system.update.view',
-        '2026-01-01 00:00:00.000',
-        '2026-01-01 00:00:00.000'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -380,8 +380,8 @@ export const migration0009SystemUpdateManagement: Migration = {
       params: [
         1,
         'admin.system.update.status',
-        '2026-01-01 00:00:00.000',
-        '2026-01-01 00:00:00.000'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -398,8 +398,8 @@ export const migration0009SystemUpdateManagement: Migration = {
       params: [
         1,
         'admin.system.update.check',
-        '2026-01-01 00:00:00.000',
-        '2026-01-01 00:00:00.000'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -416,8 +416,8 @@ export const migration0009SystemUpdateManagement: Migration = {
       params: [
         1,
         'admin.system.update.handle',
-        '2026-01-01 00:00:00.000',
-        '2026-01-01 00:00:00.000'
+        1767225600000,
+        1767225600000
       ],
     }
   ],

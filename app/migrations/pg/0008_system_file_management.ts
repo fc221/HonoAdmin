@@ -10,8 +10,8 @@ export const migration0008SystemFileManagement: Migration = {
         config_type VARCHAR(30) NOT NULL CHECK (config_type IN ('site', 'system', 'file')),
         config_key VARCHAR(255) NOT NULL,
         config_value TEXT NOT NULL,
-        created_at TIMESTAMPTZ NOT NULL,
-        updated_at TIMESTAMPTZ NOT NULL,
+        created_at BIGINT NOT NULL,
+        updated_at BIGINT NOT NULL,
         UNIQUE (config_type, config_key)
       )
     
@@ -59,8 +59,8 @@ export const migration0008SystemFileManagement: Migration = {
         mime_type VARCHAR(255) NOT NULL,
         file_size INT NOT NULL,
         user_id INT,
-        created_at TIMESTAMPTZ NOT NULL,
-        updated_at TIMESTAMPTZ NOT NULL
+        created_at BIGINT NOT NULL,
+        updated_at BIGINT NOT NULL
       )
     
     `,
@@ -89,8 +89,8 @@ export const migration0008SystemFileManagement: Migration = {
       params: [
         'file_storage_driver',
         'local',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -108,8 +108,8 @@ export const migration0008SystemFileManagement: Migration = {
       params: [
         'file_local_root',
         './uploads',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -127,8 +127,8 @@ export const migration0008SystemFileManagement: Migration = {
       params: [
         'file_s3_endpoint',
         '',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -146,8 +146,8 @@ export const migration0008SystemFileManagement: Migration = {
       params: [
         'file_s3_region',
         'auto',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -165,8 +165,8 @@ export const migration0008SystemFileManagement: Migration = {
       params: [
         'file_s3_bucket',
         '',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -184,8 +184,8 @@ export const migration0008SystemFileManagement: Migration = {
       params: [
         'file_s3_access_key_id',
         '',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -203,8 +203,8 @@ export const migration0008SystemFileManagement: Migration = {
       params: [
         'file_s3_secret_access_key',
         '',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -222,8 +222,8 @@ export const migration0008SystemFileManagement: Migration = {
       params: [
         'file_s3_signed_url_ttl_seconds',
         '300',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     `
@@ -233,7 +233,7 @@ export const migration0008SystemFileManagement: Migration = {
         created_at,
         updated_at
       )
-      VALUES (1, 'admin.system.file', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z')
+      VALUES (1, 'admin.system.file', 1767225600000, 1767225600000)
       ON CONFLICT DO NOTHING
     `,
     {
@@ -259,8 +259,8 @@ export const migration0008SystemFileManagement: Migration = {
         '/admin/system/file',
         '*',
         800,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -286,8 +286,8 @@ export const migration0008SystemFileManagement: Migration = {
         '/admin/system/file',
         'upload',
         801,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -313,8 +313,8 @@ export const migration0008SystemFileManagement: Migration = {
         '/admin/system/file',
         'delete',
         802,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -331,8 +331,8 @@ export const migration0008SystemFileManagement: Migration = {
       params: [
         1,
         'admin.system.file.view',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -349,8 +349,8 @@ export const migration0008SystemFileManagement: Migration = {
       params: [
         1,
         'admin.system.file.upload',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -367,8 +367,8 @@ export const migration0008SystemFileManagement: Migration = {
       params: [
         1,
         'admin.system.file.delete',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     }
   ],

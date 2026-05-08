@@ -14,8 +14,8 @@ export const migration0013RemoveSeededAgentRole: Migration = {
       SELECT
         user_role.user_id,
         fallback_role.id,
-        '2026-01-01 00:00:00.000',
-        '2026-01-01 00:00:00.000'
+        1767225600000,
+        1767225600000
       FROM sys_user_role user_role
       INNER JOIN sys_role agent_role
         ON agent_role.id = user_role.role_id

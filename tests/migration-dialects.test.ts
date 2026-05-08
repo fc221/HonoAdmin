@@ -8,10 +8,7 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, test } from 'bun:test'
-import {
-  normalizeBunSqlForDialect,
-  normalizeBunSqlParamsForDialect,
-} from '../app/infra/database/adapter/bun-sql'
+import { normalizeBunSqlForDialect } from '../app/infra/database/adapter/bun-sql'
 import {
   getMigrationStatus,
   runMigrations,
@@ -122,35 +119,6 @@ describe('migration dialects', () => {
       'CAST("account".id AS TEXT) LIKE $1',
     )
     expect(normalizeBunSqlForDialect(source, 'pg')).toContain('note = \'?\'')
-  })
-
-  test('MySQL temporal params are normalized only for timestamp columns', () => {
-    const insertParams = normalizeBunSqlParamsForDialect(
-      `
-        INSERT INTO sys_user (username, created_at, updated_at, note)
-        VALUES (?, ?, ?, ?)
-      `,
-      [
-        'root',
-        '2026-05-07T10:20:30+08:00',
-        '2026-05-07T10:20:30+08:00',
-        '2026-05-07T10:20:30+08:00',
-      ],
-      'mysql',
-    )
-    expect(insertParams).toEqual([
-      'root',
-      '2026-05-07 10:20:30',
-      '2026-05-07 10:20:30',
-      '2026-05-07T10:20:30+08:00',
-    ])
-
-    const updateParams = normalizeBunSqlParamsForDialect(
-      'UPDATE sys_user SET nickname = ?, updated_at = ? WHERE id = ?',
-      ['Root', '2026-05-07T10:20:30+08:00', 1],
-      'mysql',
-    )
-    expect(updateParams).toEqual(['Root', '2026-05-07 10:20:30', 1])
   })
 
   test.skipIf(!process.env.MYSQL_TEST_DATABASE_URL)(

@@ -28,14 +28,14 @@ export const rolePolicySchema = z.object({
 
 export const roleRecordSchema = z.object({
   code: roleCodeSchema,
-  createdAt: z.string(),
+  createdAt: z.number().int().nonnegative(),
   description: z.string().nullable(),
   id: z.number().int().positive(),
   menuNames: z.array(roleMenuNameSchema),
   name: z.string(),
   permissionCodes: z.array(permissionCodeSchema),
   policies: z.array(rolePolicySchema),
-  updatedAt: z.string(),
+  updatedAt: z.number().int().nonnegative(),
 })
 
 export const roleOptionSchema = z.object({

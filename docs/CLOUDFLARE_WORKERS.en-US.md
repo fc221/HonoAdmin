@@ -32,7 +32,7 @@ The HonoAdmin Workers runtime injects `DB`, `CACHE`, `APP_TIMEZONE`, `JWT_SECRET
 }
 ```
 
-`DB` is the required D1 database binding. `CACHE` is an optional KV binding; when it is not configured, HonoAdmin uses the noop cache adapter. `APP_TIMEZONE` controls admin time display and `c.now()`. Configure `JWT_SECRET` and `SESSION_SECRET` as Worker secrets:
+`DB` is the required D1 database binding. `CACHE` is an optional KV binding; when it is not configured, HonoAdmin uses the noop cache adapter. `APP_TIMEZONE` controls admin time display; `c.now()` returns a unified millisecond timestamp. Configure `JWT_SECRET` and `SESSION_SECRET` as Worker secrets:
 
 ```bash
 wrangler secret put JWT_SECRET

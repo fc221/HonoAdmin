@@ -27,13 +27,13 @@ export default function WebNotificationTable({ notifications }: Props) {
               <td class="font-mono text-sm">{notification.alias}</td>
               <td>
                 <div class="flex flex-wrap gap-1">
-                  {notification.is_top === 1
+                  {notification.isTop === 1
                     ? <span class="badge badge-primary badge-sm">置顶</span>
                     : null}
-                  {notification.is_important === 1
+                  {notification.isImportant === 1
                     ? <span class="badge badge-secondary badge-sm">弹窗</span>
                     : null}
-                  {notification.is_top !== 1 && notification.is_important !== 1
+                  {notification.isTop !== 1 && notification.isImportant !== 1
                     ? <span class="text-base-content/50">-</span>
                     : null}
                 </div>

@@ -1,6 +1,6 @@
 import type { Migration } from '../types'
 
-const seedTime = '2026-01-01T00:00:00.000Z'
+const seedTime = 1767225600000
 
 export const migration0013RemoveSeededAgentRole: Migration = {
   id: '0013_remove_seeded_agent_role',

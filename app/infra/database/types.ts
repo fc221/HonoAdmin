@@ -32,6 +32,6 @@ export interface DBAdapter {
 
 export type BaseEntity = {
   id: number
-  created_at: string
-  updated_at: string
+  created_at: number
+  updated_at: number
 }

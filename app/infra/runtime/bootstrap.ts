@@ -59,7 +59,7 @@ export async function getBunBootstrapConfigStatus(
       value: values.DATABASE_URL ?? bindings.DATABASE_URL ?? './honox-admin.sqlite',
     },
     {
-      description: '用于后台展示时间和运行时 now() 的时区。',
+      description: '用于后台展示时间的时区；运行时 now() 使用统一毫秒时间戳。',
       isConfigured: hasConfigValue(values.APP_TIMEZONE),
       key: 'APP_TIMEZONE',
       label: '应用时区',

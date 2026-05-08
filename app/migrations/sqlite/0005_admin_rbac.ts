@@ -1,6 +1,6 @@
 import type { Migration } from '../types'
 
-const seedTime = '2026-01-01T00:00:00.000Z'
+const seedTime = 1767225600000
 
 export const migration0005AdminRbac: Migration = {
   id: '0005_admin_rbac',
@@ -12,8 +12,8 @@ export const migration0005AdminRbac: Migration = {
         code TEXT NOT NULL UNIQUE,
         name TEXT NOT NULL,
         description TEXT,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
       )
     `,
     `
@@ -21,8 +21,8 @@ export const migration0005AdminRbac: Migration = {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         role_id INTEGER NOT NULL,
         menu_name TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
         UNIQUE (role_id, menu_name)
       )
     `,
@@ -32,8 +32,8 @@ export const migration0005AdminRbac: Migration = {
         role_id INTEGER NOT NULL,
         path_pattern TEXT NOT NULL,
         method_pattern TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
         UNIQUE (role_id, path_pattern, method_pattern)
       )
     `,

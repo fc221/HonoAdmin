@@ -10,8 +10,8 @@ export const migration0005AdminRbac: Migration = {
         code VARCHAR(255) NOT NULL UNIQUE,
         name VARCHAR(255) NOT NULL,
         description TEXT,
-        created_at TIMESTAMPTZ NOT NULL,
-        updated_at TIMESTAMPTZ NOT NULL
+        created_at BIGINT NOT NULL,
+        updated_at BIGINT NOT NULL
       )
     
     `,
@@ -20,8 +20,8 @@ export const migration0005AdminRbac: Migration = {
         id SERIAL PRIMARY KEY,
         role_id INT NOT NULL,
         menu_name VARCHAR(255) NOT NULL,
-        created_at TIMESTAMPTZ NOT NULL,
-        updated_at TIMESTAMPTZ NOT NULL,
+        created_at BIGINT NOT NULL,
+        updated_at BIGINT NOT NULL,
         UNIQUE (role_id, menu_name)
       )
     
@@ -32,8 +32,8 @@ export const migration0005AdminRbac: Migration = {
         role_id INT NOT NULL,
         path_pattern VARCHAR(255) NOT NULL,
         method_pattern VARCHAR(20) NOT NULL,
-        created_at TIMESTAMPTZ NOT NULL,
-        updated_at TIMESTAMPTZ NOT NULL,
+        created_at BIGINT NOT NULL,
+        updated_at BIGINT NOT NULL,
         UNIQUE (role_id, path_pattern, method_pattern)
       )
     
@@ -54,8 +54,8 @@ export const migration0005AdminRbac: Migration = {
         'admin',
         '管理员',
         '内置管理员角色，默认拥有全部后台菜单和操作权限。',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       )
       ON CONFLICT DO NOTHING
     `,
@@ -67,16 +67,16 @@ export const migration0005AdminRbac: Migration = {
         updated_at
       )
       VALUES
-        (1, 'admin.dashboard', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z'),
-        (1, 'admin.web', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z'),
-        (1, 'admin.web.page', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z'),
-        (1, 'admin.web.notification', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z'),
-        (1, 'admin.web.feedback', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z'),
-        (1, 'admin.system', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z'),
-        (1, 'admin.system.config', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z'),
-        (1, 'admin.system.role', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z'),
-        (1, 'admin.system.user', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z'),
-        (1, 'admin.system.operate-log', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z')
+        (1, 'admin.dashboard', 1767225600000, 1767225600000),
+        (1, 'admin.web', 1767225600000, 1767225600000),
+        (1, 'admin.web.page', 1767225600000, 1767225600000),
+        (1, 'admin.web.notification', 1767225600000, 1767225600000),
+        (1, 'admin.web.feedback', 1767225600000, 1767225600000),
+        (1, 'admin.system', 1767225600000, 1767225600000),
+        (1, 'admin.system.config', 1767225600000, 1767225600000),
+        (1, 'admin.system.role', 1767225600000, 1767225600000),
+        (1, 'admin.system.user', 1767225600000, 1767225600000),
+        (1, 'admin.system.operate-log', 1767225600000, 1767225600000)
       ON CONFLICT DO NOTHING
     `,
     `
@@ -88,8 +88,8 @@ export const migration0005AdminRbac: Migration = {
         updated_at
       )
       VALUES
-        (1, '/admin', '*', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z'),
-        (1, '/admin/*', '*', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z')
+        (1, '/admin', '*', 1767225600000, 1767225600000),
+        (1, '/admin/*', '*', 1767225600000, 1767225600000)
       ON CONFLICT DO NOTHING
     `,
     `

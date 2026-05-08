@@ -25,23 +25,18 @@ export function setDefaultTimezone(value: string | undefined): string {
   return timezoneValue
 }
 
-export function nowInTimezone(timezoneValue: string): string {
-  setDefaultTimezone(timezoneValue)
-  return dayjs().tz().format()
-}
-
 export function formatDateTime(
-  value: string,
+  value: number | string | null | undefined,
   timezoneValue: string,
   format = dateTimeDisplayFormat,
 ): string {
-  if (!value) {
+  if (value === null || value === undefined || value === '') {
     return '-'
   }
 
   const date = dayjs(value)
   if (!date.isValid()) {
-    return value
+    return String(value)
   }
 
   setDefaultTimezone(timezoneValue)

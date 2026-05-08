@@ -13,8 +13,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         method_pattern VARCHAR(20) NOT NULL,
         path_pattern VARCHAR(255) NOT NULL,
         sort_order INT NOT NULL DEFAULT 0,
-        created_at TIMESTAMPTZ NOT NULL,
-        updated_at TIMESTAMPTZ NOT NULL
+        created_at BIGINT NOT NULL,
+        updated_at BIGINT NOT NULL
       )
     
     `,
@@ -23,8 +23,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         id SERIAL PRIMARY KEY,
         role_id INT NOT NULL,
         permission_code VARCHAR(255) NOT NULL,
-        created_at TIMESTAMPTZ NOT NULL,
-        updated_at TIMESTAMPTZ NOT NULL,
+        created_at BIGINT NOT NULL,
+        updated_at BIGINT NOT NULL,
         UNIQUE (role_id, permission_code)
       )
     
@@ -51,8 +51,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         'GET',
         '/admin/dashboard',
         10,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -77,8 +77,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         'GET',
         '/admin/web/page',
         100,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -103,8 +103,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         'GET',
         '/admin/web/page/add',
         101,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -129,8 +129,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         'POST',
         '/admin/web/page/add',
         102,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -155,8 +155,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         'GET',
         '/admin/web/page/edit',
         103,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -181,8 +181,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         'POST',
         '/admin/web/page/edit',
         104,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -207,8 +207,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         'POST',
         '/admin/web/page',
         105,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -233,8 +233,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         'GET',
         '/admin/web/notification',
         200,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -259,8 +259,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         'GET',
         '/admin/web/notification/add',
         201,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -285,8 +285,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         'POST',
         '/admin/web/notification/add',
         202,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -311,8 +311,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         'GET',
         '/admin/web/notification/edit',
         203,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -337,8 +337,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         'POST',
         '/admin/web/notification/edit',
         204,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -363,8 +363,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         'POST',
         '/admin/web/notification',
         205,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -389,8 +389,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         'GET',
         '/admin/web/feedback',
         300,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -415,8 +415,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         'POST',
         '/admin/web/feedback',
         301,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -441,8 +441,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         'POST',
         '/admin/web/feedback',
         302,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -467,8 +467,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         'GET',
         '/admin/system/config',
         400,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -493,8 +493,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         'POST',
         '/admin/system/config',
         401,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -519,8 +519,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         'GET',
         '/admin/system/role',
         500,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -545,8 +545,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         'GET',
         '/admin/system/role/add',
         501,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -571,8 +571,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         'POST',
         '/admin/system/role/add',
         502,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -597,8 +597,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         'GET',
         '/admin/system/role/edit',
         503,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -623,8 +623,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         'POST',
         '/admin/system/role/edit',
         504,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -649,8 +649,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         'POST',
         '/admin/system/role',
         505,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -675,8 +675,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         'GET',
         '/admin/system/user',
         600,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -701,8 +701,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         'POST',
         '/admin/system/user',
         601,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -727,8 +727,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         'POST',
         '/admin/system/user',
         602,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -753,8 +753,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         'POST',
         '/admin/system/user',
         603,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -779,8 +779,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         'GET',
         '/admin/system/operate-log',
         700,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -805,8 +805,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         'POST',
         '/admin/system/operate-log',
         701,
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     `
@@ -823,8 +823,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         'user',
         '用户',
         '默认普通用户角色，仅保留基础后台入口。',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       )
       ON CONFLICT DO NOTHING
     `,
@@ -835,7 +835,7 @@ export const migration0006AdminPermissionCatalog: Migration = {
         created_at,
         updated_at
       )
-      VALUES (2, 'admin.dashboard', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z')
+      VALUES (2, 'admin.dashboard', 1767225600000, 1767225600000)
       ON CONFLICT DO NOTHING
     `,
     {
@@ -852,8 +852,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
       params: [
         1,
         'admin.dashboard.view',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -870,8 +870,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
       params: [
         1,
         'admin.web.page.view',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -888,8 +888,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
       params: [
         1,
         'admin.web.page.add.view',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -906,8 +906,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
       params: [
         1,
         'admin.web.page.create',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -924,8 +924,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
       params: [
         1,
         'admin.web.page.edit.view',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -942,8 +942,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
       params: [
         1,
         'admin.web.page.update',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -960,8 +960,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
       params: [
         1,
         'admin.web.page.delete',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -978,8 +978,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
       params: [
         1,
         'admin.web.notification.view',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -996,8 +996,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
       params: [
         1,
         'admin.web.notification.add.view',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -1014,8 +1014,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
       params: [
         1,
         'admin.web.notification.create',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -1032,8 +1032,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
       params: [
         1,
         'admin.web.notification.edit.view',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -1050,8 +1050,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
       params: [
         1,
         'admin.web.notification.update',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -1068,8 +1068,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
       params: [
         1,
         'admin.web.notification.delete',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -1086,8 +1086,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
       params: [
         1,
         'admin.web.feedback.view',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -1104,8 +1104,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
       params: [
         1,
         'admin.web.feedback.update',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -1122,8 +1122,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
       params: [
         1,
         'admin.web.feedback.delete',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -1140,8 +1140,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
       params: [
         1,
         'admin.system.config.view',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -1158,8 +1158,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
       params: [
         1,
         'admin.system.config.update',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -1176,8 +1176,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
       params: [
         1,
         'admin.system.role.view',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -1194,8 +1194,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
       params: [
         1,
         'admin.system.role.add.view',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -1212,8 +1212,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
       params: [
         1,
         'admin.system.role.create',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -1230,8 +1230,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
       params: [
         1,
         'admin.system.role.edit.view',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -1248,8 +1248,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
       params: [
         1,
         'admin.system.role.update',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -1266,8 +1266,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
       params: [
         1,
         'admin.system.role.delete',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -1284,8 +1284,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
       params: [
         1,
         'admin.system.user.view',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -1302,8 +1302,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
       params: [
         1,
         'admin.system.user.create',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -1320,8 +1320,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
       params: [
         1,
         'admin.system.user.update',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -1338,8 +1338,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
       params: [
         1,
         'admin.system.user.delete',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -1356,8 +1356,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
       params: [
         1,
         'admin.system.operate-log.view',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -1374,8 +1374,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
       params: [
         1,
         'admin.system.operate-log.delete',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     {
@@ -1392,8 +1392,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
       params: [
         2,
         'admin.dashboard.view',
-        '2026-01-01T00:00:00.000Z',
-        '2026-01-01T00:00:00.000Z'
+        1767225600000,
+        1767225600000
       ],
     },
     `

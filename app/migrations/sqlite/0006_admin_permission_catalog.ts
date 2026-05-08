@@ -1,6 +1,6 @@
 import type { Migration, MigrationStatement } from '../types'
 
-const seedTime = '2026-01-01T00:00:00.000Z'
+const seedTime = 1767225600000
 
 interface PermissionSeed {
   code: string
@@ -64,8 +64,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         method_pattern TEXT NOT NULL,
         path_pattern TEXT NOT NULL,
         sort_order INTEGER NOT NULL DEFAULT 0,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
       )
     `,
     `
@@ -73,8 +73,8 @@ export const migration0006AdminPermissionCatalog: Migration = {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         role_id INTEGER NOT NULL,
         permission_code TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
         UNIQUE (role_id, permission_code)
       )
     `,

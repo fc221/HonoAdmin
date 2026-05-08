@@ -52,7 +52,7 @@ export async function createTestServiceContext(options: {
       cache,
       config: runtime.config,
       db,
-      now: () => '2026-01-01T00:00:00.000Z',
+      now: () => 1767225600000,
       runtime,
     },
   }

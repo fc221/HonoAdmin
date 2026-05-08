@@ -56,7 +56,7 @@ export default function WebNotificationForm({
           <div class="flex flex-wrap gap-4 rounded-box border border-base-300 bg-base-100 p-3">
             <label class="label cursor-pointer justify-start gap-2">
               <input
-                checked={notification?.is_top === 1}
+                checked={notification?.isTop === 1}
                 class="checkbox checkbox-primary checkbox-sm"
                 name="isTop"
                 type="checkbox"
@@ -65,7 +65,7 @@ export default function WebNotificationForm({
             </label>
             <label class="label cursor-pointer justify-start gap-2">
               <input
-                checked={notification?.is_important === 1}
+                checked={notification?.isImportant === 1}
                 class="checkbox checkbox-primary checkbox-sm"
                 name="isImportant"
                 type="checkbox"

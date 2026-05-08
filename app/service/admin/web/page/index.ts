@@ -59,7 +59,7 @@ export async function listWebPages(
   ])
 
   return createPaginatedResult(
-    rows,
+    rows.map(toWebPageRecord),
     total,
     pagination,
   )
@@ -171,14 +171,14 @@ export async function getWebPageByAlias(
     throw new NotFoundError('页面不存在。', { alias })
   }
 
-  return row
+  return toWebPageRecord(row)
 }
 
 export async function getWebPageById(
   ctx: ServiceContext,
   id: number,
 ): Promise<WebPageRecord> {
-  return requireWebPage(ctx, id)
+  return toWebPageRecord(await requireWebPage(ctx, id))
 }
 
 async function countWebPages(
@@ -216,6 +216,19 @@ async function requireWebPage(
   }
 
   return row
+}
+
+function toWebPageRecord(row: WebPageEntity): WebPageRecord {
+  return {
+    alias: row.alias,
+    category: row.category,
+    content: row.content,
+    createdAt: row.created_at,
+    id: row.id,
+    summary: row.summary,
+    title: row.title,
+    updatedAt: row.updated_at,
+  }
 }
 
 async function assertPageAliasAvailable(

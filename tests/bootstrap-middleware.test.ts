@@ -61,7 +61,7 @@ async function markDatabaseAsPartiallyMigrated(
     CREATE TABLE IF NOT EXISTS _migrations (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
-      applied_at TEXT NOT NULL
+      applied_at INTEGER NOT NULL
     )
   `)
   await context.ctx.db.execute(
@@ -69,7 +69,7 @@ async function markDatabaseAsPartiallyMigrated(
     [
       '0001_admin_core',
       'create admin core tables',
-      '2026-01-01T00:00:00.000Z',
+      1767225600000,
     ],
   )
 }
