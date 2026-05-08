@@ -9,7 +9,9 @@
     "lint": "eslint .",
     "test": "bun test",
     "check": "bun run typecheck && bun run lint && bun test && bun run build",
-    "build": "vite build --mode client && vite build",
+    "build": "bun run build:workers",
+    "build:workers": "vite build --mode client && vite build --mode cloudflare-workers",
+    "build:bun": "bun --bun vite build --mode client && bun --bun vite build --mode bun",
     "scaffold:crud": "bun run scripts/scaffold-admin-crud.ts",
     "preview": "wrangler dev",
     "deploy": "bun run build && wrangler deploy"

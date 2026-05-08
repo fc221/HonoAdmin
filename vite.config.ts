@@ -1,5 +1,6 @@
 import type { Plugin } from 'vite'
-import build from '@hono/vite-build/cloudflare-workers'
+import buildBun from '@hono/vite-build/bun'
+import buildCloudflareWorkers from '@hono/vite-build/cloudflare-workers'
 import bunAdapter from '@hono/vite-dev-server/bun'
 import cloudflareAdapter from '@hono/vite-dev-server/cloudflare'
 import tailwindcss from '@tailwindcss/vite'
@@ -63,7 +64,9 @@ export default defineConfig(({ command, mode }) => {
       }),
       reloadAppOnChange(),
       tailwindcss(),
-      build(),
+      runtimeTarget === 'cloudflare-workers'
+        ? buildCloudflareWorkers()
+        : buildBun(),
     ],
   }
 })
@@ -72,9 +75,13 @@ function getRuntimeTarget(
   command: 'build' | 'serve',
   mode: string,
 ): 'bun' | 'cloudflare-workers' {
-  if (command === 'build' || mode === 'cloudflare-workers') {
+  if (mode === 'bun') {
+    return 'bun'
+  }
+
+  if (mode === 'cloudflare-workers') {
     return 'cloudflare-workers'
   }
 
-  return 'bun'
+  return command === 'build' ? 'cloudflare-workers' : 'bun'
 }

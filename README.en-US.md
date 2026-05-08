@@ -46,7 +46,7 @@ bun run dev
 
 Adjust `.env` as needed, then open the local app and visit `/install` to complete runtime configuration, database migrations, and administrator creation.
 
-`bun run dev` uses the Bun runtime and supports SQLite, MySQL, and PostgreSQL. Use `bun run dev:workers` or `bun run preview` when testing Cloudflare Workers/D1 locally.
+`bun run dev` uses the Bun runtime and supports SQLite, MySQL, and PostgreSQL. Use `bun run dev:workers` or `bun run preview` when testing Cloudflare Workers/D1 locally. The default `bun run build` emits a Cloudflare Workers build; use `bun run build:bun` for Bun production runtime builds.
 
 Useful commands:
 
@@ -55,6 +55,7 @@ bun run typecheck
 bun run lint
 bun test
 bun run build
+bun run build:bun
 bun run dev:workers
 ```
 
