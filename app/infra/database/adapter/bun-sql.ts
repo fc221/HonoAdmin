@@ -27,12 +27,37 @@ export async function createBunSqlAdapter(
   databaseUrl: string,
   dialect: Exclude<DatabaseDialect, 'sqlite'>,
 ): Promise<DBAdapter> {
-  const bunSqlModule = 'bun'
-  const { SQL } = await import(
-    /* @vite-ignore */ bunSqlModule
-  ) as { SQL: BunSqlConstructor }
+  const SQL = await getBunSqlConstructor()
 
   return new BunSqlAdapter(new SQL(databaseUrl), dialect)
+}
+
+async function getBunSqlConstructor(): Promise<BunSqlConstructor> {
+  const runtime = globalThis as typeof globalThis & {
+    Bun?: { SQL?: BunSqlConstructor }
+  }
+  const SQL = runtime.Bun?.SQL ?? await importNativeBunSqlConstructor()
+
+  if (!SQL) {
+    throw new DatabaseError('Bun SQL 仅支持 Bun runtime。')
+  }
+
+  return SQL
+}
+
+async function importNativeBunSqlConstructor(): Promise<BunSqlConstructor | null> {
+  try {
+    // Vite SSR must not statically resolve Bun's runtime-only built-in module.
+    // eslint-disable-next-line no-new-func
+    const importNative = new Function(
+      'specifier',
+      'return import(specifier)',
+    ) as (specifier: string) => Promise<{ SQL?: BunSqlConstructor }>
+    const module = await importNative('bun')
+    return module.SQL ?? null
+  } catch {
+    return null
+  }
 }
 
 export function normalizeBunSqlForDialect(

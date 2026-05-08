@@ -46,6 +46,8 @@ bun run dev
 
 按需调整 `.env` 后打开本地地址，进入 `/install` 完成运行时配置、数据库迁移和管理员创建。
 
+`bun run dev` 使用 Bun runtime，支持 SQLite、MySQL 和 PostgreSQL。本地调试 Cloudflare Workers/D1 时使用 `bun run dev:workers` 或 `bun run preview`。
+
 常用命令：
 
 ```bash
@@ -53,6 +55,7 @@ bun run typecheck
 bun run lint
 bun test
 bun run build
+bun run dev:workers
 ```
 
 Cloudflare Workers 部署请参考 [部署文档](./docs/CLOUDFLARE_WORKERS.md)。

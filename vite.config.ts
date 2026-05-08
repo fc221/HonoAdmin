@@ -1,6 +1,7 @@
 import type { Plugin } from 'vite'
 import build from '@hono/vite-build/cloudflare-workers'
-import adapter from '@hono/vite-dev-server/cloudflare'
+import bunAdapter from '@hono/vite-dev-server/bun'
+import cloudflareAdapter from '@hono/vite-dev-server/cloudflare'
 import tailwindcss from '@tailwindcss/vite'
 import honox from 'honox/vite'
 import { defineConfig } from 'vite'
@@ -35,28 +36,45 @@ function reloadAppOnChange(): Plugin {
   }
 }
 
-export default defineConfig(({ command }) => ({
-  define: {
-    __APP_NAME__: JSON.stringify('hono-admin'),
-    __APP_VERSION__: JSON.stringify('0.0.0'),
-    __APP_RUNTIME_TARGET__: JSON.stringify(
-      command === 'serve' ? 'bun' : 'cloudflare-workers',
-    ),
-  },
-  server: {
-    host: '0.0.0.0',
-  },
-  ssr: command === 'serve'
-    ? { external: ['casbin', 'buffer'] }
-    : undefined,
-  plugins: [
-    disableDevCache(),
-    honox({
-      devServer: { adapter },
-      client: { input: ['/app/client.ts', '/app/style.css'] },
-    }),
-    reloadAppOnChange(),
-    tailwindcss(),
-    build(),
-  ],
-}))
+export default defineConfig(({ command, mode }) => {
+  const runtimeTarget = getRuntimeTarget(command, mode)
+
+  return {
+    define: {
+      __APP_NAME__: JSON.stringify('hono-admin'),
+      __APP_VERSION__: JSON.stringify('0.0.0'),
+      __APP_RUNTIME_TARGET__: JSON.stringify(runtimeTarget),
+    },
+    server: {
+      host: '0.0.0.0',
+    },
+    ssr: command === 'serve'
+      ? { external: ['casbin', 'buffer'] }
+      : undefined,
+    plugins: [
+      disableDevCache(),
+      honox({
+        devServer: {
+          adapter: runtimeTarget === 'cloudflare-workers'
+            ? cloudflareAdapter
+            : bunAdapter,
+        },
+        client: { input: ['/app/client.ts', '/app/style.css'] },
+      }),
+      reloadAppOnChange(),
+      tailwindcss(),
+      build(),
+    ],
+  }
+})
+
+function getRuntimeTarget(
+  command: 'build' | 'serve',
+  mode: string,
+): 'bun' | 'cloudflare-workers' {
+  if (command === 'build' || mode === 'cloudflare-workers') {
+    return 'cloudflare-workers'
+  }
+
+  return 'bun'
+}

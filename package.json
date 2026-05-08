@@ -3,7 +3,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "vite",
+    "dev": "bun --bun vite",
+    "dev:workers": "vite --mode cloudflare-workers",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "bun test",

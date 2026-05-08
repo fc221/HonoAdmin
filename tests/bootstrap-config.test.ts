@@ -80,12 +80,14 @@ describe('bootstrap runtime config', () => {
   })
 
   test('reloads Bun runtime from saved config and closes old database', async () => {
+    const originalRuntimeEnv = snapshotRuntimeEnv()
     const dir = await mkdtemp(join(tmpdir(), 'hono-admin-bootstrap-'))
     const envPath = join(dir, '.env')
     const firstDbPath = join(dir, 'first.sqlite')
     const secondDbPath = join(dir, 'second.sqlite')
 
     try {
+      clearRuntimeEnv()
       await saveBunRuntimeConfig({
         appTimezone: 'Asia/Shanghai',
         cacheNamespace: 'hono-admin',
@@ -123,6 +125,7 @@ describe('bootstrap runtime config', () => {
       await reloadBunRuntime({
         HONO_ADMIN_ENV_FILE: join(dir, 'missing.env'),
       }).catch(() => undefined)
+      restoreRuntimeEnv(originalRuntimeEnv)
       await rm(dir, { force: true, recursive: true })
     }
   })
@@ -148,4 +151,45 @@ function restoreEnvFile(value: string | undefined): void {
   }
 
   process.env.HONO_ADMIN_ENV_FILE = value
+}
+
+const runtimeEnvKeys = [
+  'API_RATE_LIMIT_MAX',
+  'API_RATE_LIMIT_WINDOW_SECONDS',
+  'APP_TIMEZONE',
+  'CACHE_NAMESPACE',
+  'DATABASE_URL',
+  'JWT_SECRET',
+  'LOGIN_RATE_LIMIT_ACCOUNT_MAX',
+  'LOGIN_RATE_LIMIT_IP_MAX',
+  'LOGIN_RATE_LIMIT_WINDOW_SECONDS',
+  'REQUEST_BODY_LIMIT_BYTES',
+  'SESSION_SECRET',
+  'UPLOAD_IMAGE_LIMIT_BYTES',
+] as const
+
+function snapshotRuntimeEnv(): Partial<Record<typeof runtimeEnvKeys[number], string>> {
+  return Object.fromEntries(
+    runtimeEnvKeys.map((key) => [key, process.env[key]]),
+  )
+}
+
+function clearRuntimeEnv(): void {
+  for (const key of runtimeEnvKeys) {
+    delete process.env[key]
+  }
+}
+
+function restoreRuntimeEnv(
+  values: Partial<Record<typeof runtimeEnvKeys[number], string>>,
+): void {
+  for (const key of runtimeEnvKeys) {
+    const value = values[key]
+    if (value === undefined) {
+      delete process.env[key]
+      continue
+    }
+
+    process.env[key] = value
+  }
 }

@@ -38,22 +38,33 @@ export const requestBodyLimit = createMiddleware<AppEnv>(async (c, next) => {
     chunks.push(value)
   }
 
-  const requestInit = {
-    body: new ReadableStream({
-      start(controller) {
-        for (const chunk of chunks) {
-          controller.enqueue(chunk)
-        }
-        controller.close()
-      },
-    }),
-    duplex: 'half',
-  } as unknown as RequestInit
-
-  c.req.raw = new Request(c.req.raw, requestInit)
+  c.req.raw = new Request(c.req.raw.url, createRequestInit(c.req.raw, chunks))
 
   await next()
 })
+
+function createRequestInit(
+  request: Request,
+  chunks: Uint8Array[],
+): RequestInit {
+  return {
+    body: createBodyStream(chunks),
+    duplex: 'half',
+    headers: request.headers,
+    method: request.method,
+  } as unknown as RequestInit & { duplex: 'half' }
+}
+
+function createBodyStream(chunks: Uint8Array[]): ReadableStream<Uint8Array> {
+  return new ReadableStream({
+    start(controller) {
+      for (const chunk of chunks) {
+        controller.enqueue(chunk)
+      }
+      controller.close()
+    },
+  })
+}
 
 export const headers = createMiddleware<AppEnv>(async (c, next) => {
   await next()
