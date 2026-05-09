@@ -7,7 +7,6 @@ import Aside from './_components/$aside'
 import Header from './_components/$header'
 
 interface Props {
-  canSwitchRole?: boolean
   children: Child
   currentMenuName: string
   menus?: MenuItem[]
@@ -16,7 +15,6 @@ interface Props {
 }
 
 export default function Layout({
-  canSwitchRole,
   children,
   currentMenuName,
   menus,
@@ -26,7 +24,6 @@ export default function Layout({
   return (
     <LayoutProvider>
       <AsideLayout
-        canSwitchRole={canSwitchRole}
         currentMenuName={currentMenuName}
         menus={menus}
         siteTitle={siteTitle}
@@ -40,7 +37,6 @@ export default function Layout({
 
 // 侧边栏布局
 function AsideLayout({
-  canSwitchRole,
   children,
   currentMenuName: initialCurrentMenuName,
   menus = defaultMenus,
@@ -53,7 +49,6 @@ function AsideLayout({
   const id = 'aside-drawer'
   const isCollapsed = isDesktop ? config.sidebarCollapsed : false
   const isDrawerOpen = isAsideOpen
-  const canUseRoleSwitch = canSwitchRole ?? hasAdminMenuHref(menus)
 
   useEffect(() => {
     if (isDesktop) {
@@ -108,7 +103,6 @@ function AsideLayout({
         <main class="drawer-content flex h-full min-w-0 flex-col overflow-hidden">
           {/* header */}
           <Header
-            canSwitchRole={canUseRoleSwitch}
             currentMenuName={initialCurrentMenuName}
             isDesktop={isDesktop}
             isAsideOpen={isAsideOpen}
@@ -141,10 +135,4 @@ function getPageRootClass() {
 
 function handleRefresh() {
   location.reload()
-}
-
-function hasAdminMenuHref(items: MenuItem[]): boolean {
-  return items.some((item) =>
-    item.href?.startsWith('/admin') || hasAdminMenuHref(item.children ?? [])
-  )
 }

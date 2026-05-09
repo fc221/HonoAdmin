@@ -14,7 +14,6 @@ import { userMenus } from '../../../../service/admin/system/menu/consts'
 import { getAvatarText } from '../../../../utils/avatar'
 
 interface Props {
-  canSwitchRole: boolean
   currentMenuName: string
   isDesktop: boolean
   isAsideOpen: boolean
@@ -26,7 +25,6 @@ interface Props {
 }
 
 export default function Header({
-  canSwitchRole,
   currentMenuName,
   isDesktop,
   isAsideOpen,
@@ -48,6 +46,7 @@ export default function Header({
   const [updateStatus, setUpdateStatus] = useState<{
     pendingMigrationCount: number
   }>({ pendingMigrationCount: 0 })
+  const canSwitchRole = (user?.roles.length ?? 0) > 1
   const [isRoleMenuOpen, setIsRoleMenuOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
 
@@ -155,7 +154,7 @@ export default function Header({
         >
           <i class="icon-[ri--loop-right-line]"></i>
         </button>
-        {canSwitchRole && user?.roles.length
+        {canSwitchRole && user
           ? (
               <RoleSwitchDropdown
                 activeRoleId={user.activeRoleId}

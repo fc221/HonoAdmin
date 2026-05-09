@@ -9,7 +9,6 @@ export default createRoute(async (c) => {
 
   return c.render(
     <Layout
-      canSwitchRole={layout.canSwitchRole}
       currentMenuName="admin.dashboard"
       menus={layout.menus}
       siteTitle={layout.siteTitle}

@@ -16,7 +16,6 @@ import {
 import { getRenderableSiteConfig } from '../../_utils/site'
 
 export interface AdminLayoutData {
-  canSwitchRole: boolean
   menus: MenuItem[]
   siteTitle: string
   user: UserHeaderProfile | null
@@ -40,7 +39,6 @@ export async function getAdminLayoutData(
   const isUserSideRole = isUserRole(activeRole) || !hasMenuHref(authorizedAdminMenus)
 
   return {
-    canSwitchRole: roles.length > 1,
     menus: isUserSideRole ? userMenus : authorizedAdminMenus,
     siteTitle: siteConfig.title,
     user: profile
