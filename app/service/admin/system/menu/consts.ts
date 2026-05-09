@@ -93,6 +93,12 @@ export const adminMenus: MenuItem[] = [
 
 export const userMenus: MenuItem[] = [
   {
+    href: '/user/dashboard',
+    icon: 'icon-[ri--dashboard-line]',
+    label: '仪表盘',
+    name: 'user.dashboard',
+  },
+  {
     href: '/user/profile',
     icon: 'icon-[ri--map-pin-user-line]',
     label: '个人中心',

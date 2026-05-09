@@ -266,14 +266,6 @@ export async function listAuthorizedAdminMenus(
   return filterMenuTree(adminMenus, new Set(menuNames))
 }
 
-export async function getFirstAuthorizedAdminHref(
-  ctx: ServiceContext,
-  user: UserCredential | null,
-): Promise<string> {
-  const menus = await listAuthorizedAdminMenus(ctx, user)
-  return findFirstMenuHref(menus) ?? '/user/profile'
-}
-
 export async function canAccessAdminPath(
   ctx: ServiceContext,
   user: UserCredential,
@@ -720,21 +712,6 @@ function filterMenuTree(
   }
 
   return filteredItems
-}
-
-function findFirstMenuHref(items: MenuItem[]): string | null {
-  for (const item of items) {
-    if (item.href) {
-      return item.href
-    }
-
-    const childHref = item.children ? findFirstMenuHref(item.children) : null
-    if (childHref) {
-      return childHref
-    }
-  }
-
-  return null
 }
 
 function flattenMenuItems(items: MenuItem[]): MenuItem[] {

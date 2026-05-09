@@ -6,7 +6,6 @@ import {
   setSessionActiveRole,
 } from '../admin/session'
 import { createRequestOperateLog } from '../admin/system/operate-log'
-import { getFirstAuthorizedAdminHref } from '../admin/system/role'
 import {
   isUserAssignedRole,
   listUserSessionRoles,
@@ -49,17 +48,9 @@ export async function switchCurrentSessionRole(
   }
 
   setSessionActiveRole(c, roleId)
-  const targetCredential = {
-    ...sessionUser,
-    activeRoleId: roleId,
-    roleCode: role.code,
-    roleId,
-    roleIds: roles.map((role) => role.id),
-  }
-  const adminHref = await getFirstAuthorizedAdminHref(c, targetCredential)
-  const target = isUserSideRole(role.code) || !adminHref.startsWith('/admin')
-    ? '/user/profile'
-    : adminHref
+  const target = isUserSideRole(role.code)
+    ? '/user'
+    : '/admin'
 
   await createRequestOperateLog(c, {
     logMsg: `切换角色为 ${role.name}`,

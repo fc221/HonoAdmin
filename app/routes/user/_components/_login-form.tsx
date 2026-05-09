@@ -18,7 +18,7 @@ export default function LoginForm({ error, returnTo, siteTitle }: Props) {
           )
         : null}
 
-      <fieldset class="fieldset">
+      <fieldset class="fieldset relative" data-form-field="username">
         <legend class="fieldset-legend">账号</legend>
         <label class="input input-bordered flex w-full items-center gap-3">
           <i class="icon-[ri--user-3-line] text-base-content/50" />
@@ -31,9 +31,13 @@ export default function LoginForm({ error, returnTo, siteTitle }: Props) {
             required
           />
         </label>
+        <p
+          class="pointer-events-none absolute left-0 top-full mt-0.5 max-w-full truncate text-xs leading-none"
+          data-validation-label="true"
+        />
       </fieldset>
 
-      <fieldset class="fieldset">
+      <fieldset class="fieldset relative" data-form-field="password">
         <legend class="fieldset-legend">密码</legend>
         <label class="input input-bordered flex w-full items-center gap-3">
           <i class="icon-[ri--lock-password-line] text-base-content/50" />
@@ -46,6 +50,10 @@ export default function LoginForm({ error, returnTo, siteTitle }: Props) {
             required
           />
         </label>
+        <p
+          class="pointer-events-none absolute left-0 top-full mt-0.5 max-w-full truncate text-xs leading-none"
+          data-validation-label="true"
+        />
       </fieldset>
 
       <div class="flex items-center justify-between gap-4">

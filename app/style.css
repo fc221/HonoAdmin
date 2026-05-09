@@ -110,8 +110,14 @@ body {
 }
 
 .menu {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   --menu-active-bg: color-mix(in oklch, var(--color-primary), transparent 90%);
   --menu-active-fg: var(--color-primary);
+}
+
+.menu::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
 }
 
 /* App pages scroll inside [data-page-scroll]; keep daisyUI modals from changing root scroll chrome. */

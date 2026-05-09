@@ -15,7 +15,7 @@ import {
 } from '../_utils/site'
 import LoginForm from './_components/_login-form'
 
-const defaultReturnTo = '/user/profile'
+const defaultReturnTo = '/user/dashboard'
 const loginPath = '/user/login'
 const logoutPath = '/user/logout'
 

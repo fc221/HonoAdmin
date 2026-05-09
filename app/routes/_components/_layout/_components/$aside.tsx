@@ -40,7 +40,7 @@ export default function Aside({
       : 'bg-black/0 opacity-0'
 
   return (
-    <aside class="drawer-side h-full! overflow-visible z-99">
+    <aside class="drawer-side h-full! overflow-hidden z-99">
       <label
         for={id}
         aria-label="关闭侧边栏"
@@ -66,12 +66,12 @@ export default function Aside({
           </div>
         </div>
         {/* menu */}
-        <div class="w-full min-w-0 flex-1 min-h-0 overflow-x-hidden">
+        <div class="w-full min-w-0 flex-1 min-h-0 overflow-x-hidden p-4 bg-base-200 rounded-box">
           <Menu
             dataLayoutMenuExpanded
             currentMenuName={currentMenuName}
             items={menus}
-            className={`menu p-4 bg-base-200 rounded-box w-full h-full space-y-1 overflow-y-auto ${isDesktopCollapsed ? 'hidden' : ''}`}
+            className={`menu p-0 w-full h-full space-y-1 overflow-y-auto flex-nowrap ${isDesktopCollapsed ? 'hidden' : ''}`}
             onNavigate={onMenuNavigate}
           />
           <div
