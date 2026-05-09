@@ -22,17 +22,20 @@ function disableDevCache(): Plugin {
   }
 }
 
-function reloadAppOnChange(): Plugin {
+function reloadPageOnAppChange(): Plugin {
   return {
-    name: 'reload-app-on-change',
+    name: 'reload-page-on-app-change',
     apply: 'serve',
     handleHotUpdate({ file, server }) {
       if (!(/\/app\/.*\.[cm]?[tj]sx?$/).test(file)) {
         return undefined
       }
 
-      server.ws.send({ type: 'full-reload', path: '*' })
-      return []
+      setTimeout(() => {
+        server.hot.send({ type: 'full-reload' })
+      })
+
+      return undefined
     },
   }
 }
@@ -62,7 +65,7 @@ export default defineConfig(({ command, mode }) => {
         },
         client: { input: ['/app/client.ts', '/app/style.css'] },
       }),
-      reloadAppOnChange(),
+      reloadPageOnAppChange(),
       tailwindcss(),
       runtimeTarget === 'cloudflare-workers'
         ? buildCloudflareWorkers()
