@@ -51,13 +51,6 @@ export default function Header({
   const [isRoleMenuOpen, setIsRoleMenuOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
 
-  const handleRoleSwitchSubmit = (event: Event) => {
-    event.preventDefault()
-    setIsRoleMenuOpen(false)
-    const form = event.currentTarget as HTMLFormElement
-    void submitRoleSwitchForm(form)
-  }
-
   useEffect(() => {
     if (!hasAdminMenuHref(menus)) {
       return
@@ -67,8 +60,7 @@ export default function Header({
 
     fetch('/admin/system/update/status', {
       headers: {
-        'Accept': 'application/json',
-        'X-PJAX': 'true',
+        Accept: 'application/json',
       },
     })
       .then((response) => (response.ok ? response.json() : null))
@@ -125,18 +117,11 @@ export default function Header({
       }
     }
 
-    const closeOnPjaxContent = () => {
-      setIsRoleMenuOpen(false)
-      setIsUserMenuOpen(false)
-    }
-
     document.addEventListener('pointerdown', closeOnOutsidePointer)
     document.addEventListener('keydown', closeOnEscape)
-    window.addEventListener('hono-admin:pjax-content', closeOnPjaxContent)
     return () => {
       document.removeEventListener('pointerdown', closeOnOutsidePointer)
       document.removeEventListener('keydown', closeOnEscape)
-      window.removeEventListener('hono-admin:pjax-content', closeOnPjaxContent)
     }
   }, [isRoleMenuOpen, isUserMenuOpen])
 
@@ -176,7 +161,6 @@ export default function Header({
                 activeRoleId={user.activeRoleId}
                 isOpen={isRoleMenuOpen}
                 roles={user.roles}
-                onSubmit={handleRoleSwitchSubmit}
                 onToggle={() => {
                   setIsRoleMenuOpen((open) => !open)
                   setIsUserMenuOpen(false)
@@ -189,7 +173,6 @@ export default function Header({
               <a
                 aria-label="数据库需要迁移"
                 class="btn btn-circle btn-ghost btn-sm text-warning"
-                data-pjax="true"
                 href="/admin/system/update"
                 title={`待执行 ${updateStatus.pendingMigrationCount} 个数据库迁移`}
               >
@@ -221,7 +204,7 @@ export default function Header({
                   role="menu"
                 >
                   <li>
-                    <a data-pjax="true" href="/user/profile" role="menuitem">
+                    <a href="/user/profile" role="menuitem">
                       个人中心
                     </a>
                   </li>
@@ -251,13 +234,11 @@ export default function Header({
 function RoleSwitchDropdown({
   activeRoleId,
   isOpen,
-  onSubmit,
   onToggle,
   roles,
 }: {
   activeRoleId: number | null
   isOpen: boolean
-  onSubmit: (event: Event) => void
   onToggle: () => void
   roles: UserSessionRole[]
 }) {
@@ -289,7 +270,6 @@ function RoleSwitchDropdown({
                 <RoleSwitchMenuItem
                   active={activeRoleId === role.id}
                   key={role.id}
-                  onSubmit={onSubmit}
                   role={role}
                 />
               ))}
@@ -302,11 +282,9 @@ function RoleSwitchDropdown({
 
 function RoleSwitchMenuItem({
   active,
-  onSubmit,
   role,
 }: {
   active: boolean
-  onSubmit: (event: Event) => void
   role: UserSessionRole
 }) {
   return (
@@ -315,7 +293,6 @@ function RoleSwitchMenuItem({
         action="/user/role-switch"
         class="contents"
         method="post"
-        onSubmit={onSubmit}
       >
         <input name="roleId" type="hidden" value={role.id} />
         <button
@@ -331,71 +308,6 @@ function RoleSwitchMenuItem({
       </form>
     </li>
   )
-}
-
-interface RoleSwitchActionResult {
-  alert?: {
-    closable?: boolean
-    message?: string
-    type?: string
-  }
-  honoAdminAction?: boolean
-  ok?: boolean
-  target?: string
-}
-
-async function submitRoleSwitchForm(form: HTMLFormElement): Promise<void> {
-  let response: Response
-  try {
-    response = await fetch(form.action, {
-      body: new FormData(form),
-      headers: {
-        'Accept': 'application/json',
-        'X-PJAX': 'true',
-      },
-      method: form.method || 'POST',
-    })
-  } catch {
-    form.submit()
-    return
-  }
-
-  const result = await readRoleSwitchActionResult(response)
-  if (!result?.target) {
-    form.submit()
-    return
-  }
-
-  location.replace(createRoleSwitchUrl(result))
-}
-
-async function readRoleSwitchActionResult(
-  response: Response,
-): Promise<RoleSwitchActionResult | null> {
-  if (!response.headers.get('Content-Type')?.includes('application/json')) {
-    return null
-  }
-
-  try {
-    const result = await response.json() as RoleSwitchActionResult
-    return result.honoAdminAction === true ? result : null
-  } catch {
-    return null
-  }
-}
-
-function createRoleSwitchUrl(result: RoleSwitchActionResult): string {
-  const url = new URL(result.target ?? '/user/profile', location.href)
-
-  if (result.alert?.type && result.alert.message) {
-    url.searchParams.set('alert', result.alert.type)
-    url.searchParams.set('message', result.alert.message)
-    if (typeof result.alert.closable === 'boolean') {
-      url.searchParams.set('closable', String(result.alert.closable))
-    }
-  }
-
-  return url.href
 }
 
 function hasAdminMenuHref(items: MenuItem[]): boolean {
@@ -457,11 +369,7 @@ function renderBreadcrumbItem(item: MenuBreadcrumbItem, isLastItem: boolean) {
   }
 
   return (
-    <a
-      class={className}
-      data-pjax={item.pjax === false ? undefined : 'true'}
-      href={item.href}
-    >
+    <a class={className} href={item.href}>
       {item.label}
     </a>
   )

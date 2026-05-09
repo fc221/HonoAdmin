@@ -1,6 +1,6 @@
 import { createRoute } from 'honox/factory'
+import PageAlert from '../../../_components/$page-alert'
 import Layout from '../../../_components/_layout/$index'
-import PageAlert from '../../../_components/_page-alert'
 import PageHeader from '../../../_components/_page-header'
 import { getPageAlert } from '../../../_utils/form'
 import { getAdminLayoutData } from '../../_utils/layout'

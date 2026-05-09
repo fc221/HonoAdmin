@@ -65,41 +65,41 @@ body {
 
 /* 和 layout config 的 desktopBreakpoint 保持一致。 */
 @media (min-width: 1024px) {
-  html[data-layout-ready='false'][data-sidebar-collapsed='true'] [data-layout-aside-panel] {
+  html[data-sidebar-collapsed='true'] [data-layout-aside-panel] {
     width: 5rem !important;
   }
 
-  html[data-layout-ready='false'][data-sidebar-collapsed='true'] [data-layout-aside-logo] {
+  html[data-sidebar-collapsed='true'] [data-layout-aside-logo] {
     justify-content: center !important;
     gap: 0 !important;
     width: auto !important;
     padding: 0 !important;
   }
 
-  html[data-layout-ready='false'][data-sidebar-collapsed='true'] [data-layout-aside-brand],
-  html[data-layout-ready='false'][data-sidebar-collapsed='true'] [data-layout-aside-toggle-label],
-  html[data-layout-ready='false'][data-sidebar-collapsed='true'] [data-layout-icon-desktop-expanded] {
+  html[data-sidebar-collapsed='true'] [data-layout-aside-brand],
+  html[data-sidebar-collapsed='true'] [data-layout-aside-toggle-label],
+  html[data-sidebar-collapsed='true'] [data-layout-icon-desktop-expanded] {
     display: none !important;
   }
 
-  html[data-layout-ready='false'][data-sidebar-collapsed='true'] [data-layout-menu-expanded] {
+  html[data-sidebar-collapsed='true'] [data-layout-menu-expanded] {
     display: none !important;
   }
 
-  html[data-layout-ready='false'][data-sidebar-collapsed='true'] [data-layout-menu-collapsed] {
+  html[data-sidebar-collapsed='true'] [data-layout-menu-collapsed] {
     display: flex !important;
   }
 
-  html[data-layout-ready='false'][data-sidebar-collapsed='true'] [data-layout-icon-desktop-collapsed] {
+  html[data-sidebar-collapsed='true'] [data-layout-icon-desktop-collapsed] {
     display: inline-block !important;
   }
 
-  html[data-layout-ready='false'][data-sidebar-collapsed='true'] [data-layout-aside-options] {
+  html[data-sidebar-collapsed='true'] [data-layout-aside-options] {
     flex-direction: column !important;
     align-items: center !important;
   }
 
-  html[data-layout-ready='false'][data-sidebar-collapsed='true'] [data-layout-aside-toggle] {
+  html[data-sidebar-collapsed='true'] [data-layout-aside-toggle] {
     border-radius: 9999px !important;
   }
 }

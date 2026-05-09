@@ -1,5 +1,5 @@
 import type { WebNotificationRecord } from '../../../../../service/admin/web/notification/dto'
-import RichTextEditor from '../../../../_components/_rich-text-editor'
+import RichTextEditor from '../../../../_components/$rich-text-editor'
 
 interface Props {
   mode: 'create' | 'update'
@@ -15,7 +15,6 @@ export default function WebNotificationForm({
   return (
     <form
       class="space-y-5"
-      data-pjax="true"
       data-validate-trigger="blur"
       method="post"
     >
@@ -88,7 +87,6 @@ export default function WebNotificationForm({
       <div class="flex justify-end gap-2 border-t border-base-300 pt-4">
         <a
           class="btn btn-ghost btn-sm"
-          data-pjax="true"
           href="/admin/web/notification"
         >
           取消

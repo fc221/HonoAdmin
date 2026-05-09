@@ -21,7 +21,7 @@ import {
 } from '../../service/admin/system/user'
 import { createUserSchema } from '../../service/admin/system/user/dto'
 import { ValidationError } from '../../utils/errors'
-import PageAlert from '../_components/_page-alert'
+import PageAlert from '../_components/$page-alert'
 import {
   getActionErrorMessage,
   getFormValue,

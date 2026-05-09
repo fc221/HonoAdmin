@@ -51,7 +51,7 @@ export default function Theme({ theme, onThemeChange }: Props) {
         popover="auto"
         id="aside-theme-dropdown"
         style="position-anchor:--aside-theme-dropdown"
-        class="dropdown dropdown-top menu p-3 z-1 mb-3 w-44 rounded-box bg-base-100 shadow flex gap-y-1"
+        class="dropdown dropdown-top menu p-3 z-1 mb-3 w-44 rounded-box bg-base-100 shadow space-y-1"
       >
         {themeOptions.map((option) => (
           <li key={option.value}>

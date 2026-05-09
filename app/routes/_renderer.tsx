@@ -24,7 +24,6 @@ export default jsxRenderer(({ children }) => {
     <html
       lang="en"
       data-theme="light"
-      data-layout-ready="false"
       data-sidebar-collapsed="false"
     >
       <head>

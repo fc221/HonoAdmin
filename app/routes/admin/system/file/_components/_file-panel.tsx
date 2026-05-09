@@ -3,19 +3,20 @@ import type {
 } from '../../../../../service/admin/system/file/dto'
 import type { FileUploadType } from '../../../../../service/admin/system/file/enum'
 import type { PaginatedResult } from '../../../../../service/common/pagination'
-import type { PageAlertState } from '../../../../_components/_page-alert'
+import type { PageAlertState } from '../../../../_components/$page-alert'
 import {
   fileStorageModeLabels,
   fileUploadTypeLabels,
   fileUploadTypeOptions,
 } from '../../../../../service/admin/system/file/enum'
 import { formatDateTime } from '../../../../../utils/datetime'
-import PageAlert from '../../../../_components/_page-alert'
+import PageAlert from '../../../../_components/$page-alert'
 import Pagination from '../../../../_components/_pagination'
 import {
   ConfirmActionModal,
   CreateActionModal,
 } from '../../../_components/_crud-action-modal'
+import FileUploadDropzone from './$file-upload-dropzone'
 
 interface Props {
   alert?: PageAlertState
@@ -75,7 +76,6 @@ function UploadForm({ modalId }: { modalId: string }) {
   return (
     <form
       class="space-y-5"
-      data-pjax="true"
       enctype="multipart/form-data"
       method="post"
     >
@@ -90,37 +90,7 @@ function UploadForm({ modalId }: { modalId: string }) {
           ))}
         </select>
       </fieldset>
-      <fieldset class="fieldset">
-        <legend class="fieldset-legend">图片文件</legend>
-        <label
-          class="flex min-h-48 cursor-pointer flex-col items-center justify-center gap-3 rounded-box border border-dashed border-base-300 bg-base-200/35 px-4 py-8 text-center transition-colors hover:border-primary hover:bg-primary/5"
-          data-file-dropzone="true"
-          for="file-upload-input"
-        >
-          <i class="icon-[ri--upload-cloud-2-line] text-4xl text-primary" />
-          <span class="font-medium">拖入图片，或点击选择文件</span>
-          <span class="text-sm text-base-content/55">
-            支持 JPG、PNG、WEBP、GIF，可一次选择多张。
-          </span>
-          <span
-            class="text-sm text-base-content/70"
-            data-file-dropzone-summary="true"
-          >
-            暂未选择文件
-          </span>
-        </label>
-        <input
-          accept="image/gif,image/jpeg,image/png,image/webp"
-          class="file-input mt-3 w-full"
-          data-file-dropzone-input="true"
-          data-validate-trigger="change"
-          id="file-upload-input"
-          multiple
-          name="file"
-          required
-          type="file"
-        />
-      </fieldset>
+      <FileUploadDropzone />
       <div class="modal-action border-t border-base-300 pt-4">
         <label
           class="btn btn-ghost btn-sm"
@@ -151,12 +121,11 @@ function FileFilterForm({
     <form
       action={pagePath}
       class="flex flex-wrap items-center justify-start gap-2 xl:justify-end"
-      data-pjax="true"
-      data-pjax-replace="true"
+      data-history-replace="true"
       method="get"
     >
       <input name="pageSize" type="hidden" value={pageSize} />
-      <select class="select select-sm w-40" name="uploadType">
+      <select class="select select-sm w-40" name="uploadType" value={uploadType}>
         <option selected={uploadType === ''} value="">
           全部类型
         </option>

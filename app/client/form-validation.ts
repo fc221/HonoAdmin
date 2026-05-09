@@ -1,48 +1,43 @@
 import type {
   FormField,
-  PjaxActionResult,
   ValidateTrigger,
   ValidationErrorElement,
 } from './types'
 
-export function applyFormValidationErrors(
-  form: HTMLFormElement,
-  result: PjaxActionResult,
-) {
-  const formErrors = [...(result.formErrors ?? [])]
+let formValidationInstalled = false
 
-  for (const [fieldName, messages] of Object.entries(result.fieldErrors ?? {})) {
-    if (!applyFieldValidationError(form, fieldName, messages)) {
-      formErrors.push(...messages)
+export function installFormValidation() {
+  if (formValidationInstalled) {
+    return
+  }
+
+  formValidationInstalled = true
+
+  document.addEventListener('invalid', (event) => {
+    const field = getEventFormField(event)
+    const form = field ? getFieldForm(field) : null
+
+    if (field && form) {
+      applyNativeFieldValidation(form, field)
     }
-  }
+  }, true)
 
-  if (formErrors.length) {
-    showFormValidationErrors(form, formErrors)
-  }
+  document.addEventListener('blur', (event) => {
+    validateFieldForEvent(event, 'blur')
+  }, true)
+
+  document.addEventListener('input', (event) => {
+    validateFieldForEvent(event, 'change')
+  })
+
+  document.addEventListener('change', (event) => {
+    validateFieldForEvent(event, 'change')
+  })
 }
 
-export function clearFormValidationErrors(form: HTMLFormElement) {
-  form
-    .querySelectorAll<HTMLElement>('[data-field-error="true"], [data-form-error="true"]')
-    .forEach((element) => element.remove())
-
-  form.querySelectorAll<HTMLElement>('[data-validation-message="true"]')
-    .forEach(restoreValidationMessageTarget)
-
-  form.querySelectorAll<HTMLElement>('[data-validation-error="true"]')
-    .forEach(clearValidationErrorElement)
-
-  for (const field of Array.from(form.elements)) {
-    if (isFormField(field) && field.name) {
-      clearFieldValidationError(form, field.name, field)
-    }
-  }
-}
-
-export function validateFieldForEvent(event: Event, trigger: ValidateTrigger) {
+function validateFieldForEvent(event: Event, trigger: ValidateTrigger) {
   const field = getEventFormField(event)
-  const form = field ? getPjaxFieldForm(field) : null
+  const form = field ? getFieldForm(field) : null
 
   if (
     !field
@@ -61,9 +56,8 @@ export function getEventFormField(event: Event): FormField | null {
   return isFormField(target) ? target : null
 }
 
-export function getPjaxFieldForm(field: FormField): HTMLFormElement | null {
-  const form = field.form ?? field.closest<HTMLFormElement>('form')
-  return form?.matches('form[data-pjax="true"]') ? form : null
+export function getFieldForm(field: FormField): HTMLFormElement | null {
+  return field.form ?? field.closest<HTMLFormElement>('form')
 }
 
 export function applyNativeFieldValidation(
@@ -155,18 +149,6 @@ function setFieldValidationMessage(
   error.textContent = message
   container.appendChild(error)
   return true
-}
-
-function showFormValidationErrors(
-  form: HTMLFormElement,
-  messages: string[],
-) {
-  const error = document.createElement('div')
-  error.className = 'alert alert-error col-span-full text-sm'
-  error.dataset.formError = 'true'
-  error.setAttribute('role', 'alert')
-  error.textContent = messages.join(' ')
-  form.insertBefore(error, form.firstChild)
 }
 
 function clearFieldValidationError(

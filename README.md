@@ -19,7 +19,7 @@ AnyAdmin, CloudflareAdmin, HonoxAdmin, HonoAdmin, Hono, HonoX, Cloudflare Worker
 - 在线数据库迁移，业务处理前检查迁移状态。
 - 管理后台内置用户、角色、权限、菜单、配置、文件、操作日志和更新管理。
 - 用户面板与后台菜单共存，管理员可切换到后台功能。
-- 表单支持原生提交 fallback，同时用 PJAX 提供更顺滑的后台体验。
+- 表单使用原生提交与 `303` 跳转，复杂局部交互通过 HonoX islands 增强。
 - 独立 API 使用 `hono-openapi + zod` 做校验和文档。
 - UI 使用 Tailwind CSS 与 daisyUI，保持轻量和可定制。
 

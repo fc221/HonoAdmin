@@ -1,6 +1,6 @@
 import type { UpdateStatus } from '../../../../../service/admin/system/update/dto'
-import type { PageAlertState } from '../../../../_components/_page-alert'
-import PageAlert from '../../../../_components/_page-alert'
+import type { PageAlertState } from '../../../../_components/$page-alert'
+import PageAlert from '../../../../_components/$page-alert'
 
 interface Props {
   alert?: PageAlertState
@@ -27,7 +27,7 @@ export default function UpdatePanel({
             </p>
           </div>
           <div class="flex flex-wrap gap-2">
-            <form data-pjax="true" method="post">
+            <form method="post">
               <button
                 class="btn btn-warning btn-sm"
                 disabled={migration.isComplete || !canMigrate}

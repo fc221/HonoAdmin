@@ -19,7 +19,7 @@ AnyAdmin, CloudflareAdmin, HonoxAdmin, HonoAdmin, Hono, HonoX, Cloudflare Worker
 - Online database migrations checked before business handlers run.
 - Built-in admin modules for users, roles, permissions, menus, configs, files, operation logs, and updates.
 - A user panel and admin console in the same product; admins can switch into admin features.
-- Native form fallback plus PJAX-enhanced admin interactions.
+- Native form submissions with `303` redirects; complex local interactions use HonoX islands.
 - Standalone APIs can use `hono-openapi + zod` for validation and documentation.
 - Tailwind CSS and daisyUI for a lightweight, customizable interface.
 

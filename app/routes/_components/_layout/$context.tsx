@@ -22,13 +22,11 @@ type LayoutConfigPatch = Partial<LayoutConfig>
 interface LayoutContextValue {
   config: LayoutConfig
   isDesktop: boolean
-  isReady: boolean
   updateConfig: (patch: LayoutConfigPatch) => void
   resetConfig: () => void
 }
 
 const LayoutContext = createContext<LayoutContextValue | null>(null)
-const layoutReadyDelayMs = 120
 
 function createDefaultLayoutConfig(): LayoutConfig {
   return { ...defaultLayoutConfig }
@@ -138,7 +136,6 @@ function isDesktopViewport() {
 export default function LayoutProvider({ children }: { children: Child }) {
   const [config, setConfig] = useState<LayoutConfig>(readStoredLayoutConfig)
   const [isDesktop, setIsDesktop] = useState(isDesktopViewport)
-  const [isReady, setIsReady] = useState(false)
 
   const updateConfig = useCallback((patch: LayoutConfigPatch) => {
     if (typeof patch.sidebarCollapsed === 'boolean') {
@@ -173,33 +170,24 @@ export default function LayoutProvider({ children }: { children: Child }) {
 
   useEffect(() => {
     const syncDesktopState = () => setIsDesktop(isDesktopViewport())
+    const storedConfig = readStoredLayoutConfig()
 
     setConfig((currentConfig) => {
-      const storedConfig = readStoredLayoutConfig()
       return isSameLayoutConfig(currentConfig, storedConfig)
         ? currentConfig
         : storedConfig
     })
+    applySidebarCollapsed(storedConfig.sidebarCollapsed)
+    applyTheme(storedConfig.theme)
     syncDesktopState()
-
-    // 让 SSR 全屏 loading 至少完成一次绘制，避免刷新初始化状态闪换。
-    const readyTimer = setTimeout(() => {
-      document.documentElement.dataset.layoutReady = 'true'
-      setIsReady(true)
-    }, layoutReadyDelayMs)
 
     window.addEventListener('resize', syncDesktopState)
     return () => {
-      clearTimeout(readyTimer)
       window.removeEventListener('resize', syncDesktopState)
     }
   }, [])
 
   useEffect(() => {
-    if (!isReady) {
-      return
-    }
-
     persistLayoutConfig(config)
     applySidebarCollapsed(config.sidebarCollapsed)
     applyTheme(config.theme)
@@ -213,17 +201,16 @@ export default function LayoutProvider({ children }: { children: Child }) {
     mediaQuery.addEventListener('change', handleSystemThemeChange)
     return () =>
       mediaQuery.removeEventListener('change', handleSystemThemeChange)
-  }, [config, isReady])
+  }, [config])
 
   const contextValue = useMemo(
     () => ({
       config,
       isDesktop,
-      isReady,
       updateConfig,
       resetConfig,
     }),
-    [config, isDesktop, isReady, updateConfig, resetConfig],
+    [config, isDesktop, updateConfig, resetConfig],
   )
 
   return (

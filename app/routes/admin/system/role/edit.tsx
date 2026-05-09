@@ -3,8 +3,8 @@ import { adminMenus } from '../../../../service/admin/system/menu/consts'
 import { listPermissions } from '../../../../service/admin/system/permission'
 import { getRoleById } from '../../../../service/admin/system/role'
 import { idParamSchema } from '../../../../service/common/response'
+import PageAlert from '../../../_components/$page-alert'
 import Layout from '../../../_components/_layout/$index'
-import PageAlert from '../../../_components/_page-alert'
 import PageHeader from '../../../_components/_page-header'
 import {
   getActionErrorMessage,

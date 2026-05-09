@@ -52,7 +52,6 @@ export default function WebNotificationTable({ notifications }: Props) {
                   </a>
                   <a
                     class="btn btn-link btn-xs"
-                    data-pjax="true"
                     href={`/admin/web/notification/edit?id=${notification.id}`}
                   >
                     编辑

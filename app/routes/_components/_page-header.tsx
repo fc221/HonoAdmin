@@ -20,7 +20,7 @@ export default function PageHeader({
           ? (
               <a
                 class="btn btn-ghost btn-sm shrink-0"
-                data-history-back="true"
+                data-history-replace="true"
                 href={backHref}
               >
                 <i class="icon-[ri--arrow-left-line]" />

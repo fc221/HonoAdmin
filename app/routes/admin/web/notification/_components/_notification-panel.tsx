@@ -2,8 +2,8 @@ import type { WebNotificationRecord } from '../../../../../service/admin/web/not
 import type {
   PaginatedResult,
 } from '../../../../../service/common/pagination'
-import type { PageAlertState } from '../../../../_components/_page-alert'
-import PageAlert from '../../../../_components/_page-alert'
+import type { PageAlertState } from '../../../../_components/$page-alert'
+import PageAlert from '../../../../_components/$page-alert'
 import Pagination from '../../../../_components/_pagination'
 import TableSearchForm from '../../../../_components/_table-search-form'
 import WebNotificationTable from './_notification-table'
@@ -29,7 +29,6 @@ export default function WebNotificationPanel({
           <div class="flex flex-wrap items-center gap-2">
             <a
               class="btn btn-primary btn-sm"
-              data-pjax="true"
               href="/admin/web/notification/add"
             >
               <i class="icon-[ri--add-line]" />

@@ -176,7 +176,6 @@ function CollapsedRootMenuItem({
         <a
           aria-label={item.label}
           class={`${activeClass} justify-center`}
-          data-pjax={item.pjax === false ? undefined : 'true'}
           href={item.href}
           onClick={onNavigate}
           title={item.label}

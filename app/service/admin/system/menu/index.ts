@@ -11,7 +11,6 @@ export function getMenuBreadcrumbs(
     href: item.href,
     label: item.label,
     name: item.name,
-    pjax: item.pjax,
   }))
 }
 

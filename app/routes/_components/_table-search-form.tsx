@@ -15,8 +15,7 @@ export default function TableSearchForm({
     <form
       action={action}
       class="ml-auto flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto"
-      data-pjax="true"
-      data-pjax-replace="true"
+      data-history-replace="true"
       method="get"
     >
       {pageSize ? <input name="pageSize" type="hidden" value={pageSize} /> : null}

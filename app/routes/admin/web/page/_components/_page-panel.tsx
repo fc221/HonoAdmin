@@ -1,7 +1,7 @@
 import type { WebPageRecord } from '../../../../../service/admin/web/page/dto'
 import type { PaginatedResult } from '../../../../../service/common/pagination'
-import type { PageAlertState } from '../../../../_components/_page-alert'
-import PageAlert from '../../../../_components/_page-alert'
+import type { PageAlertState } from '../../../../_components/$page-alert'
+import PageAlert from '../../../../_components/$page-alert'
 import Pagination from '../../../../_components/_pagination'
 import TableSearchForm from '../../../../_components/_table-search-form'
 import WebPageTable from './_page-table'
@@ -27,7 +27,6 @@ export default function WebPagePanel({
           <div class="flex flex-wrap items-center gap-2">
             <a
               class="btn btn-primary btn-sm"
-              data-pjax="true"
               href="/admin/web/page/add"
             >
               <i class="icon-[ri--add-line]" />

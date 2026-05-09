@@ -71,7 +71,6 @@ function renderMenuItem(
     <li key={item.name} class="min-w-0">
       <a
         class={`${isMenuItemActive(item, currentMenuName) ? 'menu-active' : ''} min-w-0`}
-        data-pjax={item.pjax === false ? undefined : 'true'}
         href={item.href}
         onClick={onNavigate}
       >

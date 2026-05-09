@@ -101,7 +101,7 @@ function PageLink({
   return (
     <a
       class={`btn btn-xs join-item ${active ? 'btn-primary' : 'btn-ghost'}`}
-      data-pjax="true"
+      data-history-replace="true"
       href={createPageHref(action, query, page)}
     >
       {label}

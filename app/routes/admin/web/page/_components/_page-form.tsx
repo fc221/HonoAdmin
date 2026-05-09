@@ -1,5 +1,5 @@
 import type { WebPageRecord } from '../../../../../service/admin/web/page/dto'
-import RichTextEditor from '../../../../_components/_rich-text-editor'
+import RichTextEditor from '../../../../_components/$rich-text-editor'
 
 interface Props {
   mode: 'create' | 'update'
@@ -12,7 +12,6 @@ export default function WebPageForm({ mode, page }: Props) {
   return (
     <form
       class="space-y-5"
-      data-pjax="true"
       data-validate-trigger="blur"
       method="post"
     >
@@ -80,7 +79,7 @@ export default function WebPageForm({ mode, page }: Props) {
       </div>
 
       <div class="flex justify-end gap-2 border-t border-base-300 pt-4">
-        <a class="btn btn-ghost btn-sm" data-pjax="true" href="/admin/web/page">
+        <a class="btn btn-ghost btn-sm" href="/admin/web/page">
           取消
         </a>
         <button class="btn btn-primary btn-sm" type="submit">

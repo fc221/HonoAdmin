@@ -6,7 +6,7 @@ import type {
 } from '../../../../service/admin/system/operate-log/enum'
 import type { UserRecord } from '../../../../service/admin/system/user/dto'
 import type { PaginatedResult } from '../../../../service/common/pagination'
-import type { PageAlertState } from '../../../_components/_page-alert'
+import type { PageAlertState } from '../../../_components/$page-alert'
 import {
   operateLogTypeLabels,
   operateLogTypeOptions,
@@ -18,8 +18,10 @@ import {
 } from '../../../../service/admin/system/user/enum'
 import { getAvatarText } from '../../../../utils/avatar'
 import { formatDateTime } from '../../../../utils/datetime'
-import PageAlert from '../../../_components/_page-alert'
+import PageAlert from '../../../_components/$page-alert'
 import Pagination from '../../../_components/_pagination'
+import RadioTabs from '../../../_components/_radio-tabs'
+import AvatarUploadField from './$avatar-upload-field'
 
 type ProfileTab = 'logs' | 'password' | 'profile'
 
@@ -49,48 +51,30 @@ export default function ProfilePanel({
         <ProfileInfoCard timezone={timezone} user={user} />
         <section class="min-w-0">
           <div class="overflow-x-auto">
-            <div class="tabs tabs-lift">
-              <input
-                aria-label="信息编辑"
-                checked={activeTab === 'profile'}
-                class="tab z-1"
-                name="profile_panel_tabs"
-                type="radio"
-                value="profile"
-              />
-              <div class="sticky start tab-content border-base-300 bg-base-100 p-6">
+            <RadioTabs
+              activeValue={activeTab}
+              name="profile_panel_tabs"
+              tabs={[
+                { label: '信息编辑', value: 'profile' },
+                { label: '密码修改', value: 'password' },
+                { label: '操作日志', value: 'logs' },
+              ]}
+            >
+              <>
                 <ProfileEditForm user={user} />
-              </div>
-
-              <input
-                aria-label="密码修改"
-                checked={activeTab === 'password'}
-                class="tab z-1"
-                name="profile_panel_tabs"
-                type="radio"
-                value="password"
-              />
-              <div class="sticky start tab-content border-base-300 bg-base-100 p-6">
+              </>
+              <>
                 <PasswordChangeForm />
-              </div>
-
-              <input
-                aria-label="操作日志"
-                checked={activeTab === 'logs'}
-                class="tab z-1"
-                name="profile_panel_tabs"
-                type="radio"
-                value="logs"
-              />
-              <div class="sticky start tab-content border-base-300 bg-base-100 p-6">
+              </>
+              <>
                 <OperateLogTable
                   keyword={logKeyword}
                   logs={logs}
                   logType={logType}
                   timezone={timezone}
                 />
-              </div>
-            </div>
+              </>
+            </RadioTabs>
           </div>
         </section>
       </div>
@@ -212,7 +196,6 @@ function ProfileEditForm({ user }: { user: UserRecord }) {
   return (
     <form
       class="max-w-2xl space-y-4"
-      data-pjax="true"
       data-validate-trigger="blur"
       method="post"
     >
@@ -246,7 +229,7 @@ function ProfileEditForm({ user }: { user: UserRecord }) {
 
       <fieldset class="fieldset" data-form-field="gender">
         <legend class="fieldset-legend">性别</legend>
-        <select class="select w-full" name="gender">
+        <select class="select w-full" name="gender" value={user.gender ?? ''}>
           <option selected={!user.gender} value="">
             保密
           </option>
@@ -283,69 +266,10 @@ function ProfileEditForm({ user }: { user: UserRecord }) {
   )
 }
 
-function AvatarUploadField({ user }: { user: UserRecord }) {
-  const currentValue = user.avatar ?? ''
-
-  return (
-    <div
-      class="space-y-2"
-      data-file-upload="true"
-      data-file-upload-type="avatar"
-      data-form-field="avatar"
-    >
-      <input
-        data-file-upload-target="true"
-        name="avatar"
-        type="hidden"
-        value={currentValue}
-      />
-      <button
-        aria-label="上传头像"
-        class="group flex w-fit items-center gap-4 rounded-box p-2 text-left hover:bg-base-200"
-        data-file-upload-trigger="true"
-        type="button"
-      >
-        <span class="avatar">
-          <span class="relative h-20 w-20 overflow-hidden rounded-full bg-primary/80 ring ring-base-300 ring-offset-2 ring-offset-base-100">
-            <img
-              alt="用户头像"
-              class={`h-full w-full object-cover ${currentValue ? '' : 'hidden'}`}
-              data-file-upload-preview="true"
-              src={currentValue || undefined}
-            />
-            <span
-              class={`flex h-full w-full items-center justify-center text-2xl font-bold text-white ${currentValue ? 'hidden' : ''}`}
-              data-file-upload-placeholder="true"
-            >
-              {getAvatarText(user)}
-            </span>
-            <span class="absolute inset-x-0 bottom-0 bg-base-content/70 py-1 text-center text-xs text-base-100 opacity-0 transition-opacity group-hover:opacity-100">
-              上传
-            </span>
-          </span>
-        </span>
-        <span>
-          <span class="block text-sm font-medium">头像</span>
-          <span class="mt-1 block text-xs text-base-content/60">
-            点击头像上传图片
-          </span>
-        </span>
-      </button>
-      <input
-        accept="image/gif,image/jpeg,image/png,image/webp"
-        class="hidden"
-        data-file-upload-input="true"
-        type="file"
-      />
-    </div>
-  )
-}
-
 function PasswordChangeForm() {
   return (
     <form
       class="max-w-2xl space-y-4"
-      data-pjax="true"
       data-validate-trigger="blur"
       method="post"
     >
@@ -486,19 +410,28 @@ function OperateLogFilterForm({
     <form
       action="/user/profile"
       class="flex w-full flex-wrap items-center justify-end gap-2"
-      data-pjax="true"
-      data-pjax-replace="true"
+      data-history-replace="true"
       method="get"
     >
       <input name="tab" type="hidden" value="logs" />
       <input name="pageSize" type="hidden" value={pageSize} />
-      <select class="select select-bordered select-sm w-full sm:w-36" name="logType">
-        <option selected={logType === ''} value="">全部类型</option>
+      <select
+        class="select select-bordered select-sm w-full sm:w-36"
+        name="logType"
+      >
+        <option
+          value=""
+          // @ts-expect-error
+          selected={logType === '' ? 'selected' : undefined}
+        >
+          全部类型
+        </option>
         {operateLogTypeOptions.map((option) => (
           <option
             key={option.value}
-            selected={logType === option.value}
             value={option.value}
+            // @ts-expect-error
+            selected={logType === option.value ? 'selected' : undefined}
           >
             {option.label}
           </option>

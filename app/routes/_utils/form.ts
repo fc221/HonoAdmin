@@ -1,26 +1,10 @@
 import type { Context } from 'hono'
-import type { PageAlertState } from '../_components/_page-alert'
+import type { PageAlertState } from '../_components/$page-alert'
 import { ZodError } from 'zod'
 import { AppError, toErrorShape } from '../../utils/errors'
 
 type FormBody = Record<string, unknown>
 type FieldErrors = Record<string, string[]>
-
-export interface PjaxActionResult {
-  alert: PageAlertState
-  fieldErrors?: FieldErrors
-  formErrors?: string[]
-  honoAdminAction: true
-  ok: boolean
-  replace: boolean
-  target: string
-}
-
-interface ActionAlertOptions {
-  fieldErrors?: FieldErrors
-  formErrors?: string[]
-  replace?: boolean
-}
 
 export function getFormValue(body: FormBody, key: string): string {
   const value = body[key]
@@ -91,22 +75,8 @@ export function respondWithActionAlert(
   c: Context,
   path: string,
   alert: PageAlertState,
-  options: ActionAlertOptions = {},
 ): Response {
-  if (!isPjaxRequest(c)) {
-    return redirectWithAlert(c, path, alert)
-  }
-
-  const status = alert.type === 'error' ? 422 : 200
-  return c.json<PjaxActionResult>({
-    alert,
-    fieldErrors: options.fieldErrors,
-    formErrors: options.formErrors,
-    honoAdminAction: true,
-    ok: alert.type === 'success',
-    replace: options.replace ?? true,
-    target: path,
-  }, status)
+  return redirectWithAlert(c, path, alert)
 }
 
 export function respondWithActionError(
@@ -119,9 +89,6 @@ export function respondWithActionError(
   return respondWithActionAlert(c, path, {
     message: actionError.message,
     type: 'error',
-  }, {
-    fieldErrors: actionError.fieldErrors,
-    formErrors: actionError.formErrors,
   })
 }
 
@@ -219,10 +186,6 @@ function normalizeStringArray(value: unknown): string[] | undefined {
 
   const values = value.filter((item): item is string => typeof item === 'string')
   return values.length ? values : undefined
-}
-
-function isPjaxRequest(c: Context): boolean {
-  return c.req.header('X-PJAX') === 'true'
 }
 
 function normalizeBooleanQuery(value: string | undefined): boolean | undefined {

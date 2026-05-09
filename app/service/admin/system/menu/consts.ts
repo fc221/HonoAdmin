@@ -5,14 +5,12 @@ export interface MenuItem {
   icon: string
   label: string
   name: string
-  pjax?: boolean
 }
 
 export interface MenuBreadcrumbItem {
   href?: string
   label: string
   name: string
-  pjax?: boolean
 }
 
 export const adminMenus: MenuItem[] = [

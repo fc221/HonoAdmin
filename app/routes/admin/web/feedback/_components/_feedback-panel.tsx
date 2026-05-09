@@ -1,8 +1,8 @@
 import type { WebFeedbackRecord } from '../../../../../service/admin/web/feedback/dto'
 import type { PaginatedResult } from '../../../../../service/common/pagination'
-import type { PageAlertState } from '../../../../_components/_page-alert'
+import type { PageAlertState } from '../../../../_components/$page-alert'
 import { webFeedbackStatusOptions } from '../../../../../service/admin/web/feedback/enum'
-import PageAlert from '../../../../_components/_page-alert'
+import PageAlert from '../../../../_components/$page-alert'
 import Pagination from '../../../../_components/_pagination'
 import TableSearchForm from '../../../../_components/_table-search-form'
 import { ConfirmActionModal } from '../../../_components/_crud-action-modal'
@@ -65,7 +65,6 @@ export default function WebFeedbackPanel({
                   </td>
                   <td>
                     <form
-                      data-pjax="true"
                       data-validate-trigger="change"
                       id={`feedback-update-${feedback.id}`}
                       method="post"

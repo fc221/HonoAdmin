@@ -5,13 +5,13 @@ import type {
   OperateLogType,
 } from '../../../../../service/admin/system/operate-log/enum'
 import type { PaginatedResult } from '../../../../../service/common/pagination'
-import type { PageAlertState } from '../../../../_components/_page-alert'
+import type { PageAlertState } from '../../../../_components/$page-alert'
 import {
   operateLogTypeLabels,
   operateLogTypeOptions,
 } from '../../../../../service/admin/system/operate-log/enum'
 import { formatDateTime } from '../../../../../utils/datetime'
-import PageAlert from '../../../../_components/_page-alert'
+import PageAlert from '../../../../_components/$page-alert'
 import Pagination from '../../../../_components/_pagination'
 import { ConfirmActionModal } from '../../../_components/_crud-action-modal'
 
@@ -139,18 +139,27 @@ function OperateLogFilterForm({
     <form
       action="/admin/system/operate-log"
       class="ml-auto flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto"
-      data-pjax="true"
-      data-pjax-replace="true"
+      data-history-replace="true"
       method="get"
     >
       <input name="pageSize" type="hidden" value={pageSize} />
-      <select class="select select-bordered select-sm w-full sm:w-36" name="logType">
-        <option selected={logType === ''} value="">全部类型</option>
+      <select
+        class="select select-bordered select-sm w-full sm:w-36"
+        name="logType"
+      >
+        <option
+          value=""
+          // @ts-expect-error
+          selected={logType === '' ? 'selected' : undefined}
+        >
+          全部类型
+        </option>
         {operateLogTypeOptions.map((option) => (
           <option
             key={option.value}
-            selected={logType === option.value}
             value={option.value}
+            // @ts-expect-error
+            selected={logType === option.value ? 'selected' : undefined}
           >
             {option.label}
           </option>

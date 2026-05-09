@@ -1,8 +1,8 @@
 import type { RoleRecord } from '../../../../../service/admin/system/role/dto'
 import type { PaginatedResult } from '../../../../../service/common/pagination'
-import type { PageAlertState } from '../../../../_components/_page-alert'
+import type { PageAlertState } from '../../../../_components/$page-alert'
 import { formatDateTime } from '../../../../../utils/datetime'
-import PageAlert from '../../../../_components/_page-alert'
+import PageAlert from '../../../../_components/$page-alert'
 import Pagination from '../../../../_components/_pagination'
 import TableSearchForm from '../../../../_components/_table-search-form'
 import { ConfirmActionModal } from '../../../_components/_crud-action-modal'
@@ -29,7 +29,7 @@ export default function RolePanel({
       <PageAlert alert={alert} />
       <section class="rounded-box border border-base-300 bg-base-100 p-4">
         <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <a class="btn btn-primary btn-sm" data-pjax="true" href={`${pagePath}/add`}>
+          <a class="btn btn-primary btn-sm" href={`${pagePath}/add`}>
             <i class="icon-[ri--add-line]"></i>
             新增角色
           </a>
@@ -87,7 +87,6 @@ export default function RolePanel({
                     <div class="flex flex-nowrap items-center justify-end gap-2">
                       <a
                         class="btn btn-link btn-xs"
-                        data-pjax="true"
                         href={`${pagePath}/edit?id=${role.id}`}
                       >
                         编辑

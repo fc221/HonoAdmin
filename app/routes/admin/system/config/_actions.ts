@@ -21,10 +21,10 @@ const pagePath = '/admin/system/config'
 export async function handleConfigAction(c: Context): Promise<Response> {
   const body = await c.req.parseBody()
   const intent = getFormValue(body, 'intent')
+  const configType = getConfigFormType(body)
+  const currentPagePath = createConfigPagePath(configType)
 
   try {
-    const configType = getConfigFormType(body)
-
     if (intent === 'update-values') {
       const updateCount = await updateConfigValues(c, body)
 
@@ -34,7 +34,7 @@ export async function handleConfigAction(c: Context): Promise<Response> {
         method: 'handleConfigAction',
       })
 
-      return respondWithActionAlert(c, pagePath, {
+      return respondWithActionAlert(c, currentPagePath, {
         message: '配置已更新。',
         type: 'success',
       })
@@ -42,7 +42,7 @@ export async function handleConfigAction(c: Context): Promise<Response> {
 
     throw new ValidationError('未知的配置操作。', { intent })
   } catch (error) {
-    return respondWithActionError(c, pagePath, error)
+    return respondWithActionError(c, currentPagePath, error)
   }
 }
 
@@ -88,4 +88,8 @@ function getConfigTypeLabel(type: ConfigType): string {
   }
 
   return labels[type]
+}
+
+function createConfigPagePath(type: ConfigType): string {
+  return `${pagePath}?configType=${type}`
 }

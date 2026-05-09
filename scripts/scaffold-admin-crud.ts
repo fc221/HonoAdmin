@@ -642,7 +642,6 @@ export default function ${pascal}Form({ mode, record }: Props) {
   return (
     <form
       class="grid gap-4 md:grid-cols-2"
-      data-pjax="true"
       data-validate-trigger="blur"
       method="post"
     >
@@ -652,7 +651,7 @@ export default function ${pascal}Form({ mode, record }: Props) {
 ${indent(inputs, 6)}
 
       <div class="flex justify-end gap-2 border-t border-base-300 pt-4 md:col-span-2">
-        <a class="btn btn-ghost btn-sm" data-pjax="true" href="/admin/${options.route}">
+        <a class="btn btn-ghost btn-sm" href="/admin/${options.route}">
           取消
         </a>
         <button class="btn btn-primary btn-sm" type="submit">
@@ -693,7 +692,7 @@ export default function ${pascal}Panel({ alert, keyword, pagination }: Props) {
       <PageAlert alert={alert} />
       <PageHeader
         actions={(
-          <a class="btn btn-primary btn-sm" data-pjax="true" href="/admin/${options.route}/add">
+          <a class="btn btn-primary btn-sm" href="/admin/${options.route}/add">
             新增${options.title}
           </a>
         )}
@@ -750,7 +749,6 @@ ${cells}
               <td class="text-right">
                 <a
                   class="btn btn-ghost btn-xs"
-                  data-pjax="true"
                   href={\`/admin/${options.route}/edit?id=\${record.id}\`}
                 >
                   编辑

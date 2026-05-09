@@ -132,7 +132,7 @@ export function ConfirmActionModal({
             >
               取消
             </label>
-            <form data-pjax="true" method="post">
+            <form method="post">
               {inputs.map((input) => (
                 <input
                   key={`${input.name}:${input.value}`}

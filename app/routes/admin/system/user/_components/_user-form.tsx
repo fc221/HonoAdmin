@@ -4,7 +4,7 @@ import {
   UserStatus,
   userStatusOptions,
 } from '../../../../../service/admin/system/user/enum'
-import FileUploadField from '../../../../_components/_file-upload-field'
+import FileUploadField from '../../../../_components/$file-upload-field'
 import RoleMultiSelectDropdown from './$role-multi-select-dropdown'
 
 interface Props {
@@ -26,7 +26,6 @@ export default function UserForm({ cancelTargetId, mode, roles, user }: Props) {
   return (
     <form
       class="grid min-w-0 gap-4 md:grid-cols-2"
-      data-pjax="true"
       data-validate-trigger="blur"
       method="post"
     >

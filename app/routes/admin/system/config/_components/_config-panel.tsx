@@ -1,45 +1,39 @@
 import type { ConfigRecord } from '../../../../../service/admin/system/config/dto'
 import type { ConfigType } from '../../../../../service/admin/system/config/enum'
-import type { PageAlertState } from '../../../../_components/_page-alert'
+import type { PageAlertState } from '../../../../_components/$page-alert'
 import {
   builtInConfigDefinitions,
   configTypeOptions,
 } from '../../../../../service/admin/system/config/constants'
-import PageAlert from '../../../../_components/_page-alert'
+import PageAlert from '../../../../_components/$page-alert'
+import RadioTabs from '../../../../_components/_radio-tabs'
 
 interface Props {
+  activeType: ConfigType
   alert?: PageAlertState
   configs: ConfigRecord[]
 }
 
-export default function ConfigPanel({ alert, configs }: Props) {
+export default function ConfigPanel({ activeType, alert, configs }: Props) {
   return (
     <div class="space-y-4">
       <PageAlert alert={alert} />
       <div class="overflow-x-auto">
-        <div class="tabs tabs-lift">
-          {configTypeOptions.map((option, index) => (
-            <>
-              <input
-                aria-label={option.label}
-                checked={index === 0}
-                class="tab z-1"
-                name="config_type_tabs"
-                type="radio"
-                value={option.value}
-              />
-              <div class="sticky start tab-content border-base-300 bg-base-100 p-6">
-                <ConfigTypeForm
-                  configs={configs.filter(
-                    (config) => config.configType === option.value,
-                  )}
-                  label={option.label}
-                  type={option.value}
-                />
-              </div>
-            </>
+        <RadioTabs
+          activeValue={activeType}
+          name="config_type_tabs"
+          tabs={configTypeOptions}
+        >
+          {configTypeOptions.map((option) => (
+            <ConfigTypeForm
+              configs={configs.filter(
+                (config) => config.configType === option.value,
+              )}
+              label={option.label}
+              type={option.value}
+            />
           ))}
-        </div>
+        </RadioTabs>
       </div>
     </div>
   )
@@ -57,7 +51,6 @@ function ConfigTypeForm({
   return (
     <form
       class="space-y-4"
-      data-pjax="true"
       data-validate-trigger="blur"
       method="post"
     >
@@ -111,7 +104,11 @@ function ConfigValueField({ config }: { config: ConfigRecord }) {
       </legend>
       {definition?.inputType === 'select' && definition.options?.length
         ? (
-            <select class="select w-full" name={`configValue:${config.id}`}>
+            <select
+              class="select w-full"
+              name={`configValue:${config.id}`}
+              value={config.configValue}
+            >
               {definition.options.map((option) => (
                 <option
                   key={option.value}

@@ -44,7 +44,6 @@ export default function WebPageTable({ pages }: Props) {
                   </a>
                   <a
                     class="btn btn-link btn-xs"
-                    data-pjax="true"
                     href={`/admin/web/page/edit?id=${page.id}`}
                   >
                     编辑
