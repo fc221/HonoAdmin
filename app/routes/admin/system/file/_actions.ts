@@ -50,7 +50,10 @@ export async function handleFileAction(c: Context): Promise<Response> {
 
         return c.json({
           data: {
+            fileSize: file.fileSize,
             id: file.id,
+            mimeType: file.mimeType,
+            originalName: file.originalName,
             url: file.url,
           },
           ok: true,

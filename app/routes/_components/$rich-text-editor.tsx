@@ -1,6 +1,5 @@
 import type { ValidateTrigger } from '../../client/types'
 import type { FileUploadType } from '../../service/admin/system/file/enum'
-import { useState } from 'hono/jsx'
 import {
   applyNativeFieldValidation,
   getFieldForm,
@@ -38,9 +37,6 @@ export default function RichTextEditor({
   value = '',
 }: Props) {
   const sanitizedValue = sanitizeRichTextHtml(value)
-  const [uploadMessage, setUploadMessage] = useState('')
-  const [isUploadError, setIsUploadError] = useState(false)
-  const [isUploading, setIsUploading] = useState(false)
 
   const syncInput = (root: HTMLElement) => {
     const body = getRichTextBody(root)
@@ -100,21 +96,18 @@ export default function RichTextEditor({
       return
     }
 
-    setUploadMessage('正在上传图片...')
-    setIsUploadError(false)
-    setIsUploading(true)
+    setUploadStatus(root, '正在上传图片...', false)
+    setUploadButtonDisabled(root, true)
 
     try {
       const result = await uploadImage(file, uploadType)
       insertImageIntoRoot(root, result.url)
-      setUploadMessage('图片已插入正文。')
-      setIsUploadError(false)
+      setUploadStatus(root, '图片已插入正文。', false)
     } catch (error) {
-      setUploadMessage(getUploadErrorMessage(error))
-      setIsUploadError(true)
+      setUploadStatus(root, getUploadErrorMessage(error), true)
     } finally {
       input.value = ''
-      setIsUploading(false)
+      setUploadButtonDisabled(root, false)
     }
   }
 
@@ -144,7 +137,7 @@ export default function RichTextEditor({
                   <button
                     aria-label="上传图片"
                     class="btn btn-ghost btn-sm"
-                    disabled={isUploading}
+                    data-rich-text-upload-button="true"
                     title="上传图片"
                     type="button"
                     onClick={(event) => {
@@ -164,15 +157,10 @@ export default function RichTextEditor({
                     type="file"
                     onChange={handleUpload}
                   />
-                  {uploadMessage
-                    ? (
-                        <span
-                          class={`self-center px-2 text-xs ${isUploadError ? 'text-error' : 'text-success'}`}
-                        >
-                          {uploadMessage}
-                        </span>
-                      )
-                    : null}
+                  <span
+                    class="hidden self-center px-2 text-xs"
+                    data-rich-text-upload-message="true"
+                  />
                 </>
               )
             : null}
@@ -213,26 +201,72 @@ function getRichTextInput(root: HTMLElement): HTMLTextAreaElement | null {
   return root.querySelector<HTMLTextAreaElement>('[data-rich-text-input="true"]')
 }
 
+function setUploadButtonDisabled(root: HTMLElement, disabled: boolean) {
+  const button = root.querySelector(
+    '[data-rich-text-upload-button="true"]',
+  ) as HTMLButtonElement | null
+
+  if (button) {
+    button.disabled = disabled
+  }
+}
+
+function setUploadStatus(
+  root: HTMLElement,
+  message: string,
+  isError: boolean,
+) {
+  const element = root.querySelector(
+    '[data-rich-text-upload-message="true"]',
+  ) as HTMLElement | null
+
+  if (!element) {
+    return
+  }
+
+  element.textContent = message
+  element.className = [
+    'self-center px-2 text-xs',
+    message ? '' : 'hidden',
+    isError ? 'text-error' : 'text-success',
+  ].filter(Boolean).join(' ')
+}
+
 function insertImageIntoRoot(root: HTMLElement, url: string) {
   const body = getRichTextBody(root)
   if (!body) {
     return
   }
 
+  const image = document.createElement('img')
+  image.src = url
+  image.alt = ''
   body.focus()
-  document.execCommand('insertImage', false, url)
+  const selection = window.getSelection()
+  const range = selection?.rangeCount ? selection.getRangeAt(0) : null
 
-  if (!body.innerHTML.includes(url)) {
-    const image = document.createElement('img')
-    image.src = url
-    image.alt = ''
+  if (range && isRangeInsideElement(range, body)) {
+    range.deleteContents()
+    range.insertNode(image)
+    range.setStartAfter(image)
+    range.collapse(true)
+    selection?.removeAllRanges()
+    selection?.addRange(range)
+  } else {
     body.appendChild(image)
   }
 
   const input = getRichTextInput(root)
   if (input) {
     input.value = body.innerHTML.trim()
+    input.dispatchEvent(new Event('input', { bubbles: true }))
+    input.dispatchEvent(new Event('change', { bubbles: true }))
   }
+}
+
+function isRangeInsideElement(range: Range, element: HTMLElement): boolean {
+  const container = range.commonAncestorContainer
+  return container === element || element.contains(container)
 }
 
 function executeRichTextCommand(command: string) {

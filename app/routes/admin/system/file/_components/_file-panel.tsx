@@ -166,13 +166,13 @@ function FileTable({
         <thead>
           <tr>
             <th>ID</th>
-            <th>预览</th>
+            <th class="w-20 min-w-20">预览</th>
             <th>文件</th>
             <th>类型</th>
             <th>存储</th>
             <th>上传用户</th>
-            <th>上传时间</th>
-            <th class="text-right"></th>
+            <th class="w-52 min-w-52">上传时间</th>
+            <th class="text-right w-20 min-w-20"></th>
           </tr>
         </thead>
         <tbody>
@@ -180,14 +180,7 @@ function FileTable({
             <tr key={file.id}>
               <td>{file.id}</td>
               <td>
-                <a href={file.url} target="_blank">
-                  <img
-                    alt={file.originalName}
-                    class="h-12 w-12 rounded object-cover"
-                    loading="lazy"
-                    src={file.url}
-                  />
-                </a>
+                <FilePreviewCell file={file} />
               </td>
               <td>
                 <div class="flex min-w-64 flex-col gap-1">
@@ -227,7 +220,7 @@ function FileTable({
                     { name: 'intent', value: 'delete' },
                     { name: 'id', value: file.id },
                   ]}
-                  message={`文件「${file.originalName}」删除后，已引用该图片的头像、公告或页面图片将无法显示。`}
+                  message={`文件「${file.originalName}」删除后，已引用该文件的头像、公告或页面内容将无法显示。`}
                   title="删除文件"
                 />
               </td>
@@ -245,6 +238,45 @@ function FileTable({
         </tbody>
       </table>
     </div>
+  )
+}
+
+function FilePreviewCell({ file }: { file: FileRecord }) {
+  if (file.mimeType.startsWith('image/')) {
+    return (
+      <a href={file.url} target="_blank">
+        <img
+          alt={file.originalName}
+          class="h-12 w-12 rounded object-cover"
+          loading="lazy"
+          src={file.url}
+        />
+      </a>
+    )
+  }
+
+  if (file.mimeType.startsWith('video/')) {
+    return (
+      <a href={file.url} target="_blank">
+        <video
+          class="h-12 w-12 rounded bg-base-200 object-cover"
+          muted
+          playsInline
+          preload="metadata"
+          src={file.url}
+        />
+      </a>
+    )
+  }
+
+  return (
+    <a
+      class="flex h-12 w-12 items-center justify-center rounded bg-base-200 text-base-content/45"
+      href={file.url}
+      target="_blank"
+    >
+      <i class="icon-[ri--file-3-line] text-2xl" />
+    </a>
   )
 }
 

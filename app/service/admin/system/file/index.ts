@@ -217,7 +217,7 @@ async function normalizeUploadedFile(
   size: number
 }> {
   const originalName = file.name.trim() || 'upload'
-  const mimeType = file.type.trim().toLowerCase()
+  const mimeType = normalizeMimeType(file.type)
   const extension = getFileExtension(originalName)
 
   if (file.size <= 0) {
@@ -266,6 +266,10 @@ async function normalizeUploadedFile(
 function formatSize(bytes: number): string {
   const mb = bytes / 1024 / 1024
   return Number.isInteger(mb) ? `${mb}MB` : `${bytes} bytes`
+}
+
+function normalizeMimeType(value: string): string {
+  return value.split(';', 1)[0]?.trim().toLowerCase() ?? ''
 }
 
 function detectImageMimeType(bytes: Uint8Array): string | null {

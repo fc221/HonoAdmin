@@ -184,6 +184,14 @@ body {
   text-decoration: underline;
 }
 
+.rich-text-content img {
+  border-radius: var(--radius-box);
+  display: block;
+  height: auto;
+  margin-block: 0.75rem;
+  max-width: 100%;
+}
+
 .rich-text-content blockquote {
   border-inline-start: 3px solid var(--color-base-300);
   color: color-mix(in oklch, var(--color-base-content), transparent 25%);
