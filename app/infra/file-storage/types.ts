@@ -42,6 +42,7 @@ export interface S3FileStorageConfig {
   bucket: string
   endpoint: string
   mode: 's3'
+  publicBaseUrl?: string
   region: string
   secretAccessKey: string
   signedUrlTtlSeconds: number

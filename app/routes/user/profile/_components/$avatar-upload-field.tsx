@@ -1,6 +1,7 @@
 import type { UserRecord } from '../../../../service/admin/system/user/dto'
 import { useState } from 'hono/jsx'
 import { getAvatarText } from '../../../../utils/avatar'
+import LazyAvatarImage from '../../../_components/$lazy-avatar-image'
 import {
   getUploadErrorMessage,
   uploadImage,
@@ -72,16 +73,12 @@ export default function AvatarUploadField({ user }: { user: UserRecord }) {
       >
         <span class="avatar">
           <span class="relative h-20 w-20 overflow-hidden rounded-full bg-primary/80 ring ring-base-300 ring-offset-2 ring-offset-base-100">
-            <img
+            <LazyAvatarImage
               alt="用户头像"
-              class={`h-full w-full object-cover ${currentValue ? '' : 'hidden'}`}
+              fallbackClass="text-2xl font-bold text-white"
+              fallbackText={getAvatarText(user)}
               src={currentValue || undefined}
             />
-            <span
-              class={`flex h-full w-full items-center justify-center text-2xl font-bold text-white ${currentValue ? 'hidden' : ''}`}
-            >
-              {getAvatarText(user)}
-            </span>
             <span class="absolute inset-x-0 bottom-0 bg-base-content/70 py-1 text-center text-xs text-base-100 opacity-0 transition-opacity group-hover:opacity-100">
               上传
             </span>

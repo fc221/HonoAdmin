@@ -44,6 +44,15 @@ export class S3FileStorageAdapter {
   }
 
   async getAccess(input: { storageKey: string }): Promise<FileStorageAccess> {
+    if (this.config.publicBaseUrl) {
+      return {
+        cacheControl: 'no-store',
+        kind: 'redirect',
+        status: 302,
+        url: this.createPublicObjectUrl(input.storageKey),
+      }
+    }
+
     return {
       cacheControl: 'no-store',
       kind: 'redirect',
@@ -147,6 +156,13 @@ export class S3FileStorageAdapter {
       .join('/')
 
     return new URL(`${endpoint}/${encodedPath}`)
+  }
+
+  private createPublicObjectUrl(storageKey: string): string {
+    const publicBaseUrl = this.config.publicBaseUrl?.replace(/\/+$/, '') ?? ''
+    const encodedPath = storageKey.split('/').map(encodePathSegment).join('/')
+
+    return new URL(`${publicBaseUrl}/${encodedPath}`).toString()
   }
 }
 

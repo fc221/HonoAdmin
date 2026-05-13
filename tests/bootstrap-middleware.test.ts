@@ -32,7 +32,7 @@ describe('bootstrap migration guard', () => {
     expect(response.headers.get('cache-control')).toBe('no-store')
     expect(html).toContain('系统维护')
     expect(html).toContain('当前代码版本和数据库迁移版本不一致')
-    expect(html).toContain('0014_root_user_role_assignment')
+    expect(html).toContain('0015_file_s3_public_base_url')
   })
 })
 

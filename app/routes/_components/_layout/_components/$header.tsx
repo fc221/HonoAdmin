@@ -7,6 +7,7 @@ import type {
   UserSessionRole,
 } from '../../../../service/admin/system/user/dto'
 import { useEffect, useState } from 'hono/jsx'
+import LazyAvatarImage from '../../$lazy-avatar-image'
 import {
   getMenuBreadcrumbs,
 } from '../../../../service/admin/system/menu'
@@ -316,20 +317,14 @@ function hasAdminMenuHref(items: MenuItem[]): boolean {
 }
 
 function HeaderUserAvatar({ user }: { user: UserHeaderProfile | null }) {
-  if (user?.avatar) {
-    return (
-      <div class="avatar">
-        <div class="h-8 w-8 rounded-full bg-primary/80">
-          <img alt={`${getHeaderUserName(user)}头像`} src={user.avatar} />
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div class="avatar placeholder">
-      <div class="h-8 w-8 rounded-full bg-primary/80 text-white leading-8">
-        <span class="text-sm font-semibold">{getAvatarText(user)}</span>
+    <div class="avatar">
+      <div class="relative h-8 w-8 overflow-hidden rounded-full bg-primary/80 text-white leading-8">
+        <LazyAvatarImage
+          alt={`${getHeaderUserName(user)}头像`}
+          fallbackText={getAvatarText(user)}
+          src={user?.avatar}
+        />
       </div>
     </div>
   )

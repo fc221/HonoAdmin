@@ -4,7 +4,7 @@ import {
   UserStatus,
   userStatusOptions,
 } from '../../../../../service/admin/system/user/enum'
-import FileUploadField from '../../../../_components/$file-upload-field'
+import AvatarUploadField from './$avatar-upload-field'
 import RoleMultiSelectDropdown from './$role-multi-select-dropdown'
 
 interface Props {
@@ -41,12 +41,7 @@ export default function UserForm({ cancelTargetId, mode, roles, user }: Props) {
         <p class="label">可分配多个角色，用户可在头像菜单中切换当前生效角色。</p>
       </div>
 
-      <FileUploadField
-        label="头像 URL"
-        name="avatar"
-        uploadType="avatar"
-        value={user?.avatar}
-      />
+      <AvatarUploadField user={user} />
 
       <div class="min-w-0 space-y-2" data-form-field="username">
         <FieldLabel label="用户名" />

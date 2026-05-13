@@ -199,3 +199,11 @@ function normalizeBooleanQuery(value: string | undefined): boolean | undefined {
 
   return undefined
 }
+
+export function selectedOptionAttrs(condition: boolean): Record<string, 'selected'> {
+  return condition ? { selected: 'selected' } : {}
+}
+
+export function checkedOptionAttrs(condition: boolean): Record<string, 'checked'> {
+  return condition ? { checked: 'checked' } : {}
+}

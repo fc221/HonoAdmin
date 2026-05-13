@@ -13,6 +13,7 @@ import {
 import { formatDateTime } from '../../../../../utils/datetime'
 import PageAlert from '../../../../_components/$page-alert'
 import Pagination from '../../../../_components/_pagination'
+import { selectedOptionAttrs } from '../../../../_utils/form'
 import { ConfirmActionModal } from '../../../_components/_crud-action-modal'
 
 interface Props {
@@ -149,8 +150,7 @@ function OperateLogFilterForm({
       >
         <option
           value=""
-          // @ts-expect-error
-          selected={logType === '' ? 'selected' : undefined}
+          {...selectedOptionAttrs(logType === '')}
         >
           全部类型
         </option>
@@ -158,8 +158,7 @@ function OperateLogFilterForm({
           <option
             key={option.value}
             value={option.value}
-            // @ts-expect-error
-            selected={logType === option.value ? 'selected' : undefined}
+            {...selectedOptionAttrs(logType === option.value)}
           >
             {option.label}
           </option>

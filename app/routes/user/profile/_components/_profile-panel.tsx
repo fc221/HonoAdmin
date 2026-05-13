@@ -18,9 +18,11 @@ import {
 } from '../../../../service/admin/system/user/enum'
 import { getAvatarText } from '../../../../utils/avatar'
 import { formatDateTime } from '../../../../utils/datetime'
+import LazyAvatarImage from '../../../_components/$lazy-avatar-image'
 import PageAlert from '../../../_components/$page-alert'
 import Pagination from '../../../_components/_pagination'
 import RadioTabs from '../../../_components/_radio-tabs'
+import { selectedOptionAttrs } from '../../../_utils/form'
 import AvatarUploadField from './$avatar-upload-field'
 
 type ProfileTab = 'logs' | 'password' | 'profile'
@@ -93,16 +95,13 @@ function ProfileInfoCard({
     <aside class="rounded-box border border-base-300 bg-base-100 p-5 lg:sticky lg:top-4 lg:self-start">
       <div class="flex flex-col items-center text-center">
         <div class="avatar">
-          <div class="h-20 w-20 rounded-full bg-primary/80 ring ring-base-300 ring-offset-2 ring-offset-base-100">
-            {user.avatar
-              ? (
-                  <img alt="用户头像" src={user.avatar} />
-                )
-              : (
-                  <div class="flex h-full w-full items-center justify-center text-2xl font-bold text-white">
-                    {getAvatarText(user)}
-                  </div>
-                )}
+          <div class="relative h-20 w-20 overflow-hidden rounded-full bg-primary/80 ring ring-base-300 ring-offset-2 ring-offset-base-100">
+            <LazyAvatarImage
+              alt="用户头像"
+              fallbackClass="text-2xl font-bold text-white"
+              fallbackText={getAvatarText(user)}
+              src={user.avatar}
+            />
           </div>
         </div>
         <h1 class="mt-4 max-w-full truncate text-xl font-bold">
@@ -421,8 +420,7 @@ function OperateLogFilterForm({
       >
         <option
           value=""
-          // @ts-expect-error
-          selected={logType === '' ? 'selected' : undefined}
+          {...selectedOptionAttrs(logType === '')}
         >
           全部类型
         </option>
@@ -430,8 +428,7 @@ function OperateLogFilterForm({
           <option
             key={option.value}
             value={option.value}
-            // @ts-expect-error
-            selected={logType === option.value ? 'selected' : undefined}
+            {...selectedOptionAttrs(logType === option.value)}
           >
             {option.label}
           </option>

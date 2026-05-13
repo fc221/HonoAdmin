@@ -87,11 +87,25 @@ export const builtInConfigDefinitions: BuiltInConfigDefinition[] = [
     label: '本地文件目录',
   },
   {
+    configKey: 'file_public_base_url',
+    configType: 'file',
+    configValue: '',
+    description: '本地文件的公网访问地址，可填 https://panel.example.com 留空时使用当前站点 /uploads。',
+    label: '文件公网访问地址',
+  },
+  {
     configKey: 'file_s3_endpoint',
     configType: 'file',
     configValue: '',
     description: 'S3 兼容服务 endpoint，例如 Cloudflare R2 endpoint。',
     label: 'S3 Endpoint',
+  },
+  {
+    configKey: 'file_s3_public_base_url',
+    configType: 'file',
+    configValue: '',
+    description: 'S3/R2 公共访问地址，填入后 /uploads 会直接跳转到该地址下的文件路径，留空继续使用临时签名地址。',
+    label: 'S3 公共访问地址',
   },
   {
     configKey: 'file_s3_region',

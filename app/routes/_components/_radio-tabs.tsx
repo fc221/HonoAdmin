@@ -1,4 +1,5 @@
 import type { Child } from 'hono/jsx'
+import { checkedOptionAttrs } from '../_utils/form'
 
 interface RadioTabItem {
   label: string
@@ -32,8 +33,7 @@ export default function RadioTabs({
               name={name}
               type="radio"
               value={tab.value}
-              // @ts-expect-error
-              checked={currentValue === tab.value ? 'checked' : undefined}
+              {...checkedOptionAttrs(currentValue === tab.value)}
             />
             {tab.label}
           </label>

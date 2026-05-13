@@ -190,6 +190,80 @@ describe('file service', () => {
     }
   })
 
+  test('S3 file access uses public base URL when configured', async () => {
+    const { ctx } = testContext
+    const storageKey = 'avatar/2026/05/avatar.png'
+
+    await Promise.all([
+      upsertConfig(ctx, {
+        configKey: 'file_s3_endpoint',
+        configType: 'file',
+        configValue: 'https://s3.example.com',
+      }),
+      upsertConfig(ctx, {
+        configKey: 'file_s3_bucket',
+        configType: 'file',
+        configValue: 'hono-admin',
+      }),
+      upsertConfig(ctx, {
+        configKey: 'file_s3_public_base_url',
+        configType: 'file',
+        configValue: 'https://pub-99be8e2090184b07bfa9d15f3e238f51.r2.dev/',
+      }),
+      upsertConfig(ctx, {
+        configKey: 'file_s3_access_key_id',
+        configType: 'file',
+        configValue: 'test-access-key',
+      }),
+      upsertConfig(ctx, {
+        configKey: 'file_s3_secret_access_key',
+        configType: 'file',
+        configValue: 'test-secret-key',
+      }),
+    ])
+    await ctx.db.execute(
+      `
+        INSERT INTO sys_file (
+          upload_type,
+          storage_mode,
+          storage_key,
+          original_name,
+          mime_type,
+          file_size,
+          user_id,
+          created_at,
+          updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+      [
+        'avatar',
+        's3',
+        storageKey,
+        'avatar.png',
+        'image/png',
+        12,
+        1,
+        ctx.now(),
+        ctx.now(),
+      ],
+    )
+
+    const access = await getFileAccess(ctx, storageKey)
+
+    expect(access.kind).toBe('redirect')
+    if (access.kind === 'redirect') {
+      const redirectUrl = new URL(access.url)
+      expect(access.status).toBe(302)
+      expect(access.cacheControl).toBe('no-store')
+      expect(redirectUrl.origin).toBe(
+        'https://pub-99be8e2090184b07bfa9d15f3e238f51.r2.dev',
+      )
+      expect(redirectUrl.pathname).toBe('/avatar/2026/05/avatar.png')
+      expect(redirectUrl.searchParams.has('X-Amz-Signature')).toBe(false)
+    }
+  })
+
   test('file upload schema and permissions are registered', async () => {
     const { ctx } = testContext
     const invalid = uploadFileFormSchema.safeParse({ uploadType: 'bad' })

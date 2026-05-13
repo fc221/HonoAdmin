@@ -337,6 +337,9 @@ async function resolveFileStorageConfig(
     bucket: configs.get('file_s3_bucket')?.trim() ?? '',
     endpoint: configs.get('file_s3_endpoint')?.trim() ?? '',
     mode,
+    publicBaseUrl: normalizePublicBaseUrl(
+      configs.get('file_s3_public_base_url'),
+    ),
     region: configs.get('file_s3_region')?.trim() || 'auto',
     secretAccessKey: configs.get('file_s3_secret_access_key')?.trim() ?? '',
     signedUrlTtlSeconds: normalizeSignedUrlTtl(
@@ -362,6 +365,7 @@ async function listFileConfigValues(
           'file_s3_endpoint',
           'file_s3_region',
           'file_s3_bucket',
+          'file_s3_public_base_url',
           'file_s3_access_key_id',
           'file_s3_secret_access_key',
           'file_s3_signed_url_ttl_seconds'
@@ -403,6 +407,32 @@ function normalizeSignedUrlTtl(value: string | undefined): number {
   }
 
   return Math.min(ttl, 604800)
+}
+
+function normalizePublicBaseUrl(value: string | undefined): string | undefined {
+  const publicBaseUrl = value?.trim()
+  if (!publicBaseUrl) {
+    return undefined
+  }
+
+  let parsedUrl: URL
+  try {
+    parsedUrl = new URL(publicBaseUrl)
+  } catch {
+    throw new ConfigurationError('S3 公共访问地址必须是有效的 URL。', {
+      configKey: 'file_s3_public_base_url',
+    })
+  }
+
+  if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+    throw new ConfigurationError('S3 公共访问地址必须使用 http 或 https。', {
+      configKey: 'file_s3_public_base_url',
+    })
+  }
+
+  parsedUrl.hash = ''
+  parsedUrl.search = ''
+  return parsedUrl.toString().replace(/\/+$/, '')
 }
 
 async function countFiles(

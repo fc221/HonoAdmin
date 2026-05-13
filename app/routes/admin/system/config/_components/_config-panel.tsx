@@ -7,6 +7,7 @@ import {
 } from '../../../../../service/admin/system/config/constants'
 import PageAlert from '../../../../_components/$page-alert'
 import RadioTabs from '../../../../_components/_radio-tabs'
+import { selectedOptionAttrs } from '../../../../_utils/form'
 
 interface Props {
   activeType: ConfigType
@@ -112,8 +113,8 @@ function ConfigValueField({ config }: { config: ConfigRecord }) {
               {definition.options.map((option) => (
                 <option
                   key={option.value}
-                  selected={config.configValue === option.value}
                   value={option.value}
+                  {...selectedOptionAttrs(config.configValue === option.value)}
                 >
                   {option.label}
                 </option>
@@ -148,7 +149,7 @@ function ConfigValueField({ config }: { config: ConfigRecord }) {
                 value={config.configValue}
               />
             )}
-      <p class="label">
+      <p class="label whitespace-normal">
         {definition?.description ?? `配置键：${config.configKey}`}
       </p>
     </fieldset>

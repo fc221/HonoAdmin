@@ -66,12 +66,12 @@ export default function Aside({
           </div>
         </div>
         {/* menu */}
-        <div class="w-full min-w-0 flex-1 min-h-0 overflow-x-hidden p-4 bg-base-200 rounded-box">
+        <div class="w-full min-w-0 flex-1 min-h-0 overflow-x-hidden">
           <Menu
             dataLayoutMenuExpanded
             currentMenuName={currentMenuName}
             items={menus}
-            className={`menu p-0 w-full h-full space-y-1 overflow-y-auto flex-nowrap ${isDesktopCollapsed ? 'hidden' : ''}`}
+            className={`menu w-full h-full space-y-1 overflow-y-auto flex-nowrap p-4 bg-base-200 rounded-box ${isDesktopCollapsed ? 'hidden' : ''}`}
             onNavigate={onMenuNavigate}
           />
           <div
