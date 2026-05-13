@@ -15,7 +15,6 @@ const app = createApp({
   init(app) {
     app.use('*', middleware.security.headers)
     app.use('*', middleware.context.attach)
-    app.use('*', middleware.bootstrap.guard)
     app.use('*', middleware.security.requestBodyLimit)
     app.use('*', requestId())
     app.use('*', logger()) // 请求日志

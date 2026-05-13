@@ -10,6 +10,7 @@ const handler: NotFoundHandler = (c) => {
       status={404}
       title="页面不存在"
     />,
+    { layout: false },
   )
 }
 

@@ -1,5 +1,6 @@
 import { createRoute } from 'honox/factory'
 import { verifyAdminSession } from '../../service/admin/session'
+import { getDatabaseMigrationStatus } from '../../service/admin/system/update'
 import {
   clearRateLimit,
   consumeRateLimit,
@@ -68,9 +69,12 @@ export const POST = createRoute(async (c) => {
 
 export default createRoute(async (c) => {
   const returnTo = normalizeReturnTo(c.req.query('returnTo'))
-  const siteConfig = await getRenderableSiteConfig(c)
+  const [siteConfig, migration] = await Promise.all([
+    getRenderableSiteConfig(c),
+    getDatabaseMigrationStatus(c),
+  ])
 
-  if (await verifyAdminSession(c)) {
+  if (migration.isComplete && await verifyAdminSession(c)) {
     return c.redirect(returnTo, 302)
   }
 

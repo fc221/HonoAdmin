@@ -111,7 +111,7 @@ describe('service CRUD', () => {
     expect(created.username).toBe('editor')
     expect(created.roleIds).toEqual([userRoleId, adminRoleId])
     const credential = await getUserCredentialByUsername(ctx, 'editor')
-    expect(credential?.password.startsWith('pbkdf2-sha256:')).toBe(true)
+    expect(credential?.password.startsWith('pbkdf2-sha256:100000:')).toBe(true)
     expect(needsPasswordRehash(credential?.password ?? '')).toBe(false)
     expect(await verifyUserPassword('secret123', credential?.password ?? '')).toBe(true)
 

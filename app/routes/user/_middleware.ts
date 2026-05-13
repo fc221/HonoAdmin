@@ -6,13 +6,13 @@ const loginPath = '/user/login'
 const publicPaths = new Set([loginPath])
 
 export default createRoute(async (c, next) => {
-  if (!await isAdminInstalled(c)) {
-    return c.redirect('/install', 302)
-  }
-
   if (publicPaths.has(c.req.path)) {
     await next()
     return
+  }
+
+  if (!await isAdminInstalled(c)) {
+    return c.redirect('/install', 302)
   }
 
   if (!await getAdminSessionUser(c)) {

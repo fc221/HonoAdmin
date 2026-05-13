@@ -14,7 +14,8 @@
     "build:bun": "bun --bun vite build --mode client && bun --bun vite build --mode bun",
     "scaffold:crud": "bun run scripts/scaffold-admin-crud.ts",
     "preview": "wrangler dev",
-    "deploy": "bun run build && wrangler deploy"
+    "dev:worker": "bun run build && wrangler dev --config wrangler.local.jsonc",
+    "deploy": "bun run build && wrangler deploy --config wrangler.local.jsonc"
   },
   "dependencies": {
     "@hono/standard-validator": "^0.2.2",

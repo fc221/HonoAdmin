@@ -18,6 +18,7 @@ const handler: ErrorHandler = (e, c) => {
       status={status}
       title={getErrorTitle(status)}
     />,
+    { layout: false },
   )
 }
 

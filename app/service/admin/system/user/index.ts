@@ -75,7 +75,8 @@ const userCredentialColumns = `
   role.code AS role_code
 `
 const passwordHashAlgorithm = 'pbkdf2-sha256'
-const passwordHashIterations = 120000
+// Cloudflare Workers rejects PBKDF2 requests above 100000 iterations.
+const passwordHashIterations = 100000
 
 export async function listUsers(
   ctx: ServiceContext,
