@@ -1,25 +1,15 @@
 import { createRoute } from 'honox/factory'
 import PageAlert from '../../../_components/$page-alert'
-import Layout from '../../../_components/_layout/$index'
 import PageHeader from '../../../_components/_page-header'
 import { getPageAlert } from '../../../_utils/form'
-import { getAdminLayoutData } from '../../_utils/layout'
 import { handleWebPageCreateAction } from './_actions'
 import WebPageForm from './_components/_page-form'
 
 export const POST = createRoute(handleWebPageCreateAction)
 
 export default createRoute(async (c) => {
-  const layout = await getAdminLayoutData(c)
-
   return c.render(
-    <Layout
-      currentMenuName="admin.web.page"
-      menus={layout.menus}
-      siteTitle={layout.siteTitle}
-      user={layout.user}
-    >
-      <title>{`新增页面 - ${layout.siteTitle}`}</title>
+    <>
       <PageAlert alert={getPageAlert(c)} />
       <section class="rounded-box border border-base-300 bg-base-100 p-4">
         <PageHeader
@@ -29,6 +19,10 @@ export default createRoute(async (c) => {
         />
         <WebPageForm mode="create" />
       </section>
-    </Layout>,
+    </>,
+    {
+      currentMenuName: 'admin.web.page',
+      pageTitle: '新增页面',
+    },
   )
 })

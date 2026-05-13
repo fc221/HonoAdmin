@@ -1,37 +1,34 @@
 import type { MenuItem } from '../../../../service/admin/system/menu/consts'
-import type { ThemeName } from '../config'
+import { useLayoutStore } from '../$context'
 import { isMenuItemActive } from '../../../../service/admin/system/menu'
 import { getSiteLogoText } from '../../../_utils/branding'
 import Menu from './$menu'
 import Theme from './$theme'
 
 interface Props {
-  currentMenuName: string
-  theme: ThemeName
   id: string
   isDesktop: boolean
   isAsideOpen: boolean
   isCollapsed: boolean
-  menus: MenuItem[]
   onMenuNavigate: () => void
   onToggle: () => void
-  onThemeChange: (theme: ThemeName) => void
-  siteTitle: string
 }
 
 export default function Aside({
-  currentMenuName,
-  theme,
   id,
   isDesktop,
   isAsideOpen,
   isCollapsed,
-  menus,
   onMenuNavigate,
   onToggle,
-  onThemeChange,
-  siteTitle,
 }: Props) {
+  const {
+    config,
+    currentMenuName,
+    menus,
+    siteTitle,
+    updateConfig,
+  } = useLayoutStore()
   const isDesktopCollapsed = isDesktop && isCollapsed
   const mobileOverlayClass = isDesktop
     ? 'bg-transparent opacity-0'
@@ -90,7 +87,10 @@ export default function Aside({
           data-layout-aside-options
           class={`w-full max-w-full min-w-0 overflow-hidden pt-2 gap-2 border-t border-base-300 transition-[gap] duration-150 ease-out ${isDesktopCollapsed ? 'flex flex-col items-center' : 'flex flex-row items-center justify-between'}`}
         >
-          <Theme theme={theme} onThemeChange={onThemeChange} />
+          <Theme
+            theme={config.theme}
+            onThemeChange={(theme) => updateConfig({ theme })}
+          />
           {/* options collapsed */}
           <button
             data-layout-aside-toggle

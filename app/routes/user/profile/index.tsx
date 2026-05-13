@@ -2,9 +2,7 @@ import { createRoute } from 'honox/factory'
 import { getCurrentUserProfilePageData } from '../../../service/user/profile'
 import { listUserProfileOperateLogSchema } from '../../../service/user/profile/dto'
 import { UnauthorizedError } from '../../../utils/errors'
-import Layout from '../../_components/_layout/$index'
 import { getPageAlert } from '../../_utils/form'
-import { getUserLayoutData } from '../../admin/_utils/layout'
 import { handleProfileAction } from './_actions'
 import ProfilePanel from './_components/_profile-panel'
 
@@ -22,29 +20,22 @@ export default createRoute(async (c) => {
     pageSize: c.req.query('pageSize'),
   })
   try {
-    const [profileData, layout] = await Promise.all([
-      getCurrentUserProfilePageData(c, logInput),
-      getUserLayoutData(c),
-    ])
+    const profileData = await getCurrentUserProfilePageData(c, logInput)
 
     return c.render(
-      <Layout
-        currentMenuName="user.profile"
-        menus={layout.menus}
-        siteTitle={layout.siteTitle}
-        user={layout.user}
-      >
-        <title>{`个人中心 - ${layout.siteTitle}`}</title>
-        <ProfilePanel
-          activeTab={activeTab}
-          alert={getPageAlert(c)}
-          logKeyword={logInput.keyword}
-          logType={logInput.logType}
-          logs={profileData.logs}
-          user={profileData.user}
-          timezone={c.config.timezone}
-        />
-      </Layout>,
+      <ProfilePanel
+        activeTab={activeTab}
+        alert={getPageAlert(c)}
+        logKeyword={logInput.keyword}
+        logType={logInput.logType}
+        logs={profileData.logs}
+        user={profileData.user}
+        timezone={c.config.timezone}
+      />,
+      {
+        currentMenuName: 'user.profile',
+        pageTitle: '个人中心',
+      },
     )
   } catch (error) {
     if (error instanceof UnauthorizedError) {

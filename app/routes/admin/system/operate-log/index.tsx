@@ -1,9 +1,7 @@
 import { createRoute } from 'honox/factory'
 import { listOperateLogs } from '../../../../service/admin/system/operate-log'
 import { listOperateLogSchema } from '../../../../service/admin/system/operate-log/dto'
-import Layout from '../../../_components/_layout/$index'
 import { getPageAlert } from '../../../_utils/form'
-import { getAdminLayoutData } from '../../_utils/layout'
 import { handleOperateLogAction } from './_actions'
 import OperateLogPanel from './_components/_operate-log-panel'
 
@@ -17,27 +15,20 @@ export default createRoute(async (c) => {
     pageSize: c.req.query('pageSize'),
   })
   const timezone = c.config.timezone
-  const [pagination, layout] = await Promise.all([
-    listOperateLogs(c, listInput),
-    getAdminLayoutData(c),
-  ])
+  const pagination = await listOperateLogs(c, listInput)
 
   return c.render(
-    <Layout
-      currentMenuName="admin.system.operate-log"
-      menus={layout.menus}
-      siteTitle={layout.siteTitle}
-      user={layout.user}
-    >
-      <title>{`操作日志 - ${layout.siteTitle}`}</title>
-      <OperateLogPanel
-        alert={getPageAlert(c)}
-        keyword={listInput.keyword}
-        logType={listInput.logType}
-        logs={pagination.items}
-        pagination={pagination}
-        timezone={timezone}
-      />
-    </Layout>,
+    <OperateLogPanel
+      alert={getPageAlert(c)}
+      keyword={listInput.keyword}
+      logType={listInput.logType}
+      logs={pagination.items}
+      pagination={pagination}
+      timezone={timezone}
+    />,
+    {
+      currentMenuName: 'admin.system.operate-log',
+      pageTitle: '操作日志',
+    },
   )
 })

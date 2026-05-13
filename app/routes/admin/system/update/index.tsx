@@ -1,34 +1,27 @@
 import { createRoute } from 'honox/factory'
 import { getAdminSessionUser } from '../../../../service/admin/session'
 import { getUpdateStatus } from '../../../../service/admin/system/update'
-import Layout from '../../../_components/_layout/$index'
 import { getPageAlert } from '../../../_utils/form'
-import { getAdminLayoutData } from '../../_utils/layout'
 import { handleUpdateAction } from './_actions'
 import UpdatePanel from './_components/_update-panel'
 
 export const POST = createRoute(handleUpdateAction)
 
 export default createRoute(async (c) => {
-  const user = await getAdminSessionUser(c)
-  const [layout, status] = await Promise.all([
-    getAdminLayoutData(c),
+  const [user, status] = await Promise.all([
+    getAdminSessionUser(c),
     getUpdateStatus(c),
   ])
 
   return c.render(
-    <Layout
-      currentMenuName="admin.system.update"
-      menus={layout.menus}
-      siteTitle={layout.siteTitle}
-      user={layout.user}
-    >
-      <title>{`更新管理 - ${layout.siteTitle}`}</title>
-      <UpdatePanel
-        alert={getPageAlert(c)}
-        canMigrate={!!user?.isRoot}
-        status={status}
-      />
-    </Layout>,
+    <UpdatePanel
+      alert={getPageAlert(c)}
+      canMigrate={!!user?.isRoot}
+      status={status}
+    />,
+    {
+      currentMenuName: 'admin.system.update',
+      pageTitle: '更新管理',
+    },
   )
 })

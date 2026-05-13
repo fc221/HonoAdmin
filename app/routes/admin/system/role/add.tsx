@@ -2,29 +2,18 @@ import { createRoute } from 'honox/factory'
 import { adminMenus } from '../../../../service/admin/system/menu/consts'
 import { listPermissions } from '../../../../service/admin/system/permission'
 import PageAlert from '../../../_components/$page-alert'
-import Layout from '../../../_components/_layout/$index'
 import PageHeader from '../../../_components/_page-header'
 import { getPageAlert } from '../../../_utils/form'
-import { getAdminLayoutData } from '../../_utils/layout'
 import { handleRoleCreateAction } from './_actions'
 import RoleForm from './_components/_role-form'
 
 export const POST = createRoute(handleRoleCreateAction)
 
 export default createRoute(async (c) => {
-  const [layout, permissions] = await Promise.all([
-    getAdminLayoutData(c),
-    listPermissions(c),
-  ])
+  const permissions = await listPermissions(c)
 
   return c.render(
-    <Layout
-      currentMenuName="admin.system.role"
-      menus={layout.menus}
-      siteTitle={layout.siteTitle}
-      user={layout.user}
-    >
-      <title>{`新增角色 - ${layout.siteTitle}`}</title>
+    <>
       <PageAlert alert={getPageAlert(c)} />
       <section class="rounded-box border border-base-300 bg-base-100 p-4">
         <PageHeader
@@ -38,6 +27,10 @@ export default createRoute(async (c) => {
           permissions={permissions}
         />
       </section>
-    </Layout>,
+    </>,
+    {
+      currentMenuName: 'admin.system.role',
+      pageTitle: '新增角色',
+    },
   )
 })

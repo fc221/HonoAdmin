@@ -161,6 +161,7 @@ export default createRoute(async (c) => {
         </section>
       </div>
     </main>,
+    { layout: false },
   )
 })
 

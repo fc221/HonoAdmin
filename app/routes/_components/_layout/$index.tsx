@@ -1,8 +1,7 @@
 import type { MenuItem } from '../../../service/admin/system/menu/consts'
 import type { UserHeaderProfile } from '../../../service/admin/system/user/dto'
 import { Child, useEffect, useState } from 'hono/jsx'
-import { defaultMenus } from '../../../service/admin/system/menu/consts'
-import LayoutProvider, { useLayoutContext } from './$context'
+import LayoutProvider, { useLayoutStore } from './$context'
 import Aside from './_components/$aside'
 import Header from './_components/$header'
 
@@ -22,13 +21,13 @@ export default function Layout({
   user,
 }: Props) {
   return (
-    <LayoutProvider>
-      <AsideLayout
-        currentMenuName={currentMenuName}
-        menus={menus}
-        siteTitle={siteTitle}
-        user={user}
-      >
+    <LayoutProvider
+      currentMenuName={currentMenuName}
+      menus={menus}
+      siteTitle={siteTitle}
+      user={user}
+    >
+      <AsideLayout>
         {children}
       </AsideLayout>
     </LayoutProvider>
@@ -38,12 +37,10 @@ export default function Layout({
 // 侧边栏布局
 function AsideLayout({
   children,
-  currentMenuName: initialCurrentMenuName,
-  menus = defaultMenus,
-  siteTitle = 'HonoAdmin',
-  user = null,
-}: Props) {
-  const { config, isDesktop, updateConfig } = useLayoutContext()
+}: {
+  children: Child
+}) {
+  const { config, isDesktop, siteTitle, updateConfig } = useLayoutStore()
   const [isAsideOpen, setIsAsideOpen] = useState(false)
 
   const id = 'aside-drawer'
@@ -87,30 +84,22 @@ function AsideLayout({
         />
         {/* aside */}
         <Aside
-          currentMenuName={initialCurrentMenuName}
           id={id}
           isDesktop={isDesktop}
           isAsideOpen={isAsideOpen}
           isCollapsed={isCollapsed}
           onToggle={handleAsideToggle}
           onMenuNavigate={handleMenuNavigate}
-          siteTitle={siteTitle}
-          theme={config.theme}
-          menus={menus}
-          onThemeChange={(theme) => updateConfig({ theme })}
         />
         {/* content */}
         <main class="drawer-content flex h-full min-w-0 flex-col overflow-hidden">
           {/* header */}
           <Header
-            currentMenuName={initialCurrentMenuName}
             isDesktop={isDesktop}
             isAsideOpen={isAsideOpen}
             isCollapsed={isCollapsed}
             onToggle={handleAsideToggle}
             onRefresh={handleRefresh}
-            menus={menus}
-            user={user}
           />
           <div
             class="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto"

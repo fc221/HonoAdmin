@@ -4,14 +4,12 @@ import { listPermissions } from '../../../../service/admin/system/permission'
 import { getRoleById } from '../../../../service/admin/system/role'
 import { idParamSchema } from '../../../../service/common/response'
 import PageAlert from '../../../_components/$page-alert'
-import Layout from '../../../_components/_layout/$index'
 import PageHeader from '../../../_components/_page-header'
 import {
   getActionErrorMessage,
   getPageAlert,
   redirectWithAlert,
 } from '../../../_utils/form'
-import { getAdminLayoutData } from '../../_utils/layout'
 import { handleRoleUpdateAction } from './_actions'
 import RoleForm from './_components/_role-form'
 
@@ -22,20 +20,13 @@ export const POST = createRoute(handleRoleUpdateAction)
 export default createRoute(async (c) => {
   try {
     const id = idParamSchema.parse({ id: c.req.query('id') }).id
-    const [role, layout, permissions] = await Promise.all([
+    const [role, permissions] = await Promise.all([
       getRoleById(c, id),
-      getAdminLayoutData(c),
       listPermissions(c),
     ])
 
     return c.render(
-      <Layout
-        currentMenuName="admin.system.role"
-        menus={layout.menus}
-        siteTitle={layout.siteTitle}
-        user={layout.user}
-      >
-        <title>{`编辑角色 - ${role.name} - ${layout.siteTitle}`}</title>
+      <>
         <PageAlert alert={getPageAlert(c)} />
         <section class="rounded-box border border-base-300 bg-base-100 p-4">
           <PageHeader
@@ -50,7 +41,11 @@ export default createRoute(async (c) => {
             role={role}
           />
         </section>
-      </Layout>,
+      </>,
+      {
+        currentMenuName: 'admin.system.role',
+        pageTitle: `编辑角色 - ${role.name}`,
+      },
     )
   } catch (error) {
     return redirectWithAlert(c, pagePath, {

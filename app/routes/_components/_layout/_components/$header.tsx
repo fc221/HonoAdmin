@@ -7,6 +7,7 @@ import type {
   UserSessionRole,
 } from '../../../../service/admin/system/user/dto'
 import { useEffect, useState } from 'hono/jsx'
+import { useLayoutStore } from '../$context'
 import LazyAvatarImage from '../../$lazy-avatar-image'
 import {
   getMenuBreadcrumbs,
@@ -15,26 +16,21 @@ import { userMenus } from '../../../../service/admin/system/menu/consts'
 import { getAvatarText } from '../../../../utils/avatar'
 
 interface Props {
-  currentMenuName: string
   isDesktop: boolean
   isAsideOpen: boolean
   isCollapsed: boolean
-  menus: MenuItem[]
   onToggle: () => void
   onRefresh: () => void
-  user?: UserHeaderProfile | null
 }
 
 export default function Header({
-  currentMenuName,
   isDesktop,
   isAsideOpen,
   isCollapsed,
-  menus,
   onToggle,
   onRefresh,
-  user = null,
 }: Props) {
+  const { currentMenuName, menus, user } = useLayoutStore()
   const asideToggleIconClass = getAsideToggleIconClass({
     isAsideOpen,
     isCollapsed,

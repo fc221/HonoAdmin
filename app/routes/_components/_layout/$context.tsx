@@ -1,4 +1,6 @@
 import type { Child } from 'hono/jsx'
+import type { MenuItem } from '../../../service/admin/system/menu/consts'
+import type { UserHeaderProfile } from '../../../service/admin/system/user/dto'
 import type { DaisyThemeName, LayoutConfig, ThemeName } from './config'
 import {
   createContext,
@@ -9,6 +11,9 @@ import {
   useState,
 } from 'hono/jsx'
 
+import {
+  defaultMenus,
+} from '../../../service/admin/system/menu/consts'
 import {
   defaultLayoutConfig,
   desktopBreakpoint,
@@ -21,9 +26,21 @@ type LayoutConfigPatch = Partial<LayoutConfig>
 
 interface LayoutContextValue {
   config: LayoutConfig
+  currentMenuName: string
   isDesktop: boolean
+  menus: MenuItem[]
   updateConfig: (patch: LayoutConfigPatch) => void
   resetConfig: () => void
+  siteTitle: string
+  user: UserHeaderProfile | null
+}
+
+interface LayoutProviderProps {
+  children: Child
+  currentMenuName: string
+  menus?: MenuItem[]
+  siteTitle?: string
+  user?: UserHeaderProfile | null
 }
 
 const LayoutContext = createContext<LayoutContextValue | null>(null)
@@ -133,7 +150,13 @@ function isDesktopViewport() {
   return window.innerWidth >= desktopBreakpoint
 }
 
-export default function LayoutProvider({ children }: { children: Child }) {
+export default function LayoutProvider({
+  children,
+  currentMenuName,
+  menus = defaultMenus,
+  siteTitle = 'HonoAdmin',
+  user = null,
+}: LayoutProviderProps) {
   const [config, setConfig] = useState<LayoutConfig>(readStoredLayoutConfig)
   const [isDesktop, setIsDesktop] = useState(isDesktopViewport)
 
@@ -206,11 +229,24 @@ export default function LayoutProvider({ children }: { children: Child }) {
   const contextValue = useMemo(
     () => ({
       config,
+      currentMenuName,
       isDesktop,
+      menus,
       updateConfig,
       resetConfig,
+      siteTitle,
+      user,
     }),
-    [config, isDesktop, updateConfig, resetConfig],
+    [
+      config,
+      currentMenuName,
+      isDesktop,
+      menus,
+      resetConfig,
+      siteTitle,
+      updateConfig,
+      user,
+    ],
   )
 
   return (
@@ -226,4 +262,18 @@ export function useLayoutContext() {
     throw new Error('useLayoutContext 必须在 LayoutProvider 内部使用')
   }
   return context
+}
+
+export const useLayoutStore = useLayoutContext
+
+export function useCurrentUser() {
+  return useLayoutContext().user
+}
+
+export function useLayoutMenus() {
+  return useLayoutContext().menus
+}
+
+export function useSiteTitle() {
+  return useLayoutContext().siteTitle
 }
