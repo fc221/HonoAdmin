@@ -1,24 +1,30 @@
 import type { Context } from 'hono'
 import type {
   MenuItem,
-} from '../../../service/admin/system/menu/consts'
+} from '../../service/admin/system/menu/consts'
 import type {
   UserHeaderProfile,
   UserSessionRole,
-} from '../../../service/admin/system/user/dto'
-import { getAdminSessionUser } from '../../../service/admin/session'
-import { userMenus } from '../../../service/admin/system/menu/consts'
-import { listAuthorizedAdminMenus } from '../../../service/admin/system/role'
+} from '../../service/admin/system/user/dto'
+import { getAdminSessionUser } from '../../service/admin/session'
+import { userMenus } from '../../service/admin/system/menu/consts'
+import { listAuthorizedAdminMenus } from '../../service/admin/system/role'
 import {
   getUserHeaderProfileById,
   listUserSessionRoles,
-} from '../../../service/admin/system/user'
-import { getRenderableSiteConfig } from '../../_utils/site'
+} from '../../service/admin/system/user'
+import { getRenderableSiteConfig } from './site'
 
 export interface AdminLayoutData {
   menus: MenuItem[]
   siteTitle: string
   user: UserHeaderProfile | null
+}
+
+export interface LayoutRenderOptions {
+  currentMenuName?: string
+  layout?: false
+  pageTitle?: string
 }
 
 export async function getAdminLayoutData(
@@ -55,6 +61,10 @@ export async function getUserLayoutData(
   c: Context,
 ): Promise<AdminLayoutData> {
   return getAdminLayoutData(c)
+}
+
+export function isLayoutDisabled(options: LayoutRenderOptions): boolean {
+  return options.layout === false
 }
 
 function hasMenuHref(items: MenuItem[]): boolean {
