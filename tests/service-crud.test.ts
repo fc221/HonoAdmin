@@ -21,8 +21,11 @@ import {
 import {
   createUser,
   deleteUser,
+  getUserById,
   getUserCredentialByUsername,
+  isUserAssignedRole,
   listUsers,
+  listUserSessionRoles,
   needsPasswordRehash,
   updateUser,
   verifyUserPassword,
@@ -206,6 +209,117 @@ describe('service CRUD', () => {
     await expect(updateUser(ctx, normalUser.id, {
       isRoot: true,
     })).rejects.toThrow('不支持通过后台入口新增 root 管理员。')
+  })
+
+  test('root user keeps effective admin and user roles for role switching', async () => {
+    const { ctx } = testContext
+    const roles = await listRoles(ctx)
+    const adminRoleId = roles.find((role) => role.code === 'admin')?.id
+    const userRoleId = roles.find((role) => role.code === 'user')?.id
+
+    expect(adminRoleId).toBeDefined()
+    expect(userRoleId).toBeDefined()
+    if (!adminRoleId || !userRoleId) {
+      throw new Error('Expected default admin and user roles to exist.')
+    }
+
+    const rootUser = await createUser(ctx, {
+      isRoot: true,
+      password: 'secret123',
+      roleIds: [userRoleId],
+      status: UserStatus.NORMAL,
+      username: 'root.switch',
+    })
+    expect(rootUser.roleId).toBe(adminRoleId)
+    expect(rootUser.roleIds).toEqual([adminRoleId, userRoleId])
+
+    const updatedRootUser = await updateUser(ctx, rootUser.id, {
+      roleIds: [userRoleId],
+    })
+    expect(updatedRootUser.roleId).toBe(adminRoleId)
+    expect(updatedRootUser.roleIds).toEqual([adminRoleId, userRoleId])
+
+    await ctx.db.execute(
+      `
+        DELETE FROM sys_user_role
+        WHERE user_id = ? AND role_id = ?
+      `,
+      [rootUser.id, adminRoleId],
+    )
+    const renderedRootUser = await getUserById(ctx, rootUser.id)
+    expect(renderedRootUser.roleId).toBe(adminRoleId)
+    expect(renderedRootUser.roleIds).toEqual([adminRoleId, userRoleId])
+    expect(await isUserAssignedRole(ctx, rootUser.id, adminRoleId)).toBe(true)
+    expect((await listUserSessionRoles(ctx, rootUser.id)).map((role) => role.id))
+      .toEqual([adminRoleId, userRoleId])
+  })
+
+  test('admin role follows configured permissions while root keeps full access', async () => {
+    const { ctx } = testContext
+    const roles = await listRoles(ctx)
+    const adminRoleId = roles.find((role) => role.code === 'admin')?.id
+    const userRoleId = roles.find((role) => role.code === 'user')?.id
+
+    expect(adminRoleId).toBeDefined()
+    expect(userRoleId).toBeDefined()
+    if (!adminRoleId || !userRoleId) {
+      throw new Error('Expected default admin and user roles to exist.')
+    }
+
+    await createUser(ctx, {
+      isRoot: false,
+      password: 'secret123',
+      roleIds: [adminRoleId],
+      status: UserStatus.NORMAL,
+      username: 'configured.admin',
+    })
+    const adminCredential = await getUserCredentialByUsername(ctx, 'configured.admin')
+    expect(adminCredential).not.toBeNull()
+    if (!adminCredential) {
+      throw new Error('Expected configured admin user credential.')
+    }
+
+    expect(
+      await canAccessAdminPath(ctx, adminCredential, '/admin/system/user', 'GET'),
+    ).toBe(true)
+
+    await ctx.db.execute(
+      `
+        DELETE FROM sys_role_permission
+        WHERE role_id = ? AND permission_code = ?
+      `,
+      [adminRoleId, 'admin.system.user.view'],
+    )
+    await invalidateRoleAccessCache(ctx, adminRoleId)
+    expect(
+      await canAccessAdminPath(ctx, adminCredential, '/admin/system/user', 'GET'),
+    ).toBe(false)
+
+    await createUser(ctx, {
+      isRoot: true,
+      password: 'secret123',
+      status: UserStatus.NORMAL,
+      username: 'root.casbin',
+    })
+    const rootCredential = await getUserCredentialByUsername(ctx, 'root.casbin')
+    expect(rootCredential).not.toBeNull()
+    if (!rootCredential) {
+      throw new Error('Expected root user credential.')
+    }
+
+    expect(
+      await canAccessAdminPath(
+        ctx,
+        {
+          ...rootCredential,
+          activeRoleId: userRoleId,
+          roleCode: 'user',
+          roleId: userRoleId,
+        },
+        '/admin/system/user',
+        'GET',
+      ),
+    ).toBe(true)
   })
 
   test('role create, policy enforcement, update, delete', async () => {

@@ -22,7 +22,7 @@ import {
 const pagePath = '/admin/system/user'
 
 export async function handleUserAction(c: Context): Promise<Response> {
-  const body = await c.req.parseBody()
+  const body = await c.req.parseBody({ all: true })
   const intent = getFormValue(body, 'intent')
 
   try {

@@ -14,6 +14,7 @@ import { migration0012UserMultiRoles } from './0012_user_multi_roles'
 import { migration0013RemoveSeededAgentRole } from './0013_remove_seeded_agent_role'
 import { migration0014RootUserRoleAssignment } from './0014_root_user_role_assignment'
 import { migration0015FileS3PublicBaseUrl } from './0015_file_s3_public_base_url'
+import { migration0016RemoveAdminWildcardPolicy } from './0016_remove_admin_wildcard_policy'
 
 export const mysqlMigrations: Migration[] = [
   migration0001AdminCore,
@@ -31,4 +32,5 @@ export const mysqlMigrations: Migration[] = [
   migration0013RemoveSeededAgentRole,
   migration0014RootUserRoleAssignment,
   migration0015FileS3PublicBaseUrl,
+  migration0016RemoveAdminWildcardPolicy,
 ]

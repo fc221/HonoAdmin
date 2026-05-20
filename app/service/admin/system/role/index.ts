@@ -34,7 +34,7 @@ import { createRoleSchema, listRoleSchema, updateRoleSchema } from './dto'
 
 const adminRbacModel = `
 [request_definition]
-r = sub, obj, act
+r = sub, obj, act, root
 
 [policy_definition]
 p = sub, obj, act
@@ -46,7 +46,7 @@ g = _, _
 e = some(where (p.eft == allow))
 
 [matchers]
-m = g(r.sub, p.sub) && keyMatch2(r.obj, p.obj) && (p.act == "*" || r.act == p.act)
+m = r.root == true || (g(r.sub, p.sub) && keyMatch2(r.obj, p.obj) && (p.act == "*" || r.act == p.act))
 `
 
 const roleColumns = `
@@ -254,7 +254,7 @@ export async function listAuthorizedAdminMenus(
     return []
   }
 
-  if (isRootAdminRole(user)) {
+  if (user.isRoot) {
     return adminMenus
   }
 
@@ -273,33 +273,40 @@ export async function canAccessAdminPath(
   method: string,
   actionKey = '*',
 ): Promise<boolean> {
-  if (isRootAdminRole(user) || isAlwaysAllowedAdminPath(path)) {
+  if (isAlwaysAllowedAdminPath(path)) {
     return true
   }
 
-  if (!user.roleId) {
-    return false
-  }
-
-  const { policies } = await getRoleAccess(ctx, user.roleId)
-  if (policies.length === 0) {
+  if (!user.isRoot && !user.roleId) {
     return false
   }
 
   const enforcer = await newEnforcer(newModelFromString(adminRbacModel))
   const subject = getUserSubject(user.id)
-  const role = getRoleSubject(user.roleId)
 
-  await enforcer.addRoleForUser(subject, role)
-  for (const policy of policies) {
-    await enforcer.addPolicy(
-      role,
-      policy.pathPattern,
-      getPolicyAction(policy),
-    )
+  if (user.roleId) {
+    const { policies } = await getRoleAccess(ctx, user.roleId)
+    if (!user.isRoot && policies.length === 0) {
+      return false
+    }
+
+    const role = getRoleSubject(user.roleId)
+    await enforcer.addRoleForUser(subject, role)
+    for (const policy of policies) {
+      await enforcer.addPolicy(
+        role,
+        policy.pathPattern,
+        getPolicyAction(policy),
+      )
+    }
   }
 
-  return enforcer.enforce(subject, path, getRequestAction(method, actionKey))
+  return enforcer.enforce(
+    subject,
+    path,
+    getRequestAction(method, actionKey),
+    user.isRoot,
+  )
 }
 
 export function getDefaultRolePolicies(menuNames: string[]): RolePolicyInput[] {
@@ -769,10 +776,6 @@ function getPolicyAction(policy: RolePolicyInput): string {
 
 function isAlwaysAllowedAdminPath(path: string): boolean {
   return alwaysAllowedAdminPaths.has(path)
-}
-
-function isRootAdminRole(user: UserCredential): boolean {
-  return user.isRoot && (!user.roleCode || user.roleCode === 'admin')
 }
 
 function getUserSubject(userId: number): string {

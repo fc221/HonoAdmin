@@ -110,9 +110,16 @@ export async function listUsers(
   )
 
   return createPaginatedResult(
-    rows.map((row) =>
-      toUserRecord(row, roleIdsByUserId.get(row.id) ?? getFallbackRoleIds(row.role_id))
-    ),
+    await Promise.all(rows.map(async (row) =>
+      toUserRecord(
+        row,
+        await ensureEffectiveUserRoleIds(
+          ctx,
+          roleIdsByUserId.get(row.id) ?? getFallbackRoleIds(row.role_id),
+          row.is_root === 1,
+        ),
+      )
+    )),
     total,
     pagination,
   )
@@ -136,7 +143,9 @@ export async function createUser(
     await assertCanCreateRoot(ctx)
   }
 
-  const roleIds = await resolveCreateUserRoleIds(ctx, input)
+  const roleIds = input.isRoot
+    ? await ensureRootRoleIds(ctx, await resolveCreateUserRoleIds(ctx, input))
+    : await resolveCreateUserRoleIds(ctx, input)
   const roleId = roleIds[0] ?? null
   await assertRolesExist(ctx, roleIds)
 
@@ -194,9 +203,15 @@ export async function updateUser(
   const current = await requireUser(ctx, id)
   const nextUsername = input.username ?? current.username
   const shouldUpdateRoles = hasField(input, 'roleIds') || hasField(input, 'roleId')
-  const nextRoleIds = shouldUpdateRoles
+  const nextIsRoot = hasField(input, 'isRoot')
+    ? input.isRoot === true
+    : current.is_root === 1
+  const submittedRoleIds = shouldUpdateRoles
     ? normalizeRoleIds(input.roleIds, hasField(input, 'roleId') ? input.roleId ?? null : undefined)
     : await listUserRoleIds(ctx, id, current.role_id)
+  const nextRoleIds = nextIsRoot
+    ? await ensureRootRoleIds(ctx, submittedRoleIds)
+    : submittedRoleIds
   const nextRoleId = nextRoleIds[0] ?? null
 
   if (nextUsername !== current.username) {
@@ -268,7 +283,7 @@ export async function updateUser(
       ],
     )
 
-    if (shouldUpdateRoles) {
+    if (shouldUpdateRoles || nextIsRoot) {
       await replaceUserRoles(txCtx, id, nextRoleIds)
     }
   })
@@ -310,7 +325,7 @@ export async function getUserCredentialById(
 
   return toUserCredential(
     row,
-    await listUserRoleIds(ctx, row.id, row.role_id),
+    await listEffectiveUserRoleIds(ctx, row.id, row.role_id, row.is_root === 1),
   )
 }
 
@@ -335,7 +350,7 @@ export async function getUserCredentialByUsername(
 
   return toUserCredential(
     row,
-    await listUserRoleIds(ctx, row.id, row.role_id),
+    await listEffectiveUserRoleIds(ctx, row.id, row.role_id, row.is_root === 1),
   )
 }
 
@@ -361,8 +376,10 @@ export async function listUserSessionRoles(
   ctx: ServiceContext,
   userId: number,
 ): Promise<UserSessionRole[]> {
+  let roles: UserSessionRole[]
+
   try {
-    const roles = await ctx.db.query<UserSessionRole>(
+    roles = await ctx.db.query<UserSessionRole>(
       `
         SELECT
           role.id AS id,
@@ -376,10 +393,14 @@ export async function listUserSessionRoles(
       `,
       [userId],
     )
-    return roles.length ? roles : listUserSessionRolesFromLegacyRole(ctx, userId)
   } catch {
-    return listUserSessionRolesFromLegacyRole(ctx, userId)
+    roles = []
   }
+
+  const assignedRoles = roles.length
+    ? roles
+    : await listUserSessionRolesFromLegacyRole(ctx, userId)
+  return ensureEffectiveUserSessionRoles(ctx, userId, assignedRoles)
 }
 
 export async function isUserAssignedRole(
@@ -387,8 +408,8 @@ export async function isUserAssignedRole(
   userId: number,
   roleId: number,
 ): Promise<boolean> {
-  const roleIds = await listUserRoleIds(ctx, userId, null)
-  return roleIds.includes(roleId)
+  const roles = await listUserSessionRoles(ctx, userId)
+  return roles.some((role) => role.id === roleId)
 }
 
 export async function verifyUserPassword(
@@ -492,7 +513,10 @@ export async function getUserById(
   id: number,
 ): Promise<UserRecord> {
   const row = await requireUser(ctx, id)
-  return toUserRecord(row, await listUserRoleIds(ctx, id, row.role_id))
+  return toUserRecord(
+    row,
+    await listEffectiveUserRoleIds(ctx, id, row.role_id, row.is_root === 1),
+  )
 }
 
 async function requireUser(ctx: ServiceContext, id: number): Promise<UserEntity> {
@@ -555,6 +579,19 @@ async function listUserRoleIds(
   }
 }
 
+async function listEffectiveUserRoleIds(
+  ctx: ServiceContext,
+  userId: number,
+  fallbackRoleId: number | null,
+  isRoot: boolean,
+): Promise<number[]> {
+  return ensureEffectiveUserRoleIds(
+    ctx,
+    await listUserRoleIds(ctx, userId, fallbackRoleId),
+    isRoot,
+  )
+}
+
 async function listUserRoleIdsByUserIds(
   ctx: ServiceContext,
   userIds: number[],
@@ -614,6 +651,33 @@ async function listUserSessionRolesFromLegacyRole(
   return role ? [role] : []
 }
 
+async function ensureEffectiveUserSessionRoles(
+  ctx: ServiceContext,
+  userId: number,
+  roles: UserSessionRole[],
+): Promise<UserSessionRole[]> {
+  if (!await isRootUser(ctx, userId)) {
+    return roles
+  }
+
+  return mergeSessionRoles(
+    await listUserSessionRolesByCodes(ctx, ['admin', 'user']),
+    roles,
+  )
+}
+
+async function isRootUser(
+  ctx: ServiceContext,
+  userId: number,
+): Promise<boolean> {
+  const row = await ctx.db.first<{ is_root: number }>(
+    'SELECT is_root FROM sys_user WHERE id = ?',
+    [userId],
+  )
+
+  return row?.is_root === 1
+}
+
 async function replaceUserRoles(
   ctx: ServiceContext,
   userId: number,
@@ -643,13 +707,18 @@ function toUserCredential(
   row: UserCredentialEntity,
   roleIds: number[],
 ): UserCredential {
+  const isRoot = row.is_root === 1
+  const roleId = isRoot
+    ? roleIds[0] ?? row.role_id
+    : row.role_id
+
   return {
-    activeRoleId: row.role_id,
+    activeRoleId: roleId,
     id: row.id,
-    isRoot: row.is_root === 1,
+    isRoot,
     password: row.password,
     roleCode: row.role_code,
-    roleId: row.role_id,
+    roleId,
     roleIds,
     username: row.username,
   }
@@ -671,17 +740,22 @@ function toUserHeaderProfile(
 }
 
 function toUserRecord(row: UserEntity, roleIds: number[]): UserRecord {
+  const isRoot = row.is_root === 1
+  const roleId = isRoot
+    ? roleIds[0] ?? row.role_id
+    : row.role_id
+
   return {
     avatar: row.avatar,
     bio: row.bio,
     createdAt: row.created_at,
     gender: row.gender,
     id: row.id,
-    isRoot: row.is_root === 1,
+    isRoot,
     mail: row.mail,
     nickname: row.nickname,
     phone: row.phone,
-    roleId: row.role_id,
+    roleId,
     roleIds,
     status: row.status,
     updatedAt: row.updated_at,
@@ -736,6 +810,28 @@ async function resolveCreateUserRoleIds(
   return listRoleIdsByCodes(ctx, input.isRoot ? ['admin', 'user'] : ['user'])
 }
 
+async function ensureRootRoleIds(
+  ctx: ServiceContext,
+  roleIds: number[],
+): Promise<number[]> {
+  return ensureEffectiveUserRoleIds(ctx, roleIds, true)
+}
+
+async function ensureEffectiveUserRoleIds(
+  ctx: ServiceContext,
+  roleIds: number[],
+  isRoot: boolean,
+): Promise<number[]> {
+  if (!isRoot) {
+    return roleIds
+  }
+
+  return [...new Set([
+    ...await listRoleIdsByCodes(ctx, ['admin', 'user']),
+    ...roleIds,
+  ])]
+}
+
 async function listRoleIdsByCodes(
   ctx: ServiceContext,
   codes: string[],
@@ -753,6 +849,44 @@ async function listRoleIdsByCodes(
   return codes
     .map((code) => roleIdsByCode.get(code))
     .filter((roleId): roleId is number => typeof roleId === 'number')
+}
+
+async function listUserSessionRolesByCodes(
+  ctx: ServiceContext,
+  codes: string[],
+): Promise<UserSessionRole[]> {
+  const rows = await ctx.db.query<UserSessionRole>(
+    `
+      SELECT id, code, name
+      FROM sys_role
+      WHERE code IN (${createPlaceholders(codes)})
+    `,
+    codes,
+  )
+  const rolesByCode = new Map(rows.map((role) => [role.code, role]))
+
+  return codes
+    .map((code) => rolesByCode.get(code))
+    .filter((role): role is UserSessionRole => !!role)
+}
+
+function mergeSessionRoles(
+  primaryRoles: UserSessionRole[],
+  secondaryRoles: UserSessionRole[],
+): UserSessionRole[] {
+  const mergedRoles: UserSessionRole[] = []
+  const seenRoleIds = new Set<number>()
+
+  for (const role of [...primaryRoles, ...secondaryRoles]) {
+    if (seenRoleIds.has(role.id)) {
+      continue
+    }
+
+    seenRoleIds.add(role.id)
+    mergedRoles.push(role)
+  }
+
+  return mergedRoles
 }
 
 function createPlaceholders(values: unknown[]): string {

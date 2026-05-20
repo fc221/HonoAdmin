@@ -1,4 +1,8 @@
 import { describe, expect, test } from 'bun:test'
+import {
+  builtInConfigDefinitions,
+  isConfigDefinitionVisible,
+} from '../app/service/admin/system/config/constants'
 import { createRoleSchema } from '../app/service/admin/system/role/dto'
 import {
   createUserSchema,
@@ -8,6 +12,28 @@ import { createWebNotificationSchema } from '../app/service/admin/web/notificati
 import { createWebPageSchema } from '../app/service/admin/web/page/dto'
 
 describe('service schemas', () => {
+  test('config definitions drive storage field visibility', () => {
+    const localRoot = builtInConfigDefinitions.find(
+      (definition) => definition.configKey === 'file_local_root',
+    )
+    const s3Endpoint = builtInConfigDefinitions.find(
+      (definition) => definition.configKey === 'file_s3_endpoint',
+    )
+
+    expect(isConfigDefinitionVisible(localRoot, {
+      file_storage_driver: 'local',
+    })).toBe(true)
+    expect(isConfigDefinitionVisible(localRoot, {
+      file_storage_driver: 's3',
+    })).toBe(false)
+    expect(isConfigDefinitionVisible(s3Endpoint, {
+      file_storage_driver: 'local',
+    })).toBe(false)
+    expect(isConfigDefinitionVisible(s3Endpoint, {
+      file_storage_driver: 's3',
+    })).toBe(true)
+  })
+
   test('web page schema returns field-level Chinese messages', () => {
     const result = createWebPageSchema.safeParse({
       alias: 'bad alias',
