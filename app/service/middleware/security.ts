@@ -1,6 +1,10 @@
 import type { AppEnv } from '../../infra/runtime/types'
 import { createMiddleware } from 'hono/factory'
 import { defaultSecurityRuntimeConfig } from '../../infra/runtime/security-config'
+import {
+  prepareCsrfToken,
+  verifyCsrfRequest,
+} from '../security/csrf'
 
 export const requestBodyLimit = createMiddleware<AppEnv>(async (c, next) => {
   const maxSize = c.config?.security.maxRequestBodySizeBytes
@@ -74,7 +78,26 @@ export const headers = createMiddleware<AppEnv>(async (c, next) => {
   c.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
 })
 
+export const csrf = createMiddleware<AppEnv>(async (c, next) => {
+  if (shouldVerifyCsrf(c.req.method, c.req.path)) {
+    if (!await verifyCsrfRequest(c)) {
+      return c.text('CSRF 校验失败，请刷新页面后重试。', 403)
+    }
+  }
+
+  await prepareCsrfToken(c)
+  await next()
+})
+
 function formatSize(bytes: number): string {
   const mb = bytes / 1024 / 1024
   return Number.isInteger(mb) ? `${mb}MB` : `${bytes} bytes`
+}
+
+function shouldVerifyCsrf(method: string, path: string): boolean {
+  if (['GET', 'HEAD', 'OPTIONS'].includes(method.toUpperCase())) {
+    return false
+  }
+
+  return !path.startsWith('/api/')
 }

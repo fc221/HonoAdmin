@@ -1,15 +1,19 @@
 import { createRoute } from 'honox/factory'
+import PageAlert from '../../../-/components/page-alert'
+import PageHeader from '../../../-/components/page-header'
+import {
+  getPageAlert,
+  getQueryReturnPath,
+} from '../../../-/utils/form'
 import { adminMenus } from '../../../../service/admin/system/menu/consts'
 import { listPermissions } from '../../../../service/admin/system/permission'
-import PageAlert from '../../../_components/$page-alert'
-import PageHeader from '../../../_components/_page-header'
-import { getPageAlert } from '../../../_utils/form'
-import { handleRoleCreateAction } from './_actions'
-import RoleForm from './_components/_role-form'
+import { handleRoleCreateAction } from './-actions'
+import RoleForm from './-components/role-form'
 
 export const POST = createRoute(handleRoleCreateAction)
 
 export default createRoute(async (c) => {
+  const returnTo = getQueryReturnPath(c, '/admin/system/role')
   const permissions = await listPermissions(c)
 
   return c.render(
@@ -25,6 +29,7 @@ export default createRoute(async (c) => {
           menus={adminMenus}
           mode="create"
           permissions={permissions}
+          returnTo={returnTo}
         />
       </section>
     </>,

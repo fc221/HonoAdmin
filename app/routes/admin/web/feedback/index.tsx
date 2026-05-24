@@ -1,9 +1,9 @@
 import { createRoute } from 'honox/factory'
+import { getPageAlert } from '../../../-/utils/form'
 import { listWebFeedbacks } from '../../../../service/admin/web/feedback'
 import { listWebFeedbackSchema } from '../../../../service/admin/web/feedback/dto'
-import { getPageAlert } from '../../../_utils/form'
-import { handleWebFeedbackAction } from './_actions'
-import WebFeedbackPanel from './_components/_feedback-panel'
+import { handleWebFeedbackAction } from './-actions'
+import WebFeedbackPanel from './-components/feedback-panel'
 
 export const POST = createRoute(handleWebFeedbackAction)
 

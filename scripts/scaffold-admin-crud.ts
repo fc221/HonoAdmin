@@ -144,7 +144,7 @@ function assertSqlIdentifier(value: string, label: string) {
 function createCrudFiles(options: CrudOptions): Array<{ content: string, path: string }> {
   const routeDir = `app/routes/admin/${options.route}`
   const serviceDir = `app/service/admin/system/${options.name}`
-  const componentPrefix = `_${toKebabCase(options.name)}`
+  const componentPrefix = toKebabCase(options.name)
 
   return [
     {
@@ -160,7 +160,7 @@ function createCrudFiles(options: CrudOptions): Array<{ content: string, path: s
       content: createService(options),
     },
     {
-      path: `${routeDir}/_actions.ts`,
+      path: `${routeDir}/-actions.ts`,
       content: createActions(options),
     },
     {
@@ -176,15 +176,15 @@ function createCrudFiles(options: CrudOptions): Array<{ content: string, path: s
       content: createEditRoute(options),
     },
     {
-      path: `${routeDir}/_components/${componentPrefix}-form.tsx`,
+      path: `${routeDir}/-components/${componentPrefix}-form.tsx`,
       content: createFormComponent(options),
     },
     {
-      path: `${routeDir}/_components/${componentPrefix}-panel.tsx`,
+      path: `${routeDir}/-components/${componentPrefix}-panel.tsx`,
       content: createPanelComponent(options),
     },
     {
-      path: `${routeDir}/_components/${componentPrefix}-table.tsx`,
+      path: `${routeDir}/-components/${componentPrefix}-table.tsx`,
       content: createTableComponent(options),
     },
   ]
@@ -433,7 +433,8 @@ ${recordFields}
 
 function createActions(options: CrudOptions): string {
   const pascal = toPascalCase(options.name)
-  const actionsFile = `app/routes/admin/${options.route}/_actions.ts`
+  const actionsFile = `app/routes/admin/${options.route}/-actions.ts`
+  const formImport = createImportPath(actionsFile, 'app/routes/-/utils/form')
   const serviceImport = createImportPath(
     actionsFile,
     `app/service/admin/system/${options.name}/index`,
@@ -457,10 +458,12 @@ import {
   update${pascal},
 } from '${serviceImport}'
 import {
+  getActionReturnPath,
   getFormValue,
   respondWithActionAlert,
   respondWithActionError,
-} from '../../_utils/form'
+  withReturnToPath,
+} from '${formImport}'
 
 const pagePath = '/admin/${options.route}'
 const createPath = \`\${pagePath}/add\`
@@ -469,45 +472,48 @@ const getEditPath = (id: number) => \`\${pagePath}/edit?id=\${id}\`
 export async function handle${pascal}Action(c: Context): Promise<Response> {
   const body = await c.req.parseBody()
   const intent = getFormValue(body, 'intent')
+  const returnPath = getActionReturnPath(c, body, pagePath)
 
   try {
     if (intent === 'delete') {
       await delete${pascal}(c, Number(getFormValue(body, 'id')))
-      return respondWithActionAlert(c, pagePath, {
+      return respondWithActionAlert(c, returnPath, {
         message: '${options.title}已删除。',
         type: 'success',
       })
     }
 
-    return respondWithActionAlert(c, pagePath, {
+    return respondWithActionAlert(c, returnPath, {
       message: '未知操作。',
       type: 'error',
     })
   } catch (error) {
-    return respondWithActionError(c, pagePath, error)
+    return respondWithActionError(c, returnPath, error)
   }
 }
 
 export async function handle${pascal}CreateAction(c: Context): Promise<Response> {
   const body = await c.req.parseBody()
+  const returnPath = getActionReturnPath(c, body, pagePath)
 
   try {
     const record = await create${pascal}(c, create${pascal}Schema.parse({
 ${formValues}
     }))
-    return respondWithActionAlert(c, getEditPath(record.id), {
+    return respondWithActionAlert(c, withReturnToPath(getEditPath(record.id), returnPath), {
       message: '${options.title}已创建。',
       type: 'success',
     })
   } catch (error) {
-    return respondWithActionError(c, createPath, error)
+    return respondWithActionError(c, withReturnToPath(createPath, returnPath), error)
   }
 }
 
 export async function handle${pascal}UpdateAction(c: Context): Promise<Response> {
   const body = await c.req.parseBody()
   const id = Number(getFormValue(body, 'id'))
-  const editPath = getEditPath(id)
+  const returnPath = getActionReturnPath(c, body, pagePath)
+  const editPath = withReturnToPath(getEditPath(id), returnPath)
 
   try {
     await update${pascal}(c, id, update${pascal}Schema.parse({
@@ -528,6 +534,7 @@ function createIndexRoute(options: CrudOptions): string {
   const pascal = toPascalCase(options.name)
   const component = `${pascal}Panel`
   const routeFile = `app/routes/admin/${options.route}/index.tsx`
+  const formImport = createImportPath(routeFile, 'app/routes/-/utils/form')
   const serviceImport = createImportPath(
     routeFile,
     `app/service/admin/system/${options.name}/index`,
@@ -540,9 +547,12 @@ function createIndexRoute(options: CrudOptions): string {
   return `import { createRoute } from 'honox/factory'
 import { list${pascal}Schema } from '${dtoImport}'
 import { list${pascal}s } from '${serviceImport}'
-import { getPageAlert } from '../../_utils/form'
-import ${component} from './_components/_${toKebabCase(options.name)}-panel'
-import { handle${pascal}Action } from './_actions'
+import {
+  getPageAlert,
+  getQueryReturnPath,
+} from '${formImport}'
+import ${component} from './-components/${toKebabCase(options.name)}-panel'
+import { handle${pascal}Action } from './-actions'
 
 export const POST = createRoute(handle${pascal}Action)
 
@@ -566,30 +576,49 @@ export default createRoute(async (c) => {
 
 function createAddRoute(options: CrudOptions): string {
   const pascal = toPascalCase(options.name)
+  const routeFile = `app/routes/admin/${options.route}/add.tsx`
+  const pageAlertImport = createImportPath(routeFile, 'app/routes/-/components/page-alert')
+  const pageHeaderImport = createImportPath(routeFile, 'app/routes/-/components/page-header')
+  const formImport = createImportPath(routeFile, 'app/routes/-/utils/form')
 
   return `import { createRoute } from 'honox/factory'
-import PageHeader from '../../_components/_page-header'
-import ${pascal}Form from './_components/_${toKebabCase(options.name)}-form'
-import { handle${pascal}CreateAction } from './_actions'
+import PageAlert from '${pageAlertImport}'
+import PageHeader from '${pageHeaderImport}'
+import {
+  getPageAlert,
+  getQueryReturnPath,
+} from '${formImport}'
+import ${pascal}Form from './-components/${toKebabCase(options.name)}-form'
+import { handle${pascal}CreateAction } from './-actions'
 
 export const POST = createRoute(handle${pascal}CreateAction)
 
-export default createRoute((c) => c.render(
-  <section class="rounded-box border border-base-300 bg-base-100 p-4">
-    <PageHeader
-      description="填写${options.title}基础信息。"
-      title="新增${options.title}"
-      backHref="/admin/${options.route}"
-    />
-    <${pascal}Form mode="create" />
-  </section>,
-))
+export default createRoute((c) => {
+  const returnTo = getQueryReturnPath(c, '/admin/${options.route}')
+
+  return c.render(
+    <>
+      <PageAlert alert={getPageAlert(c)} />
+      <section class="rounded-box border border-base-300 bg-base-100 p-4">
+        <PageHeader
+          description="填写${options.title}基础信息。"
+          title="新增${options.title}"
+          backHref="/admin/${options.route}"
+        />
+        <${pascal}Form mode="create" returnTo={returnTo} />
+      </section>
+    </>,
+  )
+})
 `
 }
 
 function createEditRoute(options: CrudOptions): string {
   const pascal = toPascalCase(options.name)
   const routeFile = `app/routes/admin/${options.route}/edit.tsx`
+  const pageAlertImport = createImportPath(routeFile, 'app/routes/-/components/page-alert')
+  const pageHeaderImport = createImportPath(routeFile, 'app/routes/-/components/page-header')
+  const formImport = createImportPath(routeFile, 'app/routes/-/utils/form')
   const serviceImport = createImportPath(
     routeFile,
     `app/service/admin/system/${options.name}/index`,
@@ -597,24 +626,33 @@ function createEditRoute(options: CrudOptions): string {
 
   return `import { createRoute } from 'honox/factory'
 import { get${pascal}ById } from '${serviceImport}'
-import PageHeader from '../../_components/_page-header'
-import ${pascal}Form from './_components/_${toKebabCase(options.name)}-form'
-import { handle${pascal}UpdateAction } from './_actions'
+import PageAlert from '${pageAlertImport}'
+import PageHeader from '${pageHeaderImport}'
+import {
+  getPageAlert,
+  getQueryReturnPath,
+} from '${formImport}'
+import ${pascal}Form from './-components/${toKebabCase(options.name)}-form'
+import { handle${pascal}UpdateAction } from './-actions'
 
 export const POST = createRoute(handle${pascal}UpdateAction)
 
 export default createRoute(async (c) => {
   const record = await get${pascal}ById(c, Number(c.req.query('id')))
+  const returnTo = getQueryReturnPath(c, '/admin/${options.route}')
 
   return c.render(
-    <section class="rounded-box border border-base-300 bg-base-100 p-4">
-      <PageHeader
-        description="保存${options.title}后会停留在当前编辑页。"
-        title="编辑${options.title}"
-        backHref="/admin/${options.route}"
-      />
-      <${pascal}Form mode="update" record={record} />
-    </section>,
+    <>
+      <PageAlert alert={getPageAlert(c)} />
+      <section class="rounded-box border border-base-300 bg-base-100 p-4">
+        <PageHeader
+          description="保存${options.title}后会停留在当前编辑页。"
+          title="编辑${options.title}"
+          backHref="/admin/${options.route}"
+        />
+        <${pascal}Form mode="update" record={record} returnTo={returnTo} />
+      </section>
+    </>,
   )
 })
 `
@@ -622,21 +660,28 @@ export default createRoute(async (c) => {
 
 function createFormComponent(options: CrudOptions): string {
   const pascal = toPascalCase(options.name)
-  const componentFile = `app/routes/admin/${options.route}/_components/_${toKebabCase(options.name)}-form.tsx`
+  const componentFile = `app/routes/admin/${options.route}/-components/${toKebabCase(options.name)}-form.tsx`
   const dtoImport = createImportPath(
     componentFile,
     `app/service/admin/system/${options.name}/dto`,
   )
+  const csrfImport = createImportPath(componentFile, 'app/routes/-/components/csrf-field')
+  const formImport = createImportPath(componentFile, 'app/routes/-/utils/form')
+  const turboFrameImport = createImportPath(componentFile, 'app/routes/-/components/turbo-frame')
   const inputs = options.fields.map(createFormField).join('\n\n')
 
   return `import type { ${pascal}Record } from '${dtoImport}'
+import CsrfField from '${csrfImport}'
+import { topLevelFormTurboAttrs } from '${turboFrameImport}'
+import { returnToFieldName } from '${formImport}'
 
 interface Props {
   mode: 'create' | 'update'
   record?: ${pascal}Record
+  returnTo?: string
 }
 
-export default function ${pascal}Form({ mode, record }: Props) {
+export default function ${pascal}Form({ mode, record, returnTo }: Props) {
   const isUpdate = mode === 'update'
 
   return (
@@ -644,14 +689,17 @@ export default function ${pascal}Form({ mode, record }: Props) {
       class="grid gap-4 md:grid-cols-2"
       data-validate-trigger="blur"
       method="post"
+      {...topLevelFormTurboAttrs}
     >
+      <CsrfField />
+      {returnTo ? <input name={returnToFieldName} type="hidden" value={returnTo} /> : null}
       <input name="intent" type="hidden" value={mode} />
       {isUpdate && record ? <input name="id" type="hidden" value={record.id} /> : null}
 
 ${indent(inputs, 6)}
 
       <div class="flex justify-end gap-2 border-t border-base-300 pt-4 md:col-span-2">
-        <a class="btn btn-ghost btn-sm" href="/admin/${options.route}">
+        <a class="btn btn-ghost btn-sm" href={returnTo ?? '/admin/${options.route}'}>
           取消
         </a>
         <button class="btn btn-primary btn-sm" type="submit">
@@ -666,48 +714,72 @@ ${indent(inputs, 6)}
 
 function createPanelComponent(options: CrudOptions): string {
   const pascal = toPascalCase(options.name)
-  const componentFile = `app/routes/admin/${options.route}/_components/_${toKebabCase(options.name)}-panel.tsx`
+  const componentFile = `app/routes/admin/${options.route}/-components/${toKebabCase(options.name)}-panel.tsx`
+  const pageAlertImport = createImportPath(componentFile, 'app/routes/-/components/page-alert')
+  const pageHeaderImport = createImportPath(componentFile, 'app/routes/-/components/page-header')
+  const paginationImport = createImportPath(componentFile, 'app/routes/-/components/pagination')
+  const tableSearchFormImport = createImportPath(componentFile, 'app/routes/-/components/table-search-form')
+  const turboFrameImport = createImportPath(componentFile, 'app/routes/-/components/turbo-frame')
+  const formImport = createImportPath(componentFile, 'app/routes/-/utils/form')
+  const paginationTypeImport = createImportPath(componentFile, 'app/service/common/pagination')
   const dtoImport = createImportPath(
     componentFile,
     `app/service/admin/system/${options.name}/dto`,
   )
 
-  return `import type { PageAlertState } from '../../../_components/_page-alert'
-import type { PaginationState } from '../../_utils/pagination'
+  return `import type { PageAlertState } from '${pageAlertImport}'
+import type { PaginatedResult } from '${paginationTypeImport}'
 import type { ${pascal}Record } from '${dtoImport}'
-import PageAlert from '../../../_components/_page-alert'
-import PageHeader from '../../../_components/_page-header'
-import TableSearchForm from '../../../_components/_table-search-form'
-import ${pascal}Table from './_${toKebabCase(options.name)}-table'
+import PageAlert from '${pageAlertImport}'
+import PageHeader from '${pageHeaderImport}'
+import Pagination, { createPageHref } from '${paginationImport}'
+import TableSearchForm from '${tableSearchFormImport}'
+import { ListTurboFrame } from '${turboFrameImport}'
+import { withReturnToPath } from '${formImport}'
+import ${pascal}Table from './${toKebabCase(options.name)}-table'
 
 interface Props {
   alert?: PageAlertState
   keyword: string
-  pagination: PaginationState<${pascal}Record>
+  pagination: PaginatedResult<${pascal}Record>
 }
 
 export default function ${pascal}Panel({ alert, keyword, pagination }: Props) {
+  const listHref = createPageHref('/admin/${options.route}', {
+    keyword,
+    pageSize: pagination.pageSize,
+  }, pagination.page)
+
   return (
-    <section class="rounded-box border border-base-300 bg-base-100 p-4">
+    <div class="space-y-4">
       <PageAlert alert={alert} />
-      <PageHeader
-        actions={(
-          <a class="btn btn-primary btn-sm" href="/admin/${options.route}/add">
-            新增${options.title}
-          </a>
-        )}
-        description="管理${options.title}列表。"
-        title="${options.title}管理"
-      />
-      <div class="mb-4 flex justify-end">
-        <TableSearchForm
-          action="/admin/${options.route}"
-          keyword={keyword}
-          pageSize={pagination.pageSize}
-        />
-      </div>
-      <${pascal}Table records={pagination.items} />
-    </section>
+      <ListTurboFrame>
+        <section class="rounded-box border border-base-300 bg-base-100 p-4">
+          <PageHeader
+            actions={(
+              <a class="btn btn-primary btn-sm" data-turbo-frame="_top" href={withReturnToPath('/admin/${options.route}/add', listHref)}>
+                新增${options.title}
+              </a>
+            )}
+            description="管理${options.title}列表。"
+            title="${options.title}管理"
+          />
+          <div class="mb-4 flex justify-end">
+            <TableSearchForm
+              action="/admin/${options.route}"
+              keyword={keyword}
+              pageSize={pagination.pageSize}
+            />
+          </div>
+          <${pascal}Table listHref={listHref} records={pagination.items} />
+          <Pagination
+            action="/admin/${options.route}"
+            pagination={pagination}
+            query={{ keyword, pageSize: pagination.pageSize }}
+          />
+        </section>
+      </ListTurboFrame>
+    </div>
   )
 }
 `
@@ -715,7 +787,9 @@ export default function ${pascal}Panel({ alert, keyword, pagination }: Props) {
 
 function createTableComponent(options: CrudOptions): string {
   const pascal = toPascalCase(options.name)
-  const componentFile = `app/routes/admin/${options.route}/_components/_${toKebabCase(options.name)}-table.tsx`
+  const componentFile = `app/routes/admin/${options.route}/-components/${toKebabCase(options.name)}-table.tsx`
+  const crudActionModalImport = createImportPath(componentFile, 'app/routes/admin/-components/crud-action-modal')
+  const formImport = createImportPath(componentFile, 'app/routes/-/utils/form')
   const dtoImport = createImportPath(
     componentFile,
     `app/service/admin/system/${options.name}/dto`,
@@ -724,13 +798,18 @@ function createTableComponent(options: CrudOptions): string {
   const cells = options.fields.map((field) => `                  <td>{String(record.${field.name})}</td>`).join('\n')
 
   return `import type { ${pascal}Record } from '${dtoImport}'
-import { ConfirmActionModal } from '../../_components/_crud-action-modal'
+import { ConfirmActionModal } from '${crudActionModalImport}'
+import {
+  returnToFieldName,
+  withReturnToPath,
+} from '${formImport}'
 
 interface Props {
+  listHref: string
   records: ${pascal}Record[]
 }
 
-export default function ${pascal}Table({ records }: Props) {
+export default function ${pascal}Table({ listHref, records }: Props) {
   return (
     <div class="overflow-x-auto">
       <table class="table">
@@ -749,7 +828,8 @@ ${cells}
               <td class="text-right">
                 <a
                   class="btn btn-ghost btn-xs"
-                  href={\`/admin/${options.route}/edit?id=\${record.id}\`}
+                  data-turbo-frame="_top"
+                  href={withReturnToPath(\`/admin/${options.route}/edit?id=\${record.id}\`, listHref)}
                 >
                   编辑
                 </a>
@@ -758,6 +838,7 @@ ${cells}
                   inputs={[
                     { name: 'intent', value: 'delete' },
                     { name: 'id', value: record.id },
+                    { name: returnToFieldName, value: listHref },
                   ]}
                   message={\`${options.title}「\${record.id}」删除后不可恢复。\`}
                   title="删除${options.title}"

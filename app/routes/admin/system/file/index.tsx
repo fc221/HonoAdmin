@@ -1,9 +1,9 @@
 import { createRoute } from 'honox/factory'
+import { getPageAlert } from '../../../-/utils/form'
 import { listFiles } from '../../../../service/admin/system/file'
 import { listFileSchema } from '../../../../service/admin/system/file/dto'
-import { getPageAlert } from '../../../_utils/form'
-import { handleFileAction } from './_actions'
-import FilePanel from './_components/_file-panel'
+import { handleFileAction } from './-actions'
+import FilePanel from './-components/file-panel'
 
 export const POST = createRoute(handleFileAction)
 

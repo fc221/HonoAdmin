@@ -1,10 +1,10 @@
 import { createRoute } from 'honox/factory'
+import { getPageAlert } from '../../../-/utils/form'
 import { listRoleOptions } from '../../../../service/admin/system/role'
 import { listUsers } from '../../../../service/admin/system/user'
 import { listUserSchema } from '../../../../service/admin/system/user/dto'
-import { getPageAlert } from '../../../_utils/form'
-import { handleUserAction } from './_actions'
-import UserPanel from './_components/_user-panel'
+import { handleUserAction } from './-actions'
+import UserPanel from './-components/user-panel'
 
 export const POST = createRoute(handleUserAction)
 

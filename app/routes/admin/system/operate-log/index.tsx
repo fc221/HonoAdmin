@@ -1,9 +1,9 @@
 import { createRoute } from 'honox/factory'
+import { getPageAlert } from '../../../-/utils/form'
 import { listOperateLogs } from '../../../../service/admin/system/operate-log'
 import { listOperateLogSchema } from '../../../../service/admin/system/operate-log/dto'
-import { getPageAlert } from '../../../_utils/form'
-import { handleOperateLogAction } from './_actions'
-import OperateLogPanel from './_components/_operate-log-panel'
+import { handleOperateLogAction } from './-actions'
+import OperateLogPanel from './-components/operate-log-panel'
 
 export const POST = createRoute(handleOperateLogAction)
 

@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "bun --bun vite",
     "dev:bun": "bun --bun vite --mode bun",
+    "dev:poll": "VITE_USE_POLLING=true bun --bun vite",
     "dev:workers": "vite --mode cloudflare-workers",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
@@ -23,6 +24,8 @@
     "@hono/standard-validator": "^0.2.2",
     "@hono/swagger-ui": "^0.6.1",
     "@hono/zod-validator": "^0.7.6",
+    "@hotwired/stimulus": "^3.2.2",
+    "@hotwired/turbo": "^8.0.23",
     "@iconify/vue": "^5.0.0",
     "add": "^2.0.6",
     "casbin": "^5.50.0",

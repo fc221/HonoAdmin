@@ -9,6 +9,7 @@ import type { ConfigEntity } from './entity'
 import type { ConfigType } from './enum'
 import { buildCacheKey } from '../../../../infra/cache/types'
 import { NotFoundError, ValidationError } from '../../../../utils/errors'
+import { bumpAdminLayoutCacheVersion } from '../../layout-cache'
 import {
   builtInConfigDefinitions,
   siteDescriptionConfig,
@@ -126,6 +127,7 @@ export async function createConfig(
 
   const config = await getConfigById(ctx, configId)
   await invalidateConfigCache(ctx, input.configType, input.configKey)
+  await bumpAdminLayoutCacheVersion(ctx)
   return config
 }
 
@@ -192,6 +194,7 @@ export async function updateConfig(
   if (nextType !== current.config_type || nextKey !== current.config_key) {
     await invalidateConfigCache(ctx, nextType, nextKey)
   }
+  await bumpAdminLayoutCacheVersion(ctx)
 
   return getConfigById(ctx, id)
 }
@@ -205,6 +208,7 @@ export async function deleteConfig(ctx: ServiceContext, id: number): Promise<voi
   }
 
   await invalidateConfigCache(ctx, current.config_type, current.config_key)
+  await bumpAdminLayoutCacheVersion(ctx)
 }
 
 async function getConfigById(

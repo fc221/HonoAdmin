@@ -19,6 +19,7 @@ import {
   buildKeywordCondition,
   buildWhereClause,
 } from '../../../common/query'
+import { bumpAdminLayoutCacheVersion } from '../../layout-cache'
 import { listUserSchema } from './dto'
 import { UserStatus } from './enum'
 
@@ -192,6 +193,7 @@ export async function createUser(
     return userId
   })
 
+  await bumpAdminLayoutCacheVersion(ctx)
   return getUserById(ctx, userId)
 }
 
@@ -288,6 +290,7 @@ export async function updateUser(
     }
   })
 
+  await bumpAdminLayoutCacheVersion(ctx)
   return getUserById(ctx, id)
 }
 
@@ -302,6 +305,7 @@ export async function deleteUser(ctx: ServiceContext, id: number): Promise<void>
     await db.execute('DELETE FROM sys_user_role WHERE user_id = ?', [id])
     await db.execute('DELETE FROM sys_user WHERE id = ?', [id])
   })
+  await bumpAdminLayoutCacheVersion(ctx)
 }
 
 export async function getUserCredentialById(
@@ -358,6 +362,16 @@ export async function getUserHeaderProfileById(
   ctx: ServiceContext,
   id: number,
 ): Promise<UserHeaderProfile | null> {
+  const profile = await getUserHeaderIdentityById(ctx, id)
+  return profile
+    ? toUserHeaderProfile(profile, await listUserSessionRoles(ctx, id), null)
+    : null
+}
+
+export async function getUserHeaderIdentityById(
+  ctx: ServiceContext,
+  id: number,
+): Promise<UserHeaderProfileEntity | null> {
   const row = await ctx.db.first<UserHeaderProfileEntity>(
     `
       SELECT id, username, nickname, avatar
@@ -367,9 +381,7 @@ export async function getUserHeaderProfileById(
     [id, UserStatus.NORMAL],
   )
 
-  return row
-    ? toUserHeaderProfile(row, await listUserSessionRoles(ctx, id), null)
-    : null
+  return row ?? null
 }
 
 export async function listUserSessionRoles(

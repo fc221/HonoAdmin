@@ -1,11 +1,11 @@
 import { createRoute } from 'honox/factory'
-import { switchCurrentSessionRole } from '../../service/user/role-switch'
-import { UnauthorizedError } from '../../utils/errors'
 import {
   getFormValue,
   respondWithActionAlert,
   respondWithActionError,
-} from '../_utils/form'
+} from '../-/utils/form'
+import { switchCurrentSessionRole } from '../../service/user/role-switch'
+import { UnauthorizedError } from '../../utils/errors'
 
 const fallbackPath = '/user/profile'
 

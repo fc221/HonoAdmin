@@ -1,15 +1,16 @@
 import { createRoute } from 'honox/factory'
-import { getWebNotificationById } from '../../../../service/admin/web/notification'
-import { idParamSchema } from '../../../../service/common/response'
-import PageAlert from '../../../_components/$page-alert'
-import PageHeader from '../../../_components/_page-header'
+import PageAlert from '../../../-/components/page-alert'
+import PageHeader from '../../../-/components/page-header'
 import {
   getActionErrorMessage,
   getPageAlert,
+  getQueryReturnPath,
   redirectWithAlert,
-} from '../../../_utils/form'
-import { handleWebNotificationUpdateAction } from './_actions'
-import WebNotificationForm from './_components/_notification-form'
+} from '../../../-/utils/form'
+import { getWebNotificationById } from '../../../../service/admin/web/notification'
+import { idParamSchema } from '../../../../service/common/response'
+import { handleWebNotificationUpdateAction } from './-actions'
+import WebNotificationForm from './-components/notification-form'
 
 const pagePath = '/admin/web/notification'
 
@@ -18,6 +19,7 @@ export const POST = createRoute(handleWebNotificationUpdateAction)
 export default createRoute(async (c) => {
   try {
     const id = idParamSchema.parse({ id: c.req.query('id') }).id
+    const returnTo = getQueryReturnPath(c, pagePath)
     const notification = await getWebNotificationById(c, id)
 
     return c.render(
@@ -32,6 +34,7 @@ export default createRoute(async (c) => {
           <WebNotificationForm
             mode="update"
             notification={notification}
+            returnTo={returnTo}
           />
         </section>
       </>,

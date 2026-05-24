@@ -1,9 +1,9 @@
 import { createRoute } from 'honox/factory'
+import { getPageAlert } from '../../../-/utils/form'
 import { getAdminSessionUser } from '../../../../service/admin/session'
 import { getUpdateStatus } from '../../../../service/admin/system/update'
-import { getPageAlert } from '../../../_utils/form'
-import { handleUpdateAction } from './_actions'
-import UpdatePanel from './_components/_update-panel'
+import { handleUpdateAction } from './-actions'
+import UpdatePanel from './-components/update-panel'
 
 export const POST = createRoute(handleUpdateAction)
 

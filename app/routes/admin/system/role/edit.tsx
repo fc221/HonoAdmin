@@ -1,17 +1,18 @@
 import { createRoute } from 'honox/factory'
+import PageAlert from '../../../-/components/page-alert'
+import PageHeader from '../../../-/components/page-header'
+import {
+  getActionErrorMessage,
+  getPageAlert,
+  getQueryReturnPath,
+  redirectWithAlert,
+} from '../../../-/utils/form'
 import { adminMenus } from '../../../../service/admin/system/menu/consts'
 import { listPermissions } from '../../../../service/admin/system/permission'
 import { getRoleById } from '../../../../service/admin/system/role'
 import { idParamSchema } from '../../../../service/common/response'
-import PageAlert from '../../../_components/$page-alert'
-import PageHeader from '../../../_components/_page-header'
-import {
-  getActionErrorMessage,
-  getPageAlert,
-  redirectWithAlert,
-} from '../../../_utils/form'
-import { handleRoleUpdateAction } from './_actions'
-import RoleForm from './_components/_role-form'
+import { handleRoleUpdateAction } from './-actions'
+import RoleForm from './-components/role-form'
 
 const pagePath = '/admin/system/role'
 
@@ -20,6 +21,7 @@ export const POST = createRoute(handleRoleUpdateAction)
 export default createRoute(async (c) => {
   try {
     const id = idParamSchema.parse({ id: c.req.query('id') }).id
+    const returnTo = getQueryReturnPath(c, pagePath)
     const [role, permissions] = await Promise.all([
       getRoleById(c, id),
       listPermissions(c),
@@ -38,6 +40,7 @@ export default createRoute(async (c) => {
             menus={adminMenus}
             mode="update"
             permissions={permissions}
+            returnTo={returnTo}
             role={role}
           />
         </section>

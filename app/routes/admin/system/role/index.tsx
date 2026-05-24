@@ -1,9 +1,9 @@
 import { createRoute } from 'honox/factory'
+import { getPageAlert } from '../../../-/utils/form'
 import { listPaginatedRoles } from '../../../../service/admin/system/role'
 import { listRoleSchema } from '../../../../service/admin/system/role/dto'
-import { getPageAlert } from '../../../_utils/form'
-import { handleRoleAction } from './_actions'
-import RolePanel from './_components/_role-panel'
+import { handleRoleAction } from './-actions'
+import RolePanel from './-components/role-panel'
 
 export const POST = createRoute(handleRoleAction)
 

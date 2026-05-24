@@ -6,7 +6,11 @@ import {
   needsPasswordRehash,
   verifyUserPassword,
 } from '../app/service/admin/system/user'
-import { requestBodyLimit } from '../app/service/middleware/security'
+import { csrf, requestBodyLimit } from '../app/service/middleware/security'
+import {
+  csrfCookieName,
+  csrfHeaderName,
+} from '../app/service/security/csrf'
 import {
   consumeRateLimit,
   createRateLimitKey,
@@ -71,6 +75,41 @@ describe('security utilities', () => {
     expect(await response.text()).toContain('6MB')
   })
 
+  test('csrf middleware requires a signed same-origin token for form posts', async () => {
+    const app = new Hono()
+    app.use('*', csrf)
+    app.get('/form', (c) => c.text('ok'))
+    app.post('/submit', (c) => c.text('saved'))
+
+    const formResponse = await app.request('/form')
+    const token = getCookieValue(
+      formResponse.headers.get('set-cookie') ?? '',
+      csrfCookieName,
+    )
+
+    expect(token).toContain('.')
+    expect((await app.request('/submit', {
+      body: new URLSearchParams(),
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'cookie': `${csrfCookieName}=${token}`,
+      },
+      method: 'POST',
+    })).status).toBe(403)
+
+    const response = await app.request('/submit', {
+      body: new URLSearchParams(),
+      headers: {
+        [csrfHeaderName]: token,
+        cookie: `${csrfCookieName}=${token}`,
+      },
+      method: 'POST',
+    })
+
+    expect(response.status).toBe(200)
+    expect(await response.text()).toBe('saved')
+  })
+
   test('security runtime config reads optional numeric env values', () => {
     const config = resolveSecurityRuntimeConfig((key) => ({
       API_RATE_LIMIT_MAX: '240',
@@ -124,4 +163,12 @@ async function sha256Hex(value: string): Promise<string> {
   return [...new Uint8Array(hash)]
     .map((byte) => byte.toString(16).padStart(2, '0'))
     .join('')
+}
+
+function getCookieValue(setCookie: string, name: string): string {
+  const cookie = setCookie
+    .split(';')
+    .find((part) => part.trim().startsWith(`${name}=`))
+
+  return cookie?.trim().slice(name.length + 1).replace(/^"|"$/g, '') ?? ''
 }

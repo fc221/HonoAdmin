@@ -1,6 +1,6 @@
 import { createRoute } from 'honox/factory'
-import PageAlert from '../../_components/$page-alert'
-import { getPageAlert } from '../../_utils/form'
+import PageAlert from '../../-/components/page-alert'
+import { getPageAlert } from '../../-/utils/form'
 
 export default createRoute(async (c) => {
   return c.render(

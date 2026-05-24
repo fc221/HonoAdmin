@@ -1,5 +1,5 @@
 import type { NotFoundHandler } from 'hono'
-import ErrorPage from './_components/_error-page'
+import ErrorPage from './-/components/error-page'
 
 const handler: NotFoundHandler = (c) => {
   c.status(404)

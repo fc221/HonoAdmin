@@ -1,5 +1,12 @@
 import type { Child } from 'hono/jsx'
 import { createRoute } from 'honox/factory'
+import PageAlert from '../-/components/page-alert'
+import {
+  getActionErrorMessage,
+  getFormValue,
+  getPageAlert,
+  redirectWithAlert,
+} from '../-/utils/form'
 import {
   generateBootstrapSecret,
   getBunConfigPath,
@@ -21,17 +28,10 @@ import {
 } from '../../service/admin/system/user'
 import { createUserSchema } from '../../service/admin/system/user/dto'
 import { ValidationError } from '../../utils/errors'
-import PageAlert from '../_components/$page-alert'
-import {
-  getActionErrorMessage,
-  getFormValue,
-  getPageAlert,
-  redirectWithAlert,
-} from '../_utils/form'
 import InstallForm, {
   MigrationStep,
   RuntimeConfigStep,
-} from './_components/_install-form'
+} from './-components/install-form'
 
 export const POST = createRoute(async (c) => {
   const body = await c.req.parseBody()

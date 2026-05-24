@@ -5,7 +5,7 @@ import type {
   AppEnv,
   RuntimeBindings,
 } from './infra/runtime/types'
-import type { LayoutRenderOptions } from './routes/_utils/layout'
+import type { LayoutRenderOptions } from './routes/-/utils/layout'
 
 declare module 'hono' {
   interface ContextRenderer {

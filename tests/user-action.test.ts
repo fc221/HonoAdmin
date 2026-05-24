@@ -1,7 +1,7 @@
 import type { TestServiceContext } from './helpers/service-context'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { Hono } from 'hono'
-import { handleUserAction } from '../app/routes/admin/system/user/_actions'
+import { handleUserAction } from '../app/routes/admin/system/user/-actions'
 import { listRoles } from '../app/service/admin/system/role'
 import {
   createUser,

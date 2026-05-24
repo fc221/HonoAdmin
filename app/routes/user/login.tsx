@@ -1,4 +1,9 @@
 import { createRoute } from 'honox/factory'
+import { getSiteLogoText } from '../-/utils/branding'
+import {
+  formatPageTitle,
+  getRenderableSiteConfig,
+} from '../-/utils/site'
 import { verifyAdminSession } from '../../service/admin/session'
 import { getDatabaseMigrationStatus } from '../../service/admin/system/update'
 import {
@@ -9,12 +14,7 @@ import {
 } from '../../service/security/rate-limit'
 import { loginUser } from '../../service/user/login'
 import { TooManyRequestsError } from '../../utils/errors'
-import { getSiteLogoText } from '../_utils/branding'
-import {
-  formatPageTitle,
-  getRenderableSiteConfig,
-} from '../_utils/site'
-import LoginForm from './_components/_login-form'
+import LoginForm from './-components/login-form'
 
 const defaultReturnTo = '/user/dashboard'
 const loginPath = '/user/login'

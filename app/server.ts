@@ -16,6 +16,7 @@ const app = createApp({
     app.use('*', middleware.security.headers)
     app.use('*', middleware.context.attach)
     app.use('*', middleware.security.requestBodyLimit)
+    app.use('*', middleware.security.csrf)
     app.use('*', requestId())
     app.use('*', logger()) // 请求日志
     app.use('*', timing()) // 性能计时

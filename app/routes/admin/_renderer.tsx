@@ -1,10 +1,10 @@
 import { jsxRenderer } from 'hono/jsx-renderer'
-import Layout from '../_components/_layout/$index'
+import Layout from '../-/components/layout/index'
 import {
   getAdminLayoutData,
   isLayoutDisabled,
-} from '../_utils/layout'
-import { formatPageTitle } from '../_utils/site'
+} from '../-/utils/layout'
+import { formatPageTitle } from '../-/utils/site'
 
 export default jsxRenderer(async ({ children, Layout: DocumentLayout, ...options }, c) => {
   if (isLayoutDisabled(options)) {

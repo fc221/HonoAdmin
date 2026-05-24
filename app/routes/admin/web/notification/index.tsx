@@ -1,9 +1,9 @@
 import { createRoute } from 'honox/factory'
+import { getPageAlert } from '../../../-/utils/form'
 import { listWebNotifications } from '../../../../service/admin/web/notification'
 import { listWebNotificationSchema } from '../../../../service/admin/web/notification/dto'
-import { getPageAlert } from '../../../_utils/form'
-import { handleWebNotificationAction } from './_actions'
-import WebNotificationPanel from './_components/_notification-panel'
+import { handleWebNotificationAction } from './-actions'
+import WebNotificationPanel from './-components/notification-panel'
 
 export const POST = createRoute(handleWebNotificationAction)
 

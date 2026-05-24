@@ -27,6 +27,48 @@ body {
   background: var(--color-base-100);
 }
 
+.turbo-progress-bar {
+  display: none !important;
+}
+
+html[data-spa-action-pending='true'] body {
+  cursor: wait;
+}
+
+html[data-spa-action-pending='true'] body::before {
+  animation: spa-action-progress 1.1s ease-in-out infinite;
+  background: var(--color-primary);
+  content: '';
+  height: 3px;
+  inset: 0 auto auto 0;
+  pointer-events: none;
+  position: fixed;
+  transform-origin: left center;
+  width: 38vw;
+  z-index: 9999;
+}
+
+html[data-spa-action-pending='true'] .modal-toggle:checked + .modal label[for] {
+  cursor: wait;
+}
+
+@keyframes spa-action-progress {
+  0% {
+    opacity: 0.55;
+    transform: translateX(-42vw) scaleX(0.7);
+  }
+
+  45% {
+    opacity: 1;
+    transform: translateX(36vw) scaleX(1);
+  }
+
+  100% {
+    opacity: 0.55;
+    transform: translateX(104vw) scaleX(0.75);
+  }
+}
+
 * {
   scrollbar-color: var(--scrollbar-thumb) transparent;
   scrollbar-width: thin;
@@ -118,6 +160,11 @@ body {
 
 .menu::-webkit-scrollbar {
   display: none; /* Chrome, Safari */
+}
+
+/* 禁止换行 */
+.badge {
+  white-space: nowrap;
 }
 
 /* App pages scroll inside [data-page-scroll]; keep daisyUI modals from changing root scroll chrome. */

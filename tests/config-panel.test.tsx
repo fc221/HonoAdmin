@@ -1,7 +1,7 @@
 import type { ConfigRecord } from '../app/service/admin/system/config/dto'
 import { describe, expect, test } from 'bun:test'
 import { Hono } from 'hono'
-import ConfigPanel from '../app/routes/admin/system/config/_components/_config-panel'
+import ConfigPanel from '../app/routes/admin/system/config/-components/config-panel'
 import {
   builtInConfigDefinitions,
 } from '../app/service/admin/system/config/constants'

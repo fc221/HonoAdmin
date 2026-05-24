@@ -29,6 +29,7 @@ import {
   buildKeywordCondition,
   buildWhereClause,
 } from '../../../common/query'
+import { bumpAdminLayoutCacheVersion } from '../../layout-cache'
 import { adminMenus } from '../menu/consts'
 import { createRoleSchema, listRoleSchema, updateRoleSchema } from './dto'
 
@@ -165,6 +166,7 @@ export async function createRole(
   })
 
   await invalidateRoleAccessCache(ctx, role.id)
+  await bumpAdminLayoutCacheVersion(ctx)
   return role
 }
 
@@ -203,6 +205,7 @@ export async function updateRole(
   })
 
   await invalidateRoleAccessCache(ctx, id)
+  await bumpAdminLayoutCacheVersion(ctx)
   return getRoleById(ctx, id)
 }
 
@@ -233,6 +236,7 @@ export async function deleteRole(
   })
 
   await invalidateRoleAccessCache(ctx, id)
+  await bumpAdminLayoutCacheVersion(ctx)
 }
 
 export async function invalidateRoleAccessCache(

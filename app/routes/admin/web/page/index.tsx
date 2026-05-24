@@ -1,9 +1,9 @@
 import { createRoute } from 'honox/factory'
+import { getPageAlert } from '../../../-/utils/form'
 import { listWebPages } from '../../../../service/admin/web/page'
 import { listWebPageSchema } from '../../../../service/admin/web/page/dto'
-import { getPageAlert } from '../../../_utils/form'
-import { handleWebPageAction } from './_actions'
-import WebPagePanel from './_components/_page-panel'
+import { handleWebPageAction } from './-actions'
+import WebPagePanel from './-components/page-panel'
 
 export const POST = createRoute(handleWebPageAction)
 

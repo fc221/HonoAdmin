@@ -21,8 +21,10 @@ The script creates:
 After scaffolding, finish the feature manually:
 
 - Add and register a migration for the table.
-- Export the service module from `app/service/admin/system/index.ts`.
-- Add the menu entry in `app/consts/menu.ts`.
+- Add permission seeds for view and POST actions in every migration dialect.
+- Add the menu entry in `app/service/admin/system/menu/consts.ts`.
+- Include `<CsrfField />` in every non-GET HTML form.
+- Use `topLevelFormTurboAttrs` for mutating forms and `ListTurboFrame` only for list search/pagination.
 - Add focused tests for schema, action result, and service CRUD.
 - Run `bun run check`.
 

@@ -8,7 +8,7 @@ The architecture should make common extension work additive: adding a runtime, d
 
 ## Layers
 
-- `app/routes`: HonoX route entries, pages, API route entries, renderers, and island components.
+- `app/routes`: HonoX route entries, pages, API route entries, renderers, SSR components, and browser behavior.
 - `app/service`: business workflows and middleware. This layer consumes context resources but does not detect runtime details.
 - `app/infra`: adapters and runtime factories for database, cache, and platform bindings.
 - `app/utils`: framework-independent helpers, errors, response shapes, and small shared utilities.
@@ -30,9 +30,13 @@ Business code must not inspect `Bun`, Cloudflare bindings, or environment global
 
 The direct context fields are a project-level Hono `Context` extension. Do not introduce new core resources by ad-hoc assignment in route files. Add the field to the runtime/context type, attach it in `service/middleware/context`, and document the extension point here.
 
-## HonoX Pages And Islands
+## HonoX Pages And Browser Behavior
 
-HonoX pages should render meaningful initial state on the server when data is available through context resources. Islands should be limited to client-only interaction such as form state, local storage tokens, optimistic updates, and refresh actions.
+HonoX pages should render meaningful initial state on the server when data is available through context resources.
+
+Shared SSR markup lives in `app/routes/-/components`. These components output HTML, daisyUI/Tailwind classes, forms, tables, modals, menus, and `data-*` hooks.
+
+Browser-only behavior lives in `app/routes/-/browser`. This directory owns Turbo setup, Stimulus controllers, loading/confirm/CSRF helpers, upload behavior, and lifecycle code that touches `window`, `document`, `fetch`, or `localStorage`.
 
 When a feature is only used by the HonoX page, prefer integrated mode:
 
@@ -45,9 +49,20 @@ Admin feature pages use feature folders:
 - `app/routes/admin/system/config`: configuration management page and local components.
 - `app/routes/admin/system/user`: user management page and local components.
 
-Avoid large mixed files that combine route rendering, API clients, forms, tables, and unrelated domain panels. Split page-specific UI into local `_components`, and move shared admin UI into `app/routes/admin/_components`.
+Avoid large mixed files that combine route rendering, API clients, forms, tables, and unrelated domain panels. Split page-specific UI into local `-components`, and move shared admin UI into `app/routes/admin/-components`.
 
 Feature constants live beside the module that owns them. Layout components render their local navigation constants instead of duplicating labels, paths, or icons.
+
+For the full admin extension checklist, see `docs/ADMIN_FEATURE_CONTRACT.md`.
+
+## Admin Layout Cache
+
+Admin layout data is cached in two layers:
+
+- request-level cache avoids duplicate session/layout work during one render.
+- cache-adapter TTL cache stores header profile, active menu set, roles, and site title for repeated page visits.
+
+The cache key includes the user id, active role id, and a layout cache version. Services that change layout-visible data must call `bumpAdminLayoutCacheVersion(ctx)` so later requests use fresh data. This applies to user, role, and site config changes.
 
 ## Database
 

@@ -1,10 +1,10 @@
 import { createRoute } from 'honox/factory'
+import { getPageAlert } from '../../-/utils/form'
 import { getCurrentUserProfilePageData } from '../../../service/user/profile'
 import { listUserProfileOperateLogSchema } from '../../../service/user/profile/dto'
 import { UnauthorizedError } from '../../../utils/errors'
-import { getPageAlert } from '../../_utils/form'
-import { handleProfileAction } from './_actions'
-import ProfilePanel from './_components/_profile-panel'
+import { handleProfileAction } from './-actions'
+import ProfilePanel from './-components/profile-panel'
 
 export const POST = createRoute(handleProfileAction)
 

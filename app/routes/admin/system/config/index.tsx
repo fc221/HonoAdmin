@@ -1,9 +1,9 @@
 import { createRoute } from 'honox/factory'
+import { getPageAlert } from '../../../-/utils/form'
 import { listConfigs } from '../../../../service/admin/system/config'
 import { configTypes } from '../../../../service/admin/system/config/enum'
-import { getPageAlert } from '../../../_utils/form'
-import { handleConfigAction } from './_actions'
-import ConfigPanel from './_components/_config-panel'
+import { handleConfigAction } from './-actions'
+import ConfigPanel from './-components/config-panel'
 
 export const POST = createRoute(handleConfigAction)
 

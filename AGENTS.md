@@ -16,7 +16,7 @@ This file is the persistent project contract for agents and contributors. Read i
 
 - Keep structure clear and modular. A file should have one obvious responsibility.
 - Do not pack unrelated page rendering, client state, forms, tables, schemas, and service logic into one large file. Split by feature and responsibility once a file owns more than one domain concept.
-- Prefer feature folders for admin pages, for example `app/routes/admin/user` and `app/routes/admin/config`, with local `_components` for page-specific islands and widgets.
+- Prefer feature folders for admin pages, for example `app/routes/admin/user` and `app/routes/admin/config`, with local `-components` for page-specific islands and widgets.
 - Keep functions small and single-purpose. Extract only when it reduces real complexity.
 - Keep core logic extensible. Adding a new type, strategy, field, adapter, or runtime should add a module or registration entry, not rewrite the main flow.
 - Keep naming explicit and stable. Prefer domain names over generic names like `handler`, `data`, or `item` when the domain is known.
@@ -38,12 +38,20 @@ This file is the persistent project contract for agents and contributors. Read i
 
 - Admin form compatibility target is modern Chrome, Edge, Safari, and Firefox. Forms should use native browser submission with server-side `303` redirects and alert query parameters.
 - Do not add full-page interception or global DOM replacement for ordinary admin create, edit, delete, search, or save workflows. Use HonoX islands only for local interactive state inside a component.
-- For POST actions, use the shared action response helper from `app/routes/_utils/form`; success and failure both redirect with an alert.
+- For POST actions, use the shared action response helper from `app/routes/-/utils/form`; success and failure both redirect with an alert.
 - POST failure may redirect back to the relevant page with an alert. Backend Zod remains the source of truth, while HTML constraints and local island state are only lightweight client-side guards.
 - Admin forms may configure client-side validation timing with `data-validate-trigger="blur"` or `data-validate-trigger="change"` on the form, field container, or field. Field errors should reuse the existing label/help-text slot when possible instead of inserting extra vertical content.
 - Create workflows with an edit page should redirect to the new record edit URL. If a create workflow returns to a list instead, that list must be chosen so the newly created record is visible.
 - Edit workflows with an edit page should stay on the current edit URL after a successful save so users can continue editing.
 - Search forms should use GET and ordinary full-page navigation. Pagination links should be normal anchors so page navigation remains reversible.
+
+Exception for the explicit admin/user SPA migration:
+
+- `/admin/*` and `/user/*` may be served by a HonoX SSR shell with React CSR navigation when the task explicitly targets the SPA migration.
+- Preserve the existing UI first. React components must copy the existing Hono JSX structure, Tailwind/daisyUI classes, data attributes, spacing, modal/table/card markup, and menu behavior instead of redesigning screens.
+- Until a route is fully ported to React data APIs, use the legacy SSR fragment bridge with the `X-HonoAdmin-SSR: 1` request header so the old page markup remains the visual source of truth.
+- During any bridged or React mutation, set the shared pending lock and block modal close, backdrop close, menu navigation, refresh, and browser unload until the request resolves.
+- Do not delete old admin/user SSR routes or POST actions until an equivalent React page, same-origin API, validation path, permission check, and test coverage exist.
 
 ## Extension Rules
 
