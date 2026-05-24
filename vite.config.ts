@@ -17,6 +17,8 @@ const appSourceFileExtensions = new Set([
   'ts',
   'tsx',
 ])
+const commonSsrExternal = ['buffer', 'casbin']
+const bunOnlySsrExternal = ['selfsigned', 'ssh2']
 
 function disableDevCache(): Plugin {
   return {
@@ -45,6 +47,7 @@ function fullReloadOnAppChange(): Plugin {
     }
 
     reloadTimer = setTimeout(() => {
+      invalidateDevModuleCache(server, changedFile)
       server.ws.send({ type: 'full-reload' })
       server.config.logger.info(
         `[hono-admin] app source changed, full reload: ${formatProjectPath(changedFile)}`,
@@ -69,6 +72,32 @@ function fullReloadOnAppChange(): Plugin {
       server.watcher.on('change', reload)
       server.watcher.on('unlink', reload)
     },
+  }
+}
+
+interface RunnableEnvironmentLike {
+  moduleGraph?: {
+    invalidateAll?: () => void
+  }
+  runner?: {
+    evaluatedModules?: {
+      clear?: () => void
+    }
+  }
+}
+
+function invalidateDevModuleCache(server: ViteDevServer, file: string) {
+  const normalizedFile = file.replace(/\\/g, '/')
+
+  server.moduleGraph.onFileChange(normalizedFile)
+  server.moduleGraph.invalidateAll()
+
+  for (const environment of Object.values(server.environments)) {
+    const runnableEnvironment = environment as unknown as RunnableEnvironmentLike
+    runnableEnvironment.moduleGraph?.invalidateAll?.()
+    if ('runner' in runnableEnvironment) {
+      runnableEnvironment.runner?.evaluatedModules?.clear?.()
+    }
   }
 }
 
@@ -109,9 +138,11 @@ export default defineConfig(({ command, mode }) => {
         ],
       },
     },
-    ssr: command === 'serve'
-      ? { external: ['casbin', 'buffer'] }
-      : undefined,
+    ssr: {
+      external: runtimeTarget === 'bun'
+        ? [...commonSsrExternal, ...bunOnlySsrExternal]
+        : commonSsrExternal,
+    },
     plugins: [
       disableDevCache(),
       fullReloadOnAppChange(),
@@ -160,9 +191,9 @@ function getRuntimeTarget(
     return 'bun'
   }
 
-  if (mode === 'cloudflare-workers') {
+  if (command === 'build' || mode === 'cloudflare-workers') {
     return 'cloudflare-workers'
   }
 
-  return command === 'build' ? 'cloudflare-workers' : 'bun'
+  return 'bun'
 }
