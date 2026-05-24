@@ -107,8 +107,6 @@ export default defineConfig(({ command, mode }) => {
           '**/*.db-*',
           '**/*.log',
         ],
-        interval: process.env.VITE_USE_POLLING === 'true' ? 200 : undefined,
-        usePolling: process.env.VITE_USE_POLLING === 'true',
       },
     },
     ssr: command === 'serve'

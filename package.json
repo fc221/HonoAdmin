@@ -5,7 +5,6 @@
   "scripts": {
     "dev": "bun --bun vite",
     "dev:bun": "bun --bun vite --mode bun",
-    "dev:poll": "VITE_USE_POLLING=true bun --bun vite",
     "dev:workers": "vite --mode cloudflare-workers",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
