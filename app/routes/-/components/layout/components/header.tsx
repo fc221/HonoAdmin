@@ -196,7 +196,6 @@ function RoleSwitchMenuItem({
         method="post"
         {...topLevelFormTurboAttrs}
       >
-        <CsrfField />
         <input name="roleId" type="hidden" value={role.id} />
         <button
           class="flex w-full items-center justify-between rounded-field px-3 py-2 text-left hover:bg-base-200 disabled:cursor-default disabled:opacity-60"

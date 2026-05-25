@@ -8,7 +8,6 @@ import {
   ConfirmActionModal,
   CreateActionModal,
 } from '../../../-components/crud-action-modal'
-import CsrfField from '../../../../-/components/csrf-field'
 import PageAlert from '../../../../-/components/page-alert'
 import Pagination, { createPageHref } from '../../../../-/components/pagination'
 import {
@@ -94,7 +93,6 @@ function UploadForm({ modalId }: { modalId: string }) {
       method="post"
       {...topLevelFormTurboAttrs}
     >
-      <CsrfField />
       <input name="intent" type="hidden" value="upload" />
       <fieldset class="fieldset">
         <legend class="fieldset-legend">上传类型</legend>

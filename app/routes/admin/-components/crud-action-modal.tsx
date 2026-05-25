@@ -1,5 +1,4 @@
 import type { Child } from 'hono/jsx'
-import CsrfField from '../../-/components/csrf-field'
 import { topLevelFormTurboAttrs } from '../../-/components/turbo-frame'
 import { returnToFieldName } from '../../-/utils/form'
 
@@ -140,7 +139,6 @@ export function ConfirmActionModal({
               取消
             </label>
             <form method="post" {...topLevelFormTurboAttrs}>
-              <CsrfField />
               {returnTo
                 ? <input name={returnToFieldName} type="hidden" value={returnTo} />
                 : null}

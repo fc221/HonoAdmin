@@ -2,7 +2,6 @@ import type { PageAlertState } from '../../../../-/components/page-alert'
 import type { WebFeedbackRecord } from '../../../../../service/admin/web/feedback/dto'
 import type { PaginatedResult } from '../../../../../service/common/pagination'
 import { ConfirmActionModal } from '../../../-components/crud-action-modal'
-import CsrfField from '../../../../-/components/csrf-field'
 import PageAlert from '../../../../-/components/page-alert'
 import Pagination, { createPageHref } from '../../../../-/components/pagination'
 import TableSearchForm from '../../../../-/components/table-search-form'
@@ -82,7 +81,6 @@ export default function WebFeedbackPanel({
                         method="post"
                         {...topLevelFormTurboAttrs}
                       >
-                        <CsrfField />
                         <input name={returnToFieldName} type="hidden" value={listHref} />
                         <input name="intent" type="hidden" value="update" />
                         <input name="id" type="hidden" value={feedback.id} />

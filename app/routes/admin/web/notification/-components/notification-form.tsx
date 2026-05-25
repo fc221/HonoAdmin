@@ -1,5 +1,4 @@
 import type { WebNotificationRecord } from '../../../../../service/admin/web/notification/dto'
-import CsrfField from '../../../../-/components/csrf-field'
 import RichTextEditor from '../../../../-/components/rich-text-editor'
 import { topLevelFormTurboAttrs } from '../../../../-/components/turbo-frame'
 import { returnToFieldName } from '../../../../-/utils/form'
@@ -24,7 +23,6 @@ export default function WebNotificationForm({
       method="post"
       {...topLevelFormTurboAttrs}
     >
-      <CsrfField />
       {returnTo ? <input name={returnToFieldName} type="hidden" value={returnTo} /> : null}
       <input name="intent" type="hidden" value={mode} />
       {isUpdate && notification

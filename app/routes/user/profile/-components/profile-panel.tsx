@@ -7,7 +7,6 @@ import type {
 } from '../../../../service/admin/system/operate-log/enum'
 import type { UserRecord } from '../../../../service/admin/system/user/dto'
 import type { PaginatedResult } from '../../../../service/common/pagination'
-import CsrfField from '../../../-/components/csrf-field'
 import LazyAvatarImage from '../../../-/components/lazy-avatar-image'
 import PageAlert from '../../../-/components/page-alert'
 import Pagination from '../../../-/components/pagination'
@@ -206,7 +205,6 @@ function ProfileEditForm({ user }: { user: UserRecord }) {
       method="post"
       {...topLevelFormTurboAttrs}
     >
-      <CsrfField />
       <input name="intent" type="hidden" value="profile" />
       <AvatarUploadField user={user} />
 
@@ -282,7 +280,6 @@ function PasswordChangeForm() {
       method="post"
       {...topLevelFormTurboAttrs}
     >
-      <CsrfField />
       <input name="intent" type="hidden" value="password" />
 
       <fieldset class="fieldset" data-form-field="oldPassword">

@@ -4,7 +4,6 @@ import type {
 } from '../../../../../service/admin/system/config/constants'
 import type { ConfigRecord } from '../../../../../service/admin/system/config/dto'
 import type { ConfigType } from '../../../../../service/admin/system/config/enum'
-import CsrfField from '../../../../-/components/csrf-field'
 import { topLevelFormTurboAttrs } from '../../../../-/components/turbo-frame'
 import { selectedOptionAttrs } from '../../../../-/utils/form'
 import {
@@ -36,7 +35,6 @@ export default function ConfigTypeForm({
       method="post"
       {...topLevelFormTurboAttrs}
     >
-      <CsrfField />
       <input name="configType" type="hidden" value={type} />
       <div class="grid grid-cols-1 gap-4">
         {configs.map((config) => (

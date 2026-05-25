@@ -1,6 +1,5 @@
 import type { PageAlertState } from '../../../../-/components/page-alert'
 import type { UpdateStatus } from '../../../../../service/admin/system/update/dto'
-import CsrfField from '../../../../-/components/csrf-field'
 import PageAlert from '../../../../-/components/page-alert'
 import { topLevelFormTurboAttrs } from '../../../../-/components/turbo-frame'
 
@@ -30,7 +29,6 @@ export default function UpdatePanel({
           </div>
           <div class="flex flex-wrap gap-2">
             <form method="post" {...topLevelFormTurboAttrs}>
-              <CsrfField />
               <button
                 class="btn btn-warning btn-sm"
                 disabled={migration.isComplete || !canMigrate}

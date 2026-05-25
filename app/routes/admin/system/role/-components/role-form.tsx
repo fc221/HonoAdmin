@@ -7,7 +7,6 @@ import type {
 import type {
   RoleRecord,
 } from '../../../../../service/admin/system/role/dto'
-import CsrfField from '../../../../-/components/csrf-field'
 import { topLevelFormTurboAttrs } from '../../../../-/components/turbo-frame'
 import { returnToFieldName } from '../../../../-/utils/form'
 import RolePermissionSelector from './role-permission-selector'
@@ -37,7 +36,6 @@ export default function RoleForm({
       method="post"
       {...topLevelFormTurboAttrs}
     >
-      <CsrfField />
       {returnTo ? <input name={returnToFieldName} type="hidden" value={returnTo} /> : null}
       <input name="intent" type="hidden" value={mode} />
       {role ? <input name="id" type="hidden" value={role.id} /> : null}

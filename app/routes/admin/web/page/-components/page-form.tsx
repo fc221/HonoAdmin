@@ -1,5 +1,4 @@
 import type { WebPageRecord } from '../../../../../service/admin/web/page/dto'
-import CsrfField from '../../../../-/components/csrf-field'
 import RichTextEditor from '../../../../-/components/rich-text-editor'
 import { topLevelFormTurboAttrs } from '../../../../-/components/turbo-frame'
 import { returnToFieldName } from '../../../../-/utils/form'
@@ -20,7 +19,6 @@ export default function WebPageForm({ mode, page, returnTo }: Props) {
       method="post"
       {...topLevelFormTurboAttrs}
     >
-      <CsrfField />
       {returnTo ? <input name={returnToFieldName} type="hidden" value={returnTo} /> : null}
       <input name="intent" type="hidden" value={mode} />
       {isUpdate && page ? <input name="id" type="hidden" value={page.id} /> : null}

@@ -1,6 +1,5 @@
 import type { RoleOption } from '../../../../../service/admin/system/role/dto'
 import type { UserRecord } from '../../../../../service/admin/system/user/dto'
-import CsrfField from '../../../../-/components/csrf-field'
 import { topLevelFormTurboAttrs } from '../../../../-/components/turbo-frame'
 import { returnToFieldName } from '../../../../-/utils/form'
 import {
@@ -40,7 +39,6 @@ export default function UserForm({
       method="post"
       {...topLevelFormTurboAttrs}
     >
-      <CsrfField />
       {returnTo ? <input name={returnToFieldName} type="hidden" value={returnTo} /> : null}
       <input name="intent" type="hidden" value={mode} />
       {user ? <input name="id" type="hidden" value={user.id} /> : null}
