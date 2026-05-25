@@ -9,8 +9,7 @@ import {
 } from '../app/routes/-/utils/form'
 import { updateUserSchema } from '../app/service/admin/system/user/dto'
 import { createWebNotificationSchema } from '../app/service/admin/web/notification/dto'
-
-const pageAlertCookieName = 'hono_admin_page_alert'
+import { pageAlertCookieName } from '../app/service/common/page-alert'
 
 function createActionTestApp() {
   const app = new Hono()

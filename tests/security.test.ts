@@ -1,7 +1,10 @@
 import { describe, expect, test } from 'bun:test'
 import { Hono } from 'hono'
+import { html } from 'hono/html'
+import { jsxRenderer } from 'hono/jsx-renderer'
 import { MemoryCacheAdapter } from '../app/infra/cache/adapter/memory'
 import { resolveSecurityRuntimeConfig } from '../app/infra/runtime/security-config'
+import errorHandler from '../app/routes/_error'
 import {
   needsPasswordRehash,
   verifyUserPassword,
@@ -9,7 +12,10 @@ import {
 import { csrf, requestBodyLimit } from '../app/service/middleware/security'
 import {
   csrfCookieName,
+  csrfFieldName,
   csrfHeaderName,
+  getPreparedCsrfToken,
+  prepareCsrfToken,
 } from '../app/service/security/csrf'
 import {
   consumeRateLimit,
@@ -108,6 +114,206 @@ describe('security utilities', () => {
 
     expect(response.status).toBe(200)
     expect(await response.text()).toBe('saved')
+  })
+
+  test('csrf middleware shows native browser form failures before refreshing', async () => {
+    const app = new Hono()
+    app.use('*', csrf)
+    app.get('/form', (c) => c.text('ok'))
+    app.post('/submit', (c) => c.text('saved'))
+
+    const response = await app.request('/submit', {
+      body: new URLSearchParams(),
+      headers: {
+        'accept': 'text/html',
+        'content-type': 'application/x-www-form-urlencoded',
+        'referer': 'http://localhost/form?page=2',
+      },
+      method: 'POST',
+    })
+    const html = await response.text()
+
+    expect(response.status).toBe(403)
+    expect(response.headers.get('Location')).toBeNull()
+    expect(response.headers.get('Set-Cookie')).toContain(csrfCookieName)
+    expect(response.headers.get('Cache-Control')).toBe('no-store')
+    expect(response.headers.get('X-HonoAdmin-CSRF-Refresh')).toBe('true')
+    expect(html).toContain('页面令牌已过期，正在刷新页面。')
+    expect(html).toContain('window.location.replace("/form?page=2&_csrfRefresh=')
+  })
+
+  test('csrf middleware issues a usable token after a native browser form failure', async () => {
+    const app = new Hono()
+    app.use('*', csrf)
+    app.get('/form', (c) => c.text(getPreparedCsrfToken(c)))
+    app.post('/submit', (c) => c.text('saved'))
+
+    const failedResponse = await app.request('/submit', {
+      body: new URLSearchParams(),
+      headers: {
+        'accept': 'text/html',
+        'content-type': 'application/x-www-form-urlencoded',
+        'referer': 'http://localhost/form',
+      },
+      method: 'POST',
+    })
+    const refreshedCookie = getCookieValue(
+      failedResponse.headers.get('set-cookie') ?? '',
+      csrfCookieName,
+    )
+
+    expect(refreshedCookie).toContain('.')
+
+    const formResponse = await app.request('/form?_csrfRefresh=1', {
+      headers: {
+        cookie: `${csrfCookieName}=${refreshedCookie}`,
+      },
+    })
+    const token = await formResponse.text()
+
+    expect(token).toBe(refreshedCookie)
+
+    const response = await app.request('/submit', {
+      body: new URLSearchParams({
+        [csrfFieldName]: token,
+      }),
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'cookie': `${csrfCookieName}=${refreshedCookie}`,
+      },
+      method: 'POST',
+    })
+
+    expect(response.status).toBe(200)
+    expect(await response.text()).toBe('saved')
+  })
+
+  test('csrf refresh endpoint returns a usable token before submit', async () => {
+    const app = new Hono()
+    app.use('*', csrf)
+    app.get('/form', (c) => c.text(getPreparedCsrfToken(c)))
+    app.get('/csrf-token', async (c) => {
+      const token = await prepareCsrfToken(c)
+      c.header('Cache-Control', 'no-store')
+      return c.json({
+        csrf: {
+          field: csrfFieldName,
+          header: csrfHeaderName,
+          token,
+        },
+        ok: true,
+      })
+    })
+    app.post('/submit', (c) => c.text('saved'))
+
+    const formResponse = await app.request('/form')
+    const originalToken = getCookieValue(
+      formResponse.headers.get('set-cookie') ?? '',
+      csrfCookieName,
+    )
+    const refreshResponse = await app.request('/csrf-token', {
+      headers: {
+        'cookie': `${csrfCookieName}=${originalToken}`,
+        'X-HonoAdmin-CSRF-Refresh': 'true',
+      },
+    })
+    const refreshBody = await refreshResponse.json() as {
+      csrf: {
+        token: string
+      }
+    }
+    const refreshedToken = getCookieValue(
+      refreshResponse.headers.get('set-cookie') ?? '',
+      csrfCookieName,
+    )
+
+    expect(refreshResponse.status).toBe(200)
+    expect(refreshResponse.headers.get('Cache-Control')).toBe('no-store')
+    expect(refreshedToken).toContain('.')
+    expect(refreshBody.csrf.token).toBe(refreshedToken)
+
+    const response = await app.request('/submit', {
+      body: new URLSearchParams({
+        [csrfFieldName]: refreshedToken,
+      }),
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'cookie': `${csrfCookieName}=${refreshedToken}`,
+      },
+      method: 'POST',
+    })
+
+    expect(response.status).toBe(200)
+    expect(await response.text()).toBe('saved')
+  })
+
+  test('csrf middleware lets turbo show a prompt before refreshing', async () => {
+    const app = new Hono()
+    app.use('*', csrf)
+    app.post('/submit', (c) => c.text('saved'))
+
+    const response = await app.request('/submit', {
+      body: new URLSearchParams(),
+      headers: {
+        'accept': 'text/vnd.turbo-stream.html, text/html',
+        'content-type': 'application/x-www-form-urlencoded',
+        'referer': 'http://localhost/form?page=2',
+        'turbo-frame': '_top',
+      },
+      method: 'POST',
+    })
+
+    expect(response.status).toBe(403)
+    expect(response.headers.get('Cache-Control')).toBe('no-store')
+    expect(response.headers.get('X-HonoAdmin-CSRF-Refresh')).toBe('true')
+    expect(await response.text()).toContain('页面令牌已过期，正在刷新页面。')
+  })
+
+  test('csrf middleware renders an error page for browser failures without a safe referer', async () => {
+    const app = new Hono()
+    app.use('*', jsxRenderer(({ children }) => html`${children}`))
+    app.use('*', csrf)
+    app.onError(errorHandler)
+    app.post('/submit', (c) => c.text('saved'))
+
+    const response = await app.request('/submit', {
+      headers: {
+        accept: 'text/html',
+      },
+      method: 'POST',
+    })
+    const responseHtml = await response.text()
+
+    expect(response.status).toBe(403)
+    expect(response.headers.get('Cache-Control')).toBe('no-store')
+    expect(response.headers.get('X-HonoAdmin-CSRF-Refresh')).toBe('true')
+    expect(responseHtml).toContain('页面令牌已过期，正在刷新页面。')
+    expect(responseHtml).toContain('没有权限')
+  })
+
+  test('csrf middleware returns json errors for json requests', async () => {
+    const app = new Hono()
+    app.use('*', csrf)
+    app.post('/submit', (c) => c.text('saved'))
+
+    const response = await app.request('/submit', {
+      headers: {
+        accept: 'application/json',
+      },
+      method: 'POST',
+    })
+    const body = await response.json()
+
+    expect(response.status).toBe(403)
+    expect(response.headers.get('Cache-Control')).toBe('no-store')
+    expect(response.headers.get('X-HonoAdmin-CSRF-Refresh')).toBe('true')
+    expect(body).toMatchObject({
+      error: {
+        code: 'FORBIDDEN',
+        message: '页面令牌已过期，正在刷新页面。',
+      },
+      ok: false,
+    })
   })
 
   test('security runtime config reads optional numeric env values', () => {

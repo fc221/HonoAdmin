@@ -1,4 +1,10 @@
 let csrfInstalled = false
+let csrfRefreshPromise: Promise<string> | null = null
+let lastCsrfRefreshAt = 0
+
+const csrfRefreshEndpoint = '/csrf-token'
+const csrfRefreshHeaderName = 'X-HonoAdmin-CSRF-Refresh'
+const csrfRefreshMaxAgeMs = 5 * 60 * 1000
 
 export function installCsrf() {
   if (csrfInstalled) {
@@ -8,6 +14,9 @@ export function installCsrf() {
   csrfInstalled = true
   document.addEventListener('submit', ensureFormCsrfToken, true)
   document.addEventListener('turbo:before-fetch-request', addTurboCsrfHeader)
+  document.addEventListener('visibilitychange', refreshVisiblePageCsrf)
+  window.addEventListener('focus', refreshFocusedPageCsrf)
+  void ensureFreshCsrfToken({ force: true }).catch(() => {})
 }
 
 export function getCsrfToken(): string {
@@ -18,13 +27,57 @@ export function getCsrfHeaderName(): string {
   return getMetaContent('csrf-header') || 'X-HonoAdmin-CSRF'
 }
 
+export async function ensureFreshCsrfToken(
+  options: { force?: boolean } = {},
+): Promise<string> {
+  const currentToken = getCsrfToken()
+  if (
+    !options.force
+    && currentToken
+    && Date.now() - lastCsrfRefreshAt < csrfRefreshMaxAgeMs
+  ) {
+    return currentToken
+  }
+
+  if (csrfRefreshPromise) {
+    return csrfRefreshPromise
+  }
+
+  csrfRefreshPromise = fetch(csrfRefreshEndpoint, {
+    cache: 'no-store',
+    credentials: 'same-origin',
+    headers: {
+      Accept: 'application/json',
+      [csrfRefreshHeaderName]: 'true',
+    },
+  })
+    .then(async (response) => {
+      const result = await response.json().catch(() => null)
+      if (!response.ok || !isCsrfRefreshResult(result)) {
+        throw new Error('CSRF token refresh failed.')
+      }
+
+      applyCsrfToken(result.csrf)
+      lastCsrfRefreshAt = Date.now()
+      return result.csrf.token
+    })
+    .finally(() => {
+      csrfRefreshPromise = null
+    })
+
+  return csrfRefreshPromise
+}
+
 function ensureFormCsrfToken(event: SubmitEvent) {
   const form = event.target
   if (!(form instanceof HTMLFormElement) || !shouldAttachCsrfToForm(form)) {
     return
   }
 
-  const token = getCsrfToken()
+  attachCsrfTokenToForm(form, getCsrfToken())
+}
+
+function attachCsrfTokenToForm(form: HTMLFormElement, token: string) {
   if (!token) {
     return
   }
@@ -52,14 +105,23 @@ function addTurboCsrfHeader(event: Event) {
     return
   }
 
-  const token = getCsrfToken()
+  setTurboCsrfHeader(detail.fetchOptions, getCsrfToken())
+}
+
+function setTurboCsrfHeader(
+  fetchOptions: {
+    headers?: HeadersInit
+    method?: string
+  },
+  token: string,
+) {
   if (!token) {
     return
   }
 
-  const headers = new Headers(detail.fetchOptions.headers)
+  const headers = new Headers(fetchOptions.headers)
   headers.set(getCsrfHeaderName(), token)
-  detail.fetchOptions.headers = headers
+  fetchOptions.headers = headers
 }
 
 function shouldAttachCsrfToForm(form: HTMLFormElement): boolean {
@@ -98,4 +160,64 @@ function getMetaContent(name: string): string {
   return document
     .querySelector<HTMLMetaElement>(`meta[name="${CSS.escape(name)}"]`)
     ?.content ?? ''
+}
+
+function setMetaContent(name: string, value: string): void {
+  const meta = document
+    .querySelector<HTMLMetaElement>(`meta[name="${CSS.escape(name)}"]`)
+
+  if (meta) {
+    meta.content = value
+  }
+}
+
+function refreshVisiblePageCsrf() {
+  if (!document.hidden) {
+    void ensureFreshCsrfToken().catch(() => {})
+  }
+}
+
+function refreshFocusedPageCsrf() {
+  void ensureFreshCsrfToken().catch(() => {})
+}
+
+interface CsrfRefreshResult {
+  csrf: {
+    field: string
+    header: string
+    token: string
+  }
+  ok: true
+}
+
+function isCsrfRefreshResult(value: unknown): value is CsrfRefreshResult {
+  const result = value as Partial<CsrfRefreshResult> | null
+
+  return (
+    !!result
+    && result.ok === true
+    && typeof result.csrf?.field === 'string'
+    && typeof result.csrf.header === 'string'
+    && typeof result.csrf.token === 'string'
+    && result.csrf.token.length > 0
+  )
+}
+
+function applyCsrfToken(csrf: CsrfRefreshResult['csrf']): void {
+  const previousFieldName = getMetaContent('csrf-field') || '_csrf'
+
+  setMetaContent('csrf-token', csrf.token)
+  setMetaContent('csrf-field', csrf.field)
+  setMetaContent('csrf-header', csrf.header)
+
+  const fieldSelector = [
+    `input[type="hidden"][name="${CSS.escape(previousFieldName)}"]`,
+    `input[type="hidden"][name="${CSS.escape(csrf.field)}"]`,
+  ].join(',')
+
+  document.querySelectorAll<HTMLInputElement>(fieldSelector)
+    .forEach((field) => {
+      field.name = csrf.field
+      field.value = csrf.token
+    })
 }

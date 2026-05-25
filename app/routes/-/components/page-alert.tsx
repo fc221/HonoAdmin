@@ -1,8 +1,6 @@
-export interface PageAlertState {
-  closable?: boolean
-  message: string
-  type: 'error' | 'success'
-}
+import type { PageAlertState } from '../../../service/common/page-alert'
+
+export type { PageAlertState } from '../../../service/common/page-alert'
 
 interface Props {
   alert?: PageAlertState

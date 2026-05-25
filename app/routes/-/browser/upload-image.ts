@@ -1,8 +1,13 @@
 import type { FileUploadType } from '../../../service/admin/system/file/enum'
 import {
+  ensureFreshCsrfToken,
   getCsrfHeaderName,
   getCsrfToken,
 } from './csrf'
+import {
+  refreshPageForExpiredCsrf,
+  shouldRefreshForCsrfXhr,
+} from './csrf-refresh'
 
 interface UploadResult {
   data: {
@@ -36,11 +41,13 @@ export async function uploadImage(
   })
 }
 
-function uploadFile({
+async function uploadFile({
   file,
   onProgress,
   uploadType,
 }: UploadFileOptions): Promise<UploadResult['data']> {
+  await ensureFreshCsrfToken().catch(() => getCsrfToken())
+
   const body = new FormData()
 
   body.set('intent', 'upload')
@@ -65,6 +72,12 @@ function uploadFile({
 
     request.addEventListener('load', () => {
       const result = parseUploadResult(request.responseText)
+      if (shouldRefreshForCsrfFailure(request)) {
+        refreshPageForExpiredCsrf()
+        reject(new Error('页面令牌已过期，正在刷新页面。'))
+        return
+      }
+
       if (request.status < 200 || request.status >= 300 || !isUploadResult(result)) {
         reject(new Error(getResponseErrorMessage(result)))
         return
@@ -84,6 +97,10 @@ function uploadFile({
 
     request.send(body)
   })
+}
+
+function shouldRefreshForCsrfFailure(request: XMLHttpRequest): boolean {
+  return shouldRefreshForCsrfXhr(request)
 }
 
 export function getUploadErrorMessage(error: unknown): string {

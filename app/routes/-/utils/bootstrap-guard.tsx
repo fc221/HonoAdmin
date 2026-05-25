@@ -74,7 +74,8 @@ function handleRedirect(
 
 function isBypassPath(path: string): boolean {
   return (
-    path === '/favicon.ico'
+    path === '/csrf-token'
+    || path === '/favicon.ico'
     || path.startsWith('/app/')
     || path.startsWith('/static/')
   )

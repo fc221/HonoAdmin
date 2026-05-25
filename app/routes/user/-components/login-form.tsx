@@ -1,4 +1,5 @@
 import CsrfField from '../../-/components/csrf-field'
+import { topLevelFormTurboAttrs } from '../../-/components/turbo-frame'
 
 interface Props {
   error?: string
@@ -8,7 +9,7 @@ interface Props {
 
 export default function LoginForm({ error, returnTo, siteTitle }: Props) {
   return (
-    <form class="space-y-5" method="post">
+    <form class="space-y-5" method="post" {...topLevelFormTurboAttrs}>
       <CsrfField />
       <input name="returnTo" type="hidden" value={returnTo} />
 
