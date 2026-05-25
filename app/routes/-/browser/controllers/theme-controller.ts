@@ -14,6 +14,7 @@ export default class ThemeController extends Controller<HTMLElement> {
   declare readonly optionTargets: HTMLElement[]
 
   private mediaQuery: MediaQueryList | null = null
+  private themeSwitchFrame = 0
 
   connect() {
     this.mediaQuery = window.matchMedia(systemThemeQuery)
@@ -46,7 +47,22 @@ export default class ThemeController extends Controller<HTMLElement> {
   }
 
   private applyTheme(theme: ThemeName) {
-    document.documentElement.setAttribute('data-theme', resolveTheme(theme))
+    const root = document.documentElement
+    const resolvedTheme = resolveTheme(theme)
+
+    if (root.getAttribute('data-theme') === resolvedTheme) {
+      return
+    }
+
+    root.dataset.themeSwitching = 'true'
+    root.setAttribute('data-theme', resolvedTheme)
+
+    cancelAnimationFrame(this.themeSwitchFrame)
+    this.themeSwitchFrame = requestAnimationFrame(() => {
+      this.themeSwitchFrame = requestAnimationFrame(() => {
+        delete root.dataset.themeSwitching
+      })
+    })
   }
 
   private syncOptions(theme: ThemeName) {

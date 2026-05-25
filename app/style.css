@@ -27,6 +27,14 @@ body {
   background: var(--color-base-100);
 }
 
+html[data-theme-switching='true'],
+html[data-theme-switching='true'] *,
+html[data-theme-switching='true'] *::before,
+html[data-theme-switching='true'] *::after {
+  transition-duration: 0s !important;
+  transition-property: none !important;
+}
+
 .turbo-progress-bar {
   display: none !important;
 }
