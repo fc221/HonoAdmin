@@ -6,15 +6,19 @@ import { topLevelFormTurboAttrs } from '../../../../-/components/turbo-frame'
 interface Props {
   alert?: PageAlertState
   canMigrate: boolean
+  demoMode?: boolean
   status: UpdateStatus
 }
 
 export default function UpdatePanel({
   alert,
   canMigrate,
+  demoMode = false,
   status,
 }: Props) {
   const migration = status.migration
+  const migrateDisabled = migration.isComplete || !canMigrate || demoMode
+  const migrateTitle = demoMode ? '演示模式下禁止执行迁移' : undefined
 
   return (
     <div class="space-y-4">
@@ -31,8 +35,9 @@ export default function UpdatePanel({
             <form method="post" {...topLevelFormTurboAttrs}>
               <button
                 class="btn btn-warning btn-sm"
-                disabled={migration.isComplete || !canMigrate}
+                disabled={migrateDisabled}
                 name="intent"
+                title={migrateTitle}
                 type="submit"
                 value="migrate"
               >

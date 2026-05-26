@@ -19,6 +19,7 @@ export type RuntimeBindings = {
   LOGIN_RATE_LIMIT_WINDOW_SECONDS?: string
   REQUEST_BODY_LIMIT_BYTES?: string
   UPLOAD_IMAGE_LIMIT_BYTES?: string
+  DEMO_MODE?: string
 }
 
 export type RuntimeTarget = 'bun' | 'cloudflare-workers'

@@ -2,6 +2,7 @@ import { createRoute } from 'honox/factory'
 import { getPageAlert } from '../../../-/utils/form'
 import { getAdminSessionUser } from '../../../../service/admin/session'
 import { getUpdateStatus } from '../../../../service/admin/system/update'
+import { isDemoModeEnabled } from '../../../../service/middleware/demo-mode'
 import { handleUpdateAction } from './-actions'
 import UpdatePanel from './-components/update-panel'
 
@@ -17,6 +18,7 @@ export default createRoute(async (c) => {
     <UpdatePanel
       alert={getPageAlert(c)}
       canMigrate={!!user?.isRoot}
+      demoMode={isDemoModeEnabled(c)}
       status={status}
     />,
     {

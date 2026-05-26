@@ -3,6 +3,7 @@ import { createRoute } from 'honox/factory'
 import { getAdminSessionUser } from '../../service/admin/session'
 import { canAccessAdminPath } from '../../service/admin/system/role'
 import { isAdminInstalled } from '../../service/admin/system/user'
+import { rejectDemoWrite } from '../../service/middleware/demo-mode'
 
 const publicPaths = new Set(['/admin/login'])
 const loginPath = '/user/login'
@@ -37,6 +38,11 @@ export default createRoute(async (c, next) => {
     )
   ) {
     return c.text('没有权限访问该后台功能。', 403)
+  }
+
+  const demoResponse = await rejectDemoWrite(c)
+  if (demoResponse) {
+    return demoResponse
   }
 
   await next()

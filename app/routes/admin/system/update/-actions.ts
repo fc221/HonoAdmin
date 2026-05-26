@@ -7,6 +7,7 @@ import {
 import { getAdminSessionUser } from '../../../../service/admin/session'
 import { createRequestOperateLog } from '../../../../service/admin/system/operate-log'
 import { runDatabaseMigrations } from '../../../../service/admin/system/update'
+import { isDemoModeEnabled } from '../../../../service/middleware/demo-mode'
 import { ForbiddenError, ValidationError } from '../../../../utils/errors'
 
 const pagePath = '/admin/system/update'
@@ -17,6 +18,10 @@ export async function handleUpdateAction(c: Context): Promise<Response> {
 
   try {
     if (intent === 'migrate') {
+      if (isDemoModeEnabled(c)) {
+        throw new ForbiddenError('演示模式下禁止执行数据库迁移。')
+      }
+
       const user = await getAdminSessionUser(c)
       if (!user?.isRoot) {
         throw new ForbiddenError('只有 root 管理员可以执行数据库迁移。')

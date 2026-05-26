@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "hono-admin",
+  "name": "hono-admin-demo",
   "main": "./dist/index.js",
   "compatibility_date": "2026-04-19",
   "compatibility_flags": [
@@ -8,30 +8,24 @@
   ],
   "assets": {
     "directory": "./dist"
-  }
-  // HonoAdmin runtime bindings:
-  //
-  // "vars": {
-  //   "APP_TIMEZONE": "Asia/Shanghai"
-  // },
-  //
-  // Required D1 binding. The binding name must be "DB".
-  // "d1_databases": [
-  //   {
-  //     "binding": "DB",
-  //     "database_name": "hono-admin",
-  //     "database_id": "<your-d1-database-id>"
-  //   }
-  // ],
-  //
-  // Optional KV cache binding. The binding name must be "CACHE".
-  // "kv_namespaces": [
-  //   {
-  //     "binding": "CACHE",
-  //     "id": "<your-kv-namespace-id>"
-  //   }
-  // ]
-  //
+  },
+  "vars": {
+    "APP_TIMEZONE": "Asia/Shanghai",
+    "DEMO_MODE": "true"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "hono-admin-demo",
+      "database_id": "<your-d1-database-id>"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "CACHE",
+      "id": "<your-kv-namespace-id>"
+    }
+  ]
   // Configure secrets outside this file:
   // wrangler secret put JWT_SECRET
   // wrangler secret put SESSION_SECRET
