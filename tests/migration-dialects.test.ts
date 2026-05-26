@@ -8,7 +8,7 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, test } from 'bun:test'
-import { normalizeBunSqlForDialect } from '../app/infra/database/adapter/bun-sql'
+import { normalizeSqlForDialect } from '../app/infra/database/adapter/sql-normalize'
 import {
   getMigrationStatus,
   runMigrations,
@@ -108,17 +108,17 @@ describe('migration dialects', () => {
         AND note = '?'
     `
 
-    expect(normalizeBunSqlForDialect(source, 'mysql')).toContain(
+    expect(normalizeSqlForDialect(source, 'mysql')).toContain(
       'CAST(`account`.id AS CHAR) LIKE ?',
     )
-    expect(normalizeBunSqlForDialect(source, 'mysql')).toContain('`role`.name')
-    expect(normalizeBunSqlForDialect(source, 'mysql')).toContain(
+    expect(normalizeSqlForDialect(source, 'mysql')).toContain('`role`.name')
+    expect(normalizeSqlForDialect(source, 'mysql')).toContain(
       '\'AS TEXT and "account" stay literal\'',
     )
-    expect(normalizeBunSqlForDialect(source, 'pg')).toContain(
+    expect(normalizeSqlForDialect(source, 'pg')).toContain(
       'CAST("account".id AS TEXT) LIKE $1',
     )
-    expect(normalizeBunSqlForDialect(source, 'pg')).toContain('note = \'?\'')
+    expect(normalizeSqlForDialect(source, 'pg')).toContain('note = \'?\'')
   })
 
   test.skipIf(!process.env.MYSQL_TEST_DATABASE_URL)(

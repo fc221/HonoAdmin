@@ -6,7 +6,7 @@ import tailwindcss from '@tailwindcss/vite'
 import honox from 'honox/vite'
 import { defineConfig } from 'vite'
 
-const commonSsrExternal = ['buffer', 'casbin']
+const commonSsrExternal = ['buffer', 'casbin', 'mysql2', 'mysql2/promise', 'postgres']
 const bunOnlySsrExternal = ['selfsigned', 'ssh2']
 
 export default defineConfig(({ command, mode }) => {

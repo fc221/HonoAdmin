@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "dev:bun": "vite --mode bun",
+    "dev:bun": "bun --bun vite --mode bun",
     "dev:workers": "vite --mode cloudflare-workers",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
@@ -32,6 +32,8 @@
     "hono": "^4.12.18",
     "hono-openapi": "^1.3.0",
     "honox": "^0.1.55",
+    "mysql2": "^3.22.4",
+    "postgres": "^3.4.9",
     "zod": "^4.4.2",
     "zod-openapi": "^5.4.6"
   },

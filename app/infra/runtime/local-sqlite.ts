@@ -5,9 +5,22 @@ export async function createLocalDatabaseAdapter(
 ): Promise<DBAdapter> {
   const dialect = getDatabaseDialect(databaseUrl)
 
-  if (dialect === 'mysql' || dialect === 'pg') {
-    const { createBunSqlAdapter } = await import('../database/adapter/bun-sql')
-    return createBunSqlAdapter(databaseUrl, dialect)
+  if (dialect === 'mysql') {
+    if (isBunRuntime()) {
+      const { createBunSqlAdapter } = await import('../database/adapter/bun-sql')
+      return createBunSqlAdapter(databaseUrl, 'mysql')
+    }
+    const { createNodeMysqlAdapter } = await import('../database/adapter/node-mysql')
+    return createNodeMysqlAdapter(databaseUrl)
+  }
+
+  if (dialect === 'pg') {
+    if (isBunRuntime()) {
+      const { createBunSqlAdapter } = await import('../database/adapter/bun-sql')
+      return createBunSqlAdapter(databaseUrl, 'pg')
+    }
+    const { createNodePgAdapter } = await import('../database/adapter/node-pg')
+    return createNodePgAdapter(databaseUrl)
   }
 
   return createLocalSqliteAdapter(databaseUrl)
@@ -28,4 +41,11 @@ export function getDatabaseDialect(databaseUrl: string): DatabaseDialect {
   }
 
   return 'sqlite'
+}
+
+function isBunRuntime(): boolean {
+  return (
+    typeof process !== 'undefined'
+    && typeof (process.versions as Record<string, string | undefined>).bun === 'string'
+  )
 }
