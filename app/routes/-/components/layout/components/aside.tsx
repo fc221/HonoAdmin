@@ -2,10 +2,10 @@ import type { MenuItem } from '../../../../../service/admin/system/menu/consts'
 import { isMenuItemActive } from '../../../../../service/admin/system/menu'
 import { getSiteLogoText } from '../../../utils/branding'
 import Menu from './menu'
-import Theme from './theme'
 
 interface Props {
   currentMenuName: string
+  flush?: boolean
   id: string
   menus: MenuItem[]
   siteTitle: string
@@ -13,10 +13,15 @@ interface Props {
 
 export default function Aside({
   currentMenuName,
+  flush = false,
   id,
   menus,
   siteTitle,
 }: Props) {
+  const panelClass = flush
+    ? 'flex min-w-0 flex-col items-center overflow-x-hidden bg-base-100 p-4 gap-3 w-64 h-full rounded-none transition-[width,box-shadow] duration-150 ease-out shadow-none lg:w-64'
+    : 'flex min-w-0 flex-col items-center overflow-x-hidden bg-base-100 p-4 gap-3 rounded-box w-64 m-3 h-[calc(100vh-2rem)] transition-[width,box-shadow] duration-150 ease-out lg:m-0 lg:h-full shadow-none lg:w-64'
+
   return (
     <aside class="drawer-side h-full! overflow-hidden z-99">
       <label
@@ -28,7 +33,7 @@ export default function Aside({
       <div
         data-layout-aside-panel
         data-layout-target="panel"
-        class="flex min-w-0 flex-col items-center overflow-x-hidden bg-base-100 p-4 gap-3 rounded-box w-64 m-3 h-[calc(100vh-2rem)] transition-[width,box-shadow] duration-150 ease-out lg:m-0 lg:h-full shadow-none lg:w-64"
+        class={panelClass}
       >
         {/* logo */}
         <div
@@ -66,9 +71,8 @@ export default function Aside({
         {/* aside options */}
         <div
           data-layout-aside-options
-          class="w-full max-w-full min-w-0 overflow-hidden pt-2 gap-2 border-t border-base-300 transition-[gap] duration-150 ease-out flex flex-row items-center justify-between"
+          class="w-full max-w-full min-w-0 overflow-hidden pt-2 gap-2 border-t border-base-300 transition-[gap] duration-150 ease-out flex flex-row items-center justify-end"
         >
-          <Theme />
           {/* options collapsed */}
           <button
             data-action="layout#toggle"

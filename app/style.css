@@ -9,7 +9,6 @@
 }
 
 :root {
-  --radius-box: 1rem;
   --scrollbar-size: 0.5rem;
   --scrollbar-thumb: color-mix(in oklch, var(--color-base-content), transparent 72%);
   --scrollbar-thumb-hover: color-mix(in oklch, var(--color-base-content), transparent 58%);

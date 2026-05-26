@@ -3,11 +3,13 @@ import { Controller } from '@hotwired/stimulus'
 import {
   defaultLayoutConfig,
   desktopBreakpoint,
+  isLayoutVariant,
   isThemeName,
   layoutConfigStorageKey,
+  sanitizeCustomTheme,
 } from '../../components/layout/config'
 
-const headerIconBaseClass = 'transition-transform duration-150 ease-out'
+const headerIconBaseClass = 'transition-transform duration-150 ease-out text-sm'
 
 export default class LayoutController extends Controller<HTMLElement> {
   static targets = [
@@ -25,12 +27,23 @@ export default class LayoutController extends Controller<HTMLElement> {
   declare readonly headerToggleIconTarget: HTMLElement
   declare readonly mobileOverlayTarget: HTMLElement
   declare readonly panelTarget: HTMLElement
+  declare readonly hasDrawerToggleTarget: boolean
+  declare readonly hasMobileOverlayTarget: boolean
+  declare readonly hasPanelTarget: boolean
+  declare readonly hasHeaderToggleTarget: boolean
+  declare readonly hasHeaderToggleIconTarget: boolean
+  declare readonly hasAsideToggleLabelTarget: boolean
 
   private resizeMediaQuery: MediaQueryList | null = null
 
   connect() {
     this.resizeMediaQuery = window.matchMedia(`(min-width: ${desktopBreakpoint}px)`)
     this.resizeMediaQuery.addEventListener('change', this.handleViewportChange)
+
+    if (!this.hasDrawerToggleTarget) {
+      return
+    }
+
     this.applyStoredSidebarState()
     this.sync()
   }
@@ -41,6 +54,10 @@ export default class LayoutController extends Controller<HTMLElement> {
 
   toggle(event: Event) {
     event.preventDefault()
+
+    if (!this.hasDrawerToggleTarget) {
+      return
+    }
 
     if (this.isDesktop()) {
       this.setSidebarCollapsed(!readStoredLayoutConfig().sidebarCollapsed)
@@ -53,7 +70,7 @@ export default class LayoutController extends Controller<HTMLElement> {
   }
 
   closeDrawer() {
-    if (this.isDesktop()) {
+    if (!this.hasDrawerToggleTarget || this.isDesktop()) {
       return
     }
 
@@ -62,6 +79,10 @@ export default class LayoutController extends Controller<HTMLElement> {
   }
 
   drawerChanged() {
+    if (!this.hasDrawerToggleTarget) {
+      return
+    }
+
     this.sync()
   }
 
@@ -70,6 +91,10 @@ export default class LayoutController extends Controller<HTMLElement> {
   }
 
   private handleViewportChange = () => {
+    if (!this.hasDrawerToggleTarget) {
+      return
+    }
+
     if (this.isDesktop()) {
       this.drawerToggleTarget.checked = false
     }
@@ -183,6 +208,10 @@ function readStoredLayoutConfig(): LayoutConfig {
         ? parsed.sidebarCollapsed
         : defaultLayoutConfig.sidebarCollapsed,
       theme: isThemeName(parsed.theme) ? parsed.theme : defaultLayoutConfig.theme,
+      variant: isLayoutVariant(parsed.variant)
+        ? parsed.variant
+        : defaultLayoutConfig.variant,
+      customTheme: sanitizeCustomTheme(parsed.customTheme),
     }
   } catch {
     return { ...defaultLayoutConfig }

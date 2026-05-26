@@ -20,7 +20,59 @@ describe('server-first UI rendering', () => {
     expect(html).toContain('data-controller="layout"')
     expect(html).toContain('class="drawer lg:drawer-open h-full! min-w-0 overflow-x-hidden lg:gap-4"')
     expect(html).toContain('data-layout-aside-panel')
+    expect(html).toContain('data-settings-target="colorPopover"')
+    expect(html).toContain('style="position:fixed;inset:auto;margin:0;visibility:hidden"')
+    expect(html).toContain('toggle-&gt;settings#initColorPicker')
+    expect(html).toContain('hidden bg-black/40 opacity-0 transition-opacity duration-200 ease-out')
+    expect(html).toContain('translate-x-full flex-col bg-base-100 opacity-0 shadow-xl transition-[transform,opacity] duration-200 ease-out')
     expect(html).not.toContain('data-history-replace')
+  })
+
+  test('flush sidebar layout keeps the mobile drawer panel edge aligned', async () => {
+    const html = await render(
+      <Layout currentMenuName="admin.dashboard" variant="sidebar-flush">
+        <div>content</div>
+      </Layout>,
+    )
+    const panelHtml = getElementHtml(html, 'data-layout-aside-panel')
+
+    expect(panelHtml).toContain('w-64 h-full rounded-none')
+    expect(panelHtml).not.toContain('m-3')
+    expect(panelHtml).not.toContain('h-[calc(100vh-2rem)]')
+  })
+
+  test('top nav layouts use the mobile sidebar drawer on small screens', async () => {
+    const topNavHtml = await render(
+      <Layout currentMenuName="admin.dashboard" variant="top-nav">
+        <div>content</div>
+      </Layout>,
+    )
+    const flushTopNavHtml = await render(
+      <Layout currentMenuName="admin.dashboard" variant="top-nav-flush">
+        <div>content</div>
+      </Layout>,
+    )
+    const combinedHtml = `${topNavHtml}\n${flushTopNavHtml}`
+    const topNavPanelHtml = getElementHtml(topNavHtml, 'data-layout-aside-panel')
+    const flushTopNavPanelHtml = getElementHtml(flushTopNavHtml, 'data-layout-aside-panel')
+    const desktopTopNavHtml = getSectionHtml(topNavHtml, 'class="hidden lg:block"', 'data-page-scroll')
+    const desktopFlushTopNavHtml = getSectionHtml(flushTopNavHtml, 'class="hidden lg:block"', 'data-page-scroll')
+
+    expect(combinedHtml.match(/id="aside-drawer"/g)?.length).toBe(2)
+    expect(combinedHtml).toContain('class="lg:hidden"><header class="navbar w-full rounded-box bg-base-100 justify-between"')
+    expect(combinedHtml).toContain('class="lg:hidden"><header class="navbar w-full bg-base-100 justify-between border-b border-base-200"')
+    expect(combinedHtml).toContain('class="hidden lg:block"><header class="navbar relative w-full bg-base-100 rounded-box gap-3"')
+    expect(combinedHtml).toContain('class="hidden lg:block"><header class="navbar relative w-full bg-base-100 border-b border-base-200 px-4 gap-3"')
+    expect(topNavPanelHtml).toContain('rounded-box w-64 m-3 h-[calc(100vh-2rem)]')
+    expect(flushTopNavPanelHtml).toContain('w-64 h-full rounded-none')
+    expect(flushTopNavPanelHtml).not.toContain('m-3')
+    expect(desktopTopNavHtml).not.toContain('aria-label="面包屑导航"')
+    expect(desktopFlushTopNavHtml).not.toContain('aria-label="面包屑导航"')
+    expect(combinedHtml).not.toContain('top-nav-mobile-drawer')
+    expect(combinedHtml).not.toContain('aria-controls="top-nav-mobile-drawer"')
+    expect(combinedHtml).not.toContain('class="btn btn-ghost btn-circle lg:hidden"')
+    expect(combinedHtml).not.toContain('data-top-nav-mobile-menu')
+    expect(combinedHtml).not.toContain('<span class="ml-2 text-sm">菜单</span>')
   })
 
   test('list panel renders a Turbo Frame with search and pagination targets', async () => {
@@ -169,4 +221,26 @@ async function render(content: unknown): Promise<string> {
 
   const response = await app.request('/')
   return response.text()
+}
+
+function getElementHtml(html: string, marker: string): string {
+  const markerIndex = html.indexOf(marker)
+  expect(markerIndex).toBeGreaterThanOrEqual(0)
+
+  const elementStart = html.lastIndexOf('<', markerIndex)
+  const elementEnd = html.indexOf('>', markerIndex)
+  expect(elementStart).toBeGreaterThanOrEqual(0)
+  expect(elementEnd).toBeGreaterThanOrEqual(0)
+
+  return html.slice(elementStart, elementEnd + 1)
+}
+
+function getSectionHtml(html: string, startMarker: string, endMarker: string): string {
+  const start = html.indexOf(startMarker)
+  expect(start).toBeGreaterThanOrEqual(0)
+
+  const end = html.indexOf(endMarker, start)
+  expect(end).toBeGreaterThan(start)
+
+  return html.slice(start, end)
 }
