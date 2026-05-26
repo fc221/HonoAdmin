@@ -1,5 +1,6 @@
 import type { RoleOption } from '../../../../../service/admin/system/role/dto'
 import type { UserRecord } from '../../../../../service/admin/system/user/dto'
+import MultiSelectDropdown from '../../../../-/components/multi-select-dropdown'
 import { topLevelFormTurboAttrs } from '../../../../-/components/turbo-frame'
 import { returnToFieldName } from '../../../../-/utils/form'
 import {
@@ -7,7 +8,6 @@ import {
   userStatusOptions,
 } from '../../../../../service/admin/system/user/enum'
 import AvatarUploadField from './avatar-upload-field'
-import RoleMultiSelectDropdown from './role-multi-select-dropdown'
 
 interface Props {
   cancelTargetId?: string
@@ -45,9 +45,16 @@ export default function UserForm({
 
       <div class="min-w-0 space-y-2" data-form-field="roleIds">
         <FieldLabel label="角色" />
-        <RoleMultiSelectDropdown
-          roles={roles}
-          selectedRoleIds={selectedRoleIds}
+        <MultiSelectDropdown
+          name="roleIds"
+          options={roles.map((role) => ({
+            badge: role.code,
+            label: role.name,
+            value: role.id,
+          }))}
+          placeholder="请选择角色"
+          emptyText="暂无角色可选"
+          selectedValues={selectedRoleIds}
         />
         <p class="label">可分配多个角色，用户可在头像菜单中切换当前生效角色。</p>
       </div>

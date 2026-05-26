@@ -8,9 +8,9 @@ import FileUploadFieldController from './controllers/file-upload-field-controlle
 import HistoryBackController from './controllers/history-back-controller'
 import LayoutController from './controllers/layout-controller'
 import ModalController from './controllers/modal-controller'
+import MultiSelectController from './controllers/multi-select-controller'
 import PageAlertController from './controllers/page-alert-controller'
 import RichTextController from './controllers/rich-text-controller'
-import RoleMultiSelectController from './controllers/role-multi-select-controller'
 import RolePermissionController from './controllers/role-permission-controller'
 import ThemeController from './controllers/theme-controller'
 import UpdateStatusController from './controllers/update-status-controller'
@@ -33,9 +33,9 @@ export function installStimulus() {
   application.register('history-back', HistoryBackController)
   application.register('layout', LayoutController)
   application.register('modal', ModalController)
+  application.register('multi-select', MultiSelectController)
   application.register('page-alert', PageAlertController)
   application.register('rich-text', RichTextController)
-  application.register('role-multi-select', RoleMultiSelectController)
   application.register('role-permission', RolePermissionController)
   application.register('theme', ThemeController)
   application.register('update-status', UpdateStatusController)
