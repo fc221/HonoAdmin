@@ -1,34 +1,42 @@
 import type {
-  BorderWidthValue,
-  DaisyColorPalette,
-  DaisyTheme,
   DaisyThemeName,
   LayoutConfig,
   LayoutVariant,
-  RadiusValue,
-  SizeValue,
   ThemeName,
 } from '../../components/layout/config'
+import type {
+  BorderWidthValue,
+  DaisyColorPalette,
+  DaisyThemeDraft,
+  RadiusValue,
+  SizeValue,
+} from '../../components/layout/theme-css'
 import { Controller } from '@hotwired/stimulus'
 import {
-  buildCustomThemeCss,
-  customThemeStyleId,
-  daisyColorKeys,
   defaultLayoutConfig,
-  isBorderWidthValue,
+  isDaisyThemeName,
+  isLayoutMainWidth,
   isLayoutVariant,
-  isRadiusValue,
-  isSizeValue,
   isThemeName,
+  isTopNavVariant,
   layoutConfigStorageKey,
-  layoutPreset,
   layoutVariantCookieName,
-  lightThemeDefaults,
-  sanitizeCustomTheme,
+  systemThemeName,
   systemThemeQuery,
 } from '../../components/layout/config'
+import {
+  buildDaisyThemeCss,
+  cloneDaisyThemeDraft,
+  daisyColorKeys,
+  defaultDaisyThemeDraft,
+  isBorderWidthValue,
+  isRadiusValue,
+  isSizeValue,
+  sanitizeDaisyThemeDraft,
+} from '../../components/layout/theme-css'
 
 const drawerAnimationDuration = 220
+const themeChangedEventName = 'hono-admin:theme-changed'
 
 export default class SettingsController extends Controller<HTMLElement> {
   static targets = [
@@ -36,9 +44,15 @@ export default class SettingsController extends Controller<HTMLElement> {
     'panel',
     'themeOption',
     'themeCheck',
+    'themeName',
+    'themeSelect',
     'variantOption',
     'variantCheck',
+    'mainWidthToggle',
+    'sidebarOnlyControl',
     'sidebarCollapsed',
+    'topMenuCentered',
+    'topNavOnlyControl',
     'colorSwatch',
     'colorPopover',
     'saturationPicker',
@@ -54,18 +68,24 @@ export default class SettingsController extends Controller<HTMLElement> {
     'borderOption',
     'depthToggle',
     'noiseToggle',
-    'copyButton',
-    'copyLabel',
   ]
 
   declare readonly overlayTarget: HTMLElement
   declare readonly panelTarget: HTMLElement
   declare readonly themeOptionTargets: HTMLElement[]
   declare readonly themeCheckTargets: HTMLElement[]
+  declare readonly themeNameTargets: HTMLInputElement[]
+  declare readonly themeSelectTargets: HTMLSelectElement[]
   declare readonly variantOptionTargets: HTMLElement[]
   declare readonly variantCheckTargets: HTMLElement[]
+  declare readonly mainWidthToggleTarget: HTMLInputElement
+  declare readonly hasMainWidthToggleTarget: boolean
+  declare readonly sidebarOnlyControlTargets: HTMLElement[]
   declare readonly sidebarCollapsedTarget: HTMLInputElement
   declare readonly hasSidebarCollapsedTarget: boolean
+  declare readonly topMenuCenteredTarget: HTMLInputElement
+  declare readonly hasTopMenuCenteredTarget: boolean
+  declare readonly topNavOnlyControlTargets: HTMLElement[]
   declare readonly colorSwatchTargets: HTMLElement[]
   declare readonly colorPopoverTargets: HTMLElement[]
   declare readonly saturationPickerTargets: HTMLElement[]
@@ -83,10 +103,6 @@ export default class SettingsController extends Controller<HTMLElement> {
   declare readonly noiseToggleTarget: HTMLInputElement
   declare readonly hasDepthToggleTarget: boolean
   declare readonly hasNoiseToggleTarget: boolean
-  declare readonly copyButtonTarget: HTMLButtonElement
-  declare readonly copyLabelTarget: HTMLElement
-  declare readonly hasCopyButtonTarget: boolean
-  declare readonly hasCopyLabelTarget: boolean
 
   private mediaQuery: MediaQueryList | null = null
   private themeSwitchFrame = 0
@@ -94,11 +110,13 @@ export default class SettingsController extends Controller<HTMLElement> {
   private colorPopoverFrame = 0
   private drawerAnimationFrame = 0
   private drawerCloseTimer = 0
+  private themeDraft = cloneDaisyThemeDraft(defaultDaisyThemeDraft)
   private colorPickerState = new Map<string, { h: number, s: number, v: number, a: number }>()
 
   connect() {
     this.mediaQuery = window.matchMedia(systemThemeQuery)
     this.mediaQuery.addEventListener('change', this.handleSystemThemeChange)
+    window.addEventListener(themeChangedEventName, this.handleThemeChanged)
     window.addEventListener('resize', this.scheduleOpenColorPopoverPositions)
     window.addEventListener('scroll', this.scheduleOpenColorPopoverPositions, true)
     this.sync()
@@ -106,6 +124,7 @@ export default class SettingsController extends Controller<HTMLElement> {
 
   disconnect() {
     this.mediaQuery?.removeEventListener('change', this.handleSystemThemeChange)
+    window.removeEventListener(themeChangedEventName, this.handleThemeChanged)
     window.removeEventListener('resize', this.scheduleOpenColorPopoverPositions)
     window.removeEventListener('scroll', this.scheduleOpenColorPopoverPositions, true)
     cancelAnimationFrame(this.colorPopoverFrame)
@@ -160,15 +179,30 @@ export default class SettingsController extends Controller<HTMLElement> {
 
   selectTheme(event: Event) {
     const target = event.currentTarget as HTMLElement
-    const theme = target.dataset.settingsThemeValue
+    const theme = getThemeValueFromTarget(target)
+    const config = readStoredLayoutConfig()
     if (!isThemeName(theme)) {
+      this.syncThemeOptions(config.theme)
       return
     }
 
-    const config = readStoredLayoutConfig()
     persistLayoutConfig({ ...config, theme })
+    this.updateThemeDraft((draft) => ({ ...draft, name: toDaisyThemeName(theme) }))
     this.applyTheme(theme)
     this.syncThemeOptions(theme)
+    window.dispatchEvent(new CustomEvent(themeChangedEventName, { detail: { theme } }))
+    hideClosestPopover(target)
+  }
+
+  updateThemeDraftName(event: Event) {
+    const target = event.currentTarget as HTMLInputElement
+    const name = target.value.trim()
+    if (!isDaisyThemeName(name)) {
+      this.syncThemeDraft(this.themeDraft)
+      return
+    }
+
+    this.updateThemeDraft((draft) => ({ ...draft, name }))
   }
 
   selectVariant(event: Event) {
@@ -188,11 +222,41 @@ export default class SettingsController extends Controller<HTMLElement> {
     window.location.reload()
   }
 
+  toggleMainWidth(event: Event) {
+    const target = event.currentTarget as HTMLInputElement
+    const config = readStoredLayoutConfig()
+    if (!isTopNavVariant(config.variant)) {
+      target.checked = config.mainWidth === 'narrow'
+      return
+    }
+
+    const mainWidth = target.checked ? 'narrow' : 'wide'
+    persistLayoutConfig({ ...config, mainWidth })
+    document.documentElement.dataset.layoutMainWidth = mainWidth
+  }
+
   toggleSidebarCollapsed(event: Event) {
     const target = event.currentTarget as HTMLInputElement
     const config = readStoredLayoutConfig()
+    if (isTopNavVariant(config.variant)) {
+      target.checked = config.sidebarCollapsed
+      return
+    }
+
     persistLayoutConfig({ ...config, sidebarCollapsed: target.checked })
     document.documentElement.dataset.sidebarCollapsed = target.checked ? 'true' : 'false'
+  }
+
+  toggleTopMenuCentered(event: Event) {
+    const target = event.currentTarget as HTMLInputElement
+    const config = readStoredLayoutConfig()
+    if (!isTopNavVariant(config.variant)) {
+      target.checked = config.topMenuCentered
+      return
+    }
+
+    persistLayoutConfig({ ...config, topMenuCentered: target.checked })
+    document.documentElement.dataset.layoutTopMenuCentered = target.checked ? 'true' : 'false'
   }
 
   initColorPicker(event: Event) {
@@ -210,9 +274,7 @@ export default class SettingsController extends Controller<HTMLElement> {
       return
     }
 
-    const config = readStoredLayoutConfig()
-    const hexColor = config.customTheme.colors[key]
-    const hsva = this.hexToHsva(hexColor)
+    const hsva = this.colorToHsva(this.getColorPickerSourceColor(key))
     this.colorPickerState.set(key, hsva)
     this.updateColorPickerUI(key, hsva)
     this.positionColorPopover(popover)
@@ -292,10 +354,12 @@ export default class SettingsController extends Controller<HTMLElement> {
 
     const updatePosition = (e: MouseEvent) => {
       const rect = picker.getBoundingClientRect()
-      const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width))
-      const y = Math.max(0, Math.min(e.clientY - rect.top, rect.height))
-      const s = (x / rect.width) * 100
-      const v = 100 - (y / rect.height) * 100
+      const width = Math.max(rect.width, 1)
+      const height = Math.max(rect.height, 1)
+      const x = Math.max(0, Math.min(e.clientX - rect.left, width))
+      const y = Math.max(0, Math.min(e.clientY - rect.top, height))
+      const s = (x / width) * 100
+      const v = 100 - (y / height) * 100
 
       const state = this.colorPickerState.get(key) ?? { h: 0, s: 100, v: 100, a: 1 }
       state.s = s
@@ -323,8 +387,9 @@ export default class SettingsController extends Controller<HTMLElement> {
 
     const updatePosition = (e: MouseEvent) => {
       const rect = picker.getBoundingClientRect()
-      const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width))
-      const h = (x / rect.width) * 360
+      const width = Math.max(rect.width, 1)
+      const x = Math.max(0, Math.min(e.clientX - rect.left, width))
+      const h = (x / width) * 360
 
       const state = this.colorPickerState.get(key) ?? { h: 0, s: 100, v: 100, a: 1 }
       state.h = h
@@ -351,8 +416,9 @@ export default class SettingsController extends Controller<HTMLElement> {
 
     const updatePosition = (e: MouseEvent) => {
       const rect = picker.getBoundingClientRect()
-      const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width))
-      const a = x / rect.width
+      const width = Math.max(rect.width, 1)
+      const x = Math.max(0, Math.min(e.clientX - rect.left, width))
+      const a = x / width
 
       const state = this.colorPickerState.get(key) ?? { h: 0, s: 100, v: 100, a: 1 }
       state.a = a
@@ -385,20 +451,25 @@ export default class SettingsController extends Controller<HTMLElement> {
     }
 
     const hsva = this.hexToHsva(value)
+    if (!hsva) {
+      return
+    }
     this.colorPickerState.set(key, hsva)
     this.updateColorFromHsva(key, hsva)
   }
 
   private updateColorFromHsva(key: keyof DaisyColorPalette, hsva: { h: number, s: number, v: number, a: number }) {
-    const hex = this.hsvaToHex(hsva)
-    this.updateCustomTheme((theme) => ({
+    const nextHsva = normalizeHsva(hsva)
+    const hex = this.hsvaToHex(nextHsva)
+    this.updateThemeDraft((theme) => ({
       ...theme,
       colors: { ...theme.colors, [key]: hex },
     }))
-    this.updateColorPickerUI(key, hsva)
+    this.updateColorPickerUI(key, nextHsva)
   }
 
   private updateColorPickerUI(key: keyof DaisyColorPalette, hsva: { h: number, s: number, v: number, a: number }) {
+    const nextHsva = normalizeHsva(hsva)
     const saturationHandle = this.saturationHandleTargets.find((el) => el.dataset.settingsColorKey === key)
     const hueHandle = this.hueHandleTargets.find((el) => el.dataset.settingsColorKey === key)
     const alphaHandle = this.alphaHandleTargets.find((el) => el.dataset.settingsColorKey === key)
@@ -407,39 +478,85 @@ export default class SettingsController extends Controller<HTMLElement> {
     const saturationPicker = this.saturationPickerTargets.find((el) => el.dataset.settingsColorKey === key)
 
     if (saturationHandle) {
-      saturationHandle.style.left = `${hsva.s}%`
-      saturationHandle.style.top = `${100 - hsva.v}%`
+      saturationHandle.style.left = `${nextHsva.s}%`
+      saturationHandle.style.top = `${100 - nextHsva.v}%`
     }
 
     if (hueHandle) {
-      hueHandle.style.left = `${(hsva.h / 360) * 100}%`
+      hueHandle.style.left = `${(nextHsva.h / 360) * 100}%`
     }
 
     if (alphaHandle) {
-      alphaHandle.style.left = `${hsva.a * 100}%`
+      alphaHandle.style.left = `${nextHsva.a * 100}%`
     }
 
-    const baseColor = this.hsvToRgb(hsva.h, 100, 100)
+    const baseColor = this.hsvToRgb(nextHsva.h, 100, 100)
     if (saturationPicker) {
       saturationPicker.style.background = `linear-gradient(to bottom, transparent, black), linear-gradient(to right, white, rgb(${baseColor.r}, ${baseColor.g}, ${baseColor.b}))`
     }
 
-    const rgb = this.hsvToRgb(hsva.h, hsva.s, hsva.v)
+    const rgb = this.hsvToRgb(nextHsva.h, nextHsva.s, nextHsva.v)
     if (alphaGradient) {
       alphaGradient.style.background = `linear-gradient(to right, transparent, rgb(${rgb.r}, ${rgb.g}, ${rgb.b}))`
     }
 
     if (hexInput) {
-      hexInput.value = this.hsvaToHex(hsva)
+      hexInput.value = this.hsvaToHex(nextHsva)
     }
   }
 
-  private hexToHsva(hex: string): { h: number, s: number, v: number, a: number } {
-    const cleanHex = hex.replace('#', '')
-    const r = Number.parseInt(cleanHex.substring(0, 2), 16) / 255
-    const g = Number.parseInt(cleanHex.substring(2, 4), 16) / 255
-    const b = Number.parseInt(cleanHex.substring(4, 6), 16) / 255
-    const a = cleanHex.length === 8 ? Number.parseInt(cleanHex.substring(6, 8), 16) / 255 : 1
+  private getColorPickerSourceColor(key: keyof DaisyColorPalette): string {
+    const swatch = this.colorSwatchTargets.find((target) => target.dataset.settingsColorKey === key)
+    const swatchColor = swatch ? getComputedStyle(swatch).backgroundColor : ''
+    if (swatchColor && swatchColor !== 'rgba(0, 0, 0, 0)' && swatchColor !== 'transparent') {
+      return swatchColor
+    }
+
+    return this.themeDraft.colors[key]
+  }
+
+  private colorToHsva(color: string): { h: number, s: number, v: number, a: number } {
+    const value = color.trim()
+    return normalizeHsva(
+      this.hexToHsva(value)
+      ?? this.rgbCssToHsva(value)
+      ?? this.oklchToHsva(value)
+      ?? { h: 0, s: 0, v: 100, a: 1 },
+    )
+  }
+
+  private hexToHsva(hex: string): { h: number, s: number, v: number, a: number } | null {
+    const rgba = parseHexColor(hex)
+    if (!rgba) {
+      return null
+    }
+
+    return this.rgbToHsva(rgba.r, rgba.g, rgba.b, rgba.a)
+  }
+
+  private rgbCssToHsva(color: string): { h: number, s: number, v: number, a: number } | null {
+    const rgba = parseRgbColor(color)
+    if (!rgba) {
+      return null
+    }
+
+    return this.rgbToHsva(rgba.r, rgba.g, rgba.b, rgba.a)
+  }
+
+  private oklchToHsva(color: string): { h: number, s: number, v: number, a: number } | null {
+    const rgba = parseOklchColor(color)
+    if (!rgba) {
+      return null
+    }
+
+    return this.rgbToHsva(rgba.r, rgba.g, rgba.b, rgba.a)
+  }
+
+  private rgbToHsva(rValue: number, gValue: number, bValue: number, aValue = 1): { h: number, s: number, v: number, a: number } {
+    const r = clamp(rValue, 0, 255) / 255
+    const g = clamp(gValue, 0, 255) / 255
+    const b = clamp(bValue, 0, 255) / 255
+    const a = clamp(aValue, 0, 1)
 
     const max = Math.max(r, g, b)
     const min = Math.min(r, g, b)
@@ -464,41 +581,43 @@ export default class SettingsController extends Controller<HTMLElement> {
   }
 
   private hsvaToHex(hsva: { h: number, s: number, v: number, a: number }): string {
-    const rgb = this.hsvToRgb(hsva.h, hsva.s, hsva.v)
-    const r = Math.round(rgb.r).toString(16).padStart(2, '0')
-    const g = Math.round(rgb.g).toString(16).padStart(2, '0')
-    const b = Math.round(rgb.b).toString(16).padStart(2, '0')
-    const a = Math.round(hsva.a * 255).toString(16).padStart(2, '0')
-    return hsva.a < 1 ? `#${r}${g}${b}${a}` : `#${r}${g}${b}`
+    const nextHsva = normalizeHsva(hsva)
+    const rgb = this.hsvToRgb(nextHsva.h, nextHsva.s, nextHsva.v)
+    const r = toHexByte(rgb.r)
+    const g = toHexByte(rgb.g)
+    const b = toHexByte(rgb.b)
+    const a = toHexByte(nextHsva.a * 255)
+    return nextHsva.a < 1 ? `#${r}${g}${b}${a}` : `#${r}${g}${b}`
   }
 
   private hsvToRgb(h: number, s: number, v: number): { r: number, g: number, b: number } {
-    const sNorm = s / 100
-    const vNorm = v / 100
+    const hNorm = normalizeHue(h)
+    const sNorm = clamp(s, 0, 100) / 100
+    const vNorm = clamp(v, 0, 100) / 100
     const c = vNorm * sNorm
-    const x = c * (1 - Math.abs(((h / 60) % 2) - 1))
+    const x = c * (1 - Math.abs(((hNorm / 60) % 2) - 1))
     const m = vNorm - c
 
     let r = 0
     let g = 0
     let b = 0
-    if (h >= 0 && h < 60) {
+    if (hNorm >= 0 && hNorm < 60) {
       r = c
       g = x
       b = 0
-    } else if (h >= 60 && h < 120) {
+    } else if (hNorm >= 60 && hNorm < 120) {
       r = x
       g = c
       b = 0
-    } else if (h >= 120 && h < 180) {
+    } else if (hNorm >= 120 && hNorm < 180) {
       r = 0
       g = c
       b = x
-    } else if (h >= 180 && h < 240) {
+    } else if (hNorm >= 180 && hNorm < 240) {
       r = 0
       g = x
       b = c
-    } else if (h >= 240 && h < 300) {
+    } else if (hNorm >= 240 && hNorm < 300) {
       r = x
       g = 0
       b = c
@@ -522,7 +641,7 @@ export default class SettingsController extends Controller<HTMLElement> {
       return
     }
     const value = input.value
-    this.updateCustomTheme((theme) => ({
+    this.updateThemeDraft((theme) => ({
       ...theme,
       colors: { ...theme.colors, [key]: value },
     }))
@@ -536,6 +655,9 @@ export default class SettingsController extends Controller<HTMLElement> {
       return
     }
     const hsva = this.hexToHsva(value)
+    if (!hsva) {
+      return
+    }
     this.colorPickerState.set(key, hsva)
     this.updateColorFromHsva(key, hsva)
   }
@@ -547,7 +669,7 @@ export default class SettingsController extends Controller<HTMLElement> {
     if (!field || !isRadiusValue(value)) {
       return
     }
-    this.updateCustomTheme((theme) => ({ ...theme, [field]: value }))
+    this.updateThemeDraft((theme) => ({ ...theme, [field]: value }))
   }
 
   selectSize(event: Event) {
@@ -557,7 +679,7 @@ export default class SettingsController extends Controller<HTMLElement> {
     if (!field || !isSizeValue(value)) {
       return
     }
-    this.updateCustomTheme((theme) => ({ ...theme, [field]: value }))
+    this.updateThemeDraft((theme) => ({ ...theme, [field]: value }))
   }
 
   selectBorder(event: Event) {
@@ -566,60 +688,71 @@ export default class SettingsController extends Controller<HTMLElement> {
     if (!isBorderWidthValue(value)) {
       return
     }
-    this.updateCustomTheme((theme) => ({ ...theme, borderWidth: value }))
+    this.updateThemeDraft((theme) => ({ ...theme, borderWidth: value }))
   }
 
   toggleDepth(event: Event) {
     const target = event.currentTarget as HTMLInputElement
-    this.updateCustomTheme((theme) => ({ ...theme, depth: target.checked }))
+    this.updateThemeDraft((theme) => ({ ...theme, depth: target.checked }))
   }
 
   toggleNoise(event: Event) {
     const target = event.currentTarget as HTMLInputElement
-    this.updateCustomTheme((theme) => ({ ...theme, noise: target.checked }))
+    this.updateThemeDraft((theme) => ({ ...theme, noise: target.checked }))
   }
 
-  resetCustomTheme() {
-    const config = readStoredLayoutConfig()
-    persistLayoutConfig({ ...config, customTheme: { ...lightThemeDefaults } })
-    applyCustomTheme(lightThemeDefaults)
-    this.syncCustomTheme(lightThemeDefaults)
+  resetThemeDraft() {
+    this.themeDraft = cloneDaisyThemeDraft({
+      ...defaultDaisyThemeDraft,
+      name: toDaisyThemeName(readStoredLayoutConfig().theme),
+    })
+    this.syncThemeDraft(this.themeDraft)
   }
 
-  async copyConfig() {
-    if (!this.hasCopyButtonTarget) {
-      return
-    }
-    const config = readStoredLayoutConfig()
-    const snippet = renderPresetSnippet(config)
+  async copyThemeCss(event: Event) {
+    this.themeDraft = sanitizeDaisyThemeDraft({
+      ...this.themeDraft,
+      name: this.readDaisyThemeNameFromInput(),
+    })
+
     try {
-      await navigator.clipboard.writeText(snippet)
-      this.flashCopyLabel('已复制!')
+      await writeClipboardText(buildDaisyThemeCss(this.themeDraft))
+      this.flashCopyLabel(event.currentTarget as HTMLElement, '已复制!')
     } catch {
-      this.flashCopyLabel('复制失败')
+      this.flashCopyLabel(event.currentTarget as HTMLElement, '复制失败')
     }
   }
 
-  private flashCopyLabel(text: string) {
-    if (!this.hasCopyLabelTarget) {
+  async copyLayoutConfig(event: Event) {
+    const config = readStoredLayoutConfig()
+    try {
+      await writeClipboardText(renderLayoutConfigSnippet(config))
+      this.flashCopyLabel(event.currentTarget as HTMLElement, '已复制!')
+    } catch {
+      this.flashCopyLabel(event.currentTarget as HTMLElement, '复制失败')
+    }
+  }
+
+  private flashCopyLabel(button: HTMLElement, text: string) {
+    const label = button.querySelector<HTMLElement>('[data-settings-copy-label]')
+    if (!label) {
       return
     }
-    const original = this.copyLabelTarget.textContent ?? '复制配置到 layout/config.ts'
-    this.copyLabelTarget.textContent = text
+
+    const original = label.dataset.settingsCopyDefault || label.textContent || ''
+    label.dataset.settingsCopyDefault = original
+    label.textContent = text
     if (this.copyResetTimer) {
       window.clearTimeout(this.copyResetTimer)
     }
     this.copyResetTimer = window.setTimeout(() => {
-      this.copyLabelTarget.textContent = original
+      label.textContent = original
     }, 1500)
   }
 
-  private updateCustomTheme(updater: (theme: DaisyTheme) => DaisyTheme) {
-    const config = readStoredLayoutConfig()
-    const customTheme = sanitizeCustomTheme(updater(config.customTheme))
-    persistLayoutConfig({ ...config, customTheme })
-    applyCustomTheme(customTheme)
-    this.syncCustomTheme(customTheme)
+  private updateThemeDraft(updater: (theme: DaisyThemeDraft) => DaisyThemeDraft) {
+    this.themeDraft = sanitizeDaisyThemeDraft(updater(cloneDaisyThemeDraft(this.themeDraft)))
+    this.syncThemeDraft(this.themeDraft)
   }
 
   private sync() {
@@ -629,21 +762,36 @@ export default class SettingsController extends Controller<HTMLElement> {
     if (this.hasSidebarCollapsedTarget) {
       this.sidebarCollapsedTarget.checked = config.sidebarCollapsed
     }
-    this.syncCustomTheme(config.customTheme)
-    applyCustomTheme(config.customTheme)
+    if (this.hasMainWidthToggleTarget) {
+      this.mainWidthToggleTarget.checked = config.mainWidth === 'narrow'
+    }
+    if (this.hasTopMenuCenteredTarget) {
+      this.topMenuCenteredTarget.checked = config.topMenuCentered
+    }
+    this.themeDraft = sanitizeDaisyThemeDraft({
+      ...this.themeDraft,
+      name: toDaisyThemeName(config.theme),
+    })
+    this.syncThemeDraft(this.themeDraft)
   }
 
   private syncThemeOptions(theme: ThemeName) {
     for (const option of this.themeOptionTargets) {
       const selected = option.dataset.settingsThemeValue === theme
       option.setAttribute('aria-pressed', selected ? 'true' : 'false')
-      option.classList.toggle('btn-primary', selected)
-      option.classList.toggle('btn-ghost', !selected)
-      option.classList.toggle('border', !selected)
-      option.classList.toggle('border-base-300', !selected)
+      option.classList.toggle('menu-active', selected)
+      if (option.classList.contains('btn')) {
+        option.classList.toggle('btn-primary', selected)
+        option.classList.toggle('btn-ghost', !selected)
+        option.classList.toggle('border', !selected)
+        option.classList.toggle('border-base-300', !selected)
+      }
     }
     for (const check of this.themeCheckTargets) {
       check.classList.toggle('hidden', check.dataset.settingsThemeValue !== theme)
+    }
+    for (const select of this.themeSelectTargets) {
+      select.value = theme
     }
   }
 
@@ -659,9 +807,30 @@ export default class SettingsController extends Controller<HTMLElement> {
     for (const check of this.variantCheckTargets) {
       check.classList.toggle('hidden', check.dataset.settingsVariantValue !== variant)
     }
+    const topNavSelected = isTopNavVariant(variant)
+    if (this.hasSidebarCollapsedTarget) {
+      this.sidebarCollapsedTarget.disabled = topNavSelected
+    }
+    for (const control of this.sidebarOnlyControlTargets) {
+      control.classList.toggle('opacity-50', topNavSelected)
+      control.classList.toggle('cursor-not-allowed', topNavSelected)
+      control.classList.toggle('cursor-pointer', !topNavSelected)
+    }
+    if (this.hasMainWidthToggleTarget) {
+      this.mainWidthToggleTarget.disabled = !topNavSelected
+    }
+    if (this.hasTopMenuCenteredTarget) {
+      this.topMenuCenteredTarget.disabled = !topNavSelected
+    }
+    for (const control of this.topNavOnlyControlTargets) {
+      control.classList.toggle('opacity-50', !topNavSelected)
+    }
   }
 
-  private syncCustomTheme(theme: DaisyTheme) {
+  private syncThemeDraft(theme: DaisyThemeDraft) {
+    for (const input of this.themeNameTargets) {
+      input.value = theme.name
+    }
     for (const swatch of this.colorSwatchTargets) {
       const key = swatch.dataset.settingsColorKey as keyof DaisyColorPalette | undefined
       if (key && daisyColorKeys.includes(key)) {
@@ -711,6 +880,11 @@ export default class SettingsController extends Controller<HTMLElement> {
     }
   }
 
+  private readDaisyThemeNameFromInput(): DaisyThemeName {
+    const value = this.themeNameTargets[0]?.value.trim()
+    return isDaisyThemeName(value) ? value : this.themeDraft.name
+  }
+
   private applyTheme(theme: ThemeName) {
     const root = document.documentElement
     const resolvedTheme = resolveTheme(theme)
@@ -730,10 +904,36 @@ export default class SettingsController extends Controller<HTMLElement> {
   }
 
   private handleSystemThemeChange = () => {
-    if (readStoredLayoutConfig().theme === 'system') {
-      this.applyTheme('system')
+    if (readStoredLayoutConfig().theme === systemThemeName) {
+      this.applyTheme(systemThemeName)
     }
   }
+
+  private handleThemeChanged = (event: Event) => {
+    const theme = (event as CustomEvent<{ theme?: unknown }>).detail?.theme
+    if (!isThemeName(theme)) {
+      return
+    }
+
+    this.applyTheme(theme)
+    this.syncThemeOptions(theme)
+    this.updateThemeDraft((draft) => ({ ...draft, name: toDaisyThemeName(theme) }))
+  }
+}
+
+function getThemeValueFromTarget(target: HTMLElement): unknown {
+  if (target instanceof HTMLInputElement || target instanceof HTMLSelectElement) {
+    return target.value.trim()
+  }
+
+  return target.dataset.settingsThemeValue
+}
+
+function hideClosestPopover(target: HTMLElement) {
+  const popover = target.closest<HTMLElement & { hidePopover?: () => void }>(
+    '[popover]',
+  )
+  popover?.hidePopover?.()
 }
 
 function readStoredLayoutConfig(): LayoutConfig {
@@ -742,19 +942,24 @@ function readStoredLayoutConfig(): LayoutConfig {
     const parsed = value ? JSON.parse(value) as Partial<LayoutConfig> : {}
 
     return {
+      mainWidth: isLayoutMainWidth(parsed.mainWidth)
+        ? parsed.mainWidth
+        : defaultLayoutConfig.mainWidth,
       sidebarCollapsed: typeof parsed.sidebarCollapsed === 'boolean'
         ? parsed.sidebarCollapsed
         : defaultLayoutConfig.sidebarCollapsed,
       theme: isThemeName(parsed.theme)
         ? parsed.theme
         : defaultLayoutConfig.theme,
+      topMenuCentered: typeof parsed.topMenuCentered === 'boolean'
+        ? parsed.topMenuCentered
+        : defaultLayoutConfig.topMenuCentered,
       variant: isLayoutVariant(parsed.variant)
         ? parsed.variant
         : defaultLayoutConfig.variant,
-      customTheme: sanitizeCustomTheme(parsed.customTheme),
     }
   } catch {
-    return { ...defaultLayoutConfig, customTheme: { ...defaultLayoutConfig.customTheme } }
+    return { ...defaultLayoutConfig }
   }
 }
 
@@ -769,10 +974,14 @@ function writeVariantCookie(variant: LayoutVariant) {
 }
 
 function resolveTheme(theme: ThemeName): DaisyThemeName {
-  if (theme !== 'system') {
+  if (theme !== systemThemeName) {
     return theme
   }
   return window.matchMedia(systemThemeQuery).matches ? 'dark' : 'light'
+}
+
+function toDaisyThemeName(theme: ThemeName): DaisyThemeName {
+  return theme === systemThemeName ? defaultDaisyThemeDraft.name : theme
 }
 
 function getPopoverToggleState(event: Event): 'open' | 'closed' | null {
@@ -795,30 +1004,209 @@ function clamp(value: number, min: number, max: number): number {
   if (max < min) {
     return min
   }
+  if (!Number.isFinite(value)) {
+    return min
+  }
   return Math.min(Math.max(value, min), max)
 }
 
-function applyCustomTheme(theme: DaisyTheme) {
-  let styleEl = document.getElementById(customThemeStyleId) as HTMLStyleElement | null
-  if (!styleEl) {
-    styleEl = document.createElement('style')
-    styleEl.id = customThemeStyleId
-    document.head.appendChild(styleEl)
+function parseHexColor(color: string): { r: number, g: number, b: number, a: number } | null {
+  const match = color.trim().match(/^#([\da-f]{3,4}|[\da-f]{6}|[\da-f]{8})$/i)
+  if (!match) {
+    return null
   }
-  styleEl.textContent = buildCustomThemeCss(theme)
+
+  const value = match[1]
+  const expanded = value.length === 3 || value.length === 4
+    ? value.split('').map((part) => part + part).join('')
+    : value
+
+  const r = Number.parseInt(expanded.slice(0, 2), 16)
+  const g = Number.parseInt(expanded.slice(2, 4), 16)
+  const b = Number.parseInt(expanded.slice(4, 6), 16)
+  const a = expanded.length === 8 ? Number.parseInt(expanded.slice(6, 8), 16) / 255 : 1
+
+  if (![r, g, b, a].every(Number.isFinite)) {
+    return null
+  }
+
+  return { r, g, b, a }
 }
 
-function renderPresetSnippet(config: LayoutConfig): string {
-  const preset = {
-    defaultTheme: config.theme,
-    variant: config.variant,
-    customTheme: config.customTheme,
+function parseRgbColor(color: string): { r: number, g: number, b: number, a: number } | null {
+  const match = color.trim().match(/^rgba?\((.*)\)$/i)
+  if (!match) {
+    return null
   }
-  void layoutPreset
-  const json = JSON.stringify(preset, null, 2)
-  const tsLiteral = json
-    .replace(/"([A-Z_$][\w$-]*)":/gi, (_match, key: string) =>
-      (/^[A-Z_$][\w$]*$/i).test(key) ? `${key}:` : `'${key}':`)
-    .replace(/"/g, '\'')
-  return `export const layoutPreset: LayoutPreset = ${tsLiteral}\n`
+
+  const [channelsPart, slashAlpha] = match[1].split('/').map((part) => part.trim())
+  const channels = channelsPart.replace(/,/g, ' ').split(/\s+/).filter(Boolean)
+  if (channels.length < 3) {
+    return null
+  }
+
+  const r = parseRgbChannel(channels[0])
+  const g = parseRgbChannel(channels[1])
+  const b = parseRgbChannel(channels[2])
+  const a = parseAlphaValue(slashAlpha || channels[3] || '1')
+
+  if (![r, g, b, a].every(Number.isFinite)) {
+    return null
+  }
+
+  return { r, g, b, a }
+}
+
+function parseOklchColor(color: string): { r: number, g: number, b: number, a: number } | null {
+  const match = color.trim().match(/^oklch\((.*)\)$/i)
+  if (!match) {
+    return null
+  }
+
+  const [channelsPart, slashAlpha] = match[1].split('/').map((part) => part.trim())
+  const channels = channelsPart.split(/\s+/).filter(Boolean)
+  if (channels.length < 3) {
+    return null
+  }
+
+  const l = channels[0].endsWith('%')
+    ? Number.parseFloat(channels[0]) / 100
+    : Number.parseFloat(channels[0])
+  const c = Number.parseFloat(channels[1])
+  const h = channels[2] === 'none' ? 0 : Number.parseFloat(channels[2])
+  const a = parseAlphaValue(slashAlpha || '1')
+
+  if (![l, c, h, a].every(Number.isFinite)) {
+    return null
+  }
+
+  return oklchToRgb(l, c, h, a)
+}
+
+function parseRgbChannel(value: string): number {
+  if (value.endsWith('%')) {
+    return clamp((Number.parseFloat(value) / 100) * 255, 0, 255)
+  }
+
+  return clamp(Number.parseFloat(value), 0, 255)
+}
+
+function parseAlphaValue(value: string): number {
+  if (value.endsWith('%')) {
+    return clamp(Number.parseFloat(value) / 100, 0, 1)
+  }
+
+  return clamp(Number.parseFloat(value), 0, 1)
+}
+
+function oklchToRgb(l: number, c: number, h: number, a: number): { r: number, g: number, b: number, a: number } {
+  const hueRadians = (h * Math.PI) / 180
+  const labA = c * Math.cos(hueRadians)
+  const labB = c * Math.sin(hueRadians)
+
+  const lPrime = l + 0.3963377774 * labA + 0.2158037573 * labB
+  const mPrime = l - 0.1055613458 * labA - 0.0638541728 * labB
+  const sPrime = l - 0.0894841775 * labA - 1.2914855480 * labB
+
+  const lCubed = lPrime ** 3
+  const mCubed = mPrime ** 3
+  const sCubed = sPrime ** 3
+
+  const rLinear = 4.0767416621 * lCubed - 3.3077115913 * mCubed + 0.2309699292 * sCubed
+  const gLinear = -1.2684380046 * lCubed + 2.6097574011 * mCubed - 0.3413193965 * sCubed
+  const bLinear = -0.0041960863 * lCubed - 0.7034186147 * mCubed + 1.7076147010 * sCubed
+
+  return {
+    r: linearSrgbToByte(rLinear),
+    g: linearSrgbToByte(gLinear),
+    b: linearSrgbToByte(bLinear),
+    a,
+  }
+}
+
+function linearSrgbToByte(value: number): number {
+  const srgb = value <= 0.0031308
+    ? 12.92 * value
+    : 1.055 * (value ** (1 / 2.4)) - 0.055
+  return clamp(srgb * 255, 0, 255)
+}
+
+function normalizeHsva(hsva: { h: number, s: number, v: number, a: number }): { h: number, s: number, v: number, a: number } {
+  return {
+    h: normalizeHue(hsva.h),
+    s: clamp(hsva.s, 0, 100),
+    v: clamp(hsva.v, 0, 100),
+    a: clamp(hsva.a, 0, 1),
+  }
+}
+
+function normalizeHue(hue: number): number {
+  if (!Number.isFinite(hue)) {
+    return 0
+  }
+  return ((hue % 360) + 360) % 360
+}
+
+function toHexByte(value: number): string {
+  return Math.round(clamp(value, 0, 255)).toString(16).padStart(2, '0')
+}
+
+async function writeClipboardText(text: string) {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text)
+      return
+    }
+  } catch {}
+
+  if (copyTextWithTextarea(text)) {
+    return
+  }
+
+  throw new Error('Clipboard copy failed')
+}
+
+function copyTextWithTextarea(text: string): boolean {
+  const activeElement = document.activeElement
+  const textarea = document.createElement('textarea')
+  textarea.value = text
+  textarea.setAttribute('readonly', 'true')
+  textarea.style.position = 'fixed'
+  textarea.style.top = '0'
+  textarea.style.left = '-9999px'
+  textarea.style.opacity = '0'
+  document.body.appendChild(textarea)
+  textarea.select()
+  textarea.setSelectionRange(0, textarea.value.length)
+
+  let copied = false
+  try {
+    copied = document.execCommand('copy')
+  } catch {
+    copied = false
+  } finally {
+    textarea.remove()
+    if (activeElement instanceof HTMLElement) {
+      activeElement.focus()
+    }
+  }
+
+  return copied
+}
+
+function renderLayoutConfigSnippet(config: LayoutConfig): string {
+  return [
+    'export const layoutPreset: LayoutPreset = {',
+    `  defaultTheme: ${quoteTsString(config.theme)},`,
+    `  mainWidth: ${quoteTsString(config.mainWidth)},`,
+    `  sidebarCollapsed: ${config.sidebarCollapsed ? 'true' : 'false'},`,
+    `  topMenuCentered: ${config.topMenuCentered ? 'true' : 'false'},`,
+    `  variant: ${quoteTsString(config.variant)},`,
+    '}',
+    '',
+  ].join('\n')
+}
+
+function quoteTsString(value: string): string {
+  return JSON.stringify(value)
 }

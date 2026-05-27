@@ -6,11 +6,12 @@ import {
   getPreparedCsrfToken,
 } from '../service/security/csrf'
 import {
-  customThemeStyleId,
   layoutConfigStorageKey,
+  layoutMainWidths,
   layoutPreset,
   layoutVariantCookieName,
   layoutVariants,
+  systemThemeName,
   systemThemeQuery,
 } from './-/components/layout/config'
 import { resolveLayoutVariantFromRequest } from './-/utils/layout-variant'
@@ -19,11 +20,22 @@ const mainScript = `
   try {
     const storedConfig = localStorage.getItem(${JSON.stringify(layoutConfigStorageKey)}) || "{}";
     const config = JSON.parse(storedConfig);
-    document.documentElement.dataset.sidebarCollapsed = config.sidebarCollapsed === true ? "true" : "false";
-    const theme = config.theme === "system"
+    const defaultSidebarCollapsed = ${JSON.stringify(layoutPreset.sidebarCollapsed)};
+    document.documentElement.dataset.sidebarCollapsed = config.sidebarCollapsed === true
+      ? "true"
+      : config.sidebarCollapsed === false ? "false" : defaultSidebarCollapsed ? "true" : "false";
+    const defaultTopMenuCentered = ${JSON.stringify(layoutPreset.topMenuCentered)};
+    document.documentElement.dataset.layoutTopMenuCentered = config.topMenuCentered === true
+      ? "true"
+      : config.topMenuCentered === false ? "false" : defaultTopMenuCentered ? "true" : "false";
+    var mainWidths = ${JSON.stringify(layoutMainWidths)};
+    document.documentElement.dataset.layoutMainWidth = mainWidths.indexOf(config.mainWidth) !== -1
+      ? config.mainWidth
+      : ${JSON.stringify(layoutPreset.mainWidth)};
+    const theme = config.theme === ${JSON.stringify(systemThemeName)}
       ? (matchMedia(${JSON.stringify(systemThemeQuery)}).matches ? "dark" : "light")
       : config.theme;
-    if (["light", "dark", "black"].includes(theme)) {
+    if (typeof theme === "string" && /^[A-Za-z][\\w-]{0,63}$/.test(theme)) {
       document.documentElement.setAttribute("data-theme", theme);
     }
     var variants = ${JSON.stringify(layoutVariants)};
@@ -35,47 +47,25 @@ const mainScript = `
         document.cookie = cookieValue;
       }
     }
-  if (config.customTheme && typeof config.customTheme === "object") {
-    var ct = config.customTheme;
-    var lines = [];
-    var colors = ct.colors || {};
-    var colorKeys = ["primary","primary-content","secondary","secondary-content","accent","accent-content","neutral","neutral-content","base-100","base-200","base-300","base-content","info","info-content","success","success-content","warning","warning-content","error","error-content"];
-    for (var i = 0; i < colorKeys.length; i++) {
-      var k = colorKeys[i];
-      if (typeof colors[k] === "string" && colors[k]) {
-        lines.push("--color-" + k + ":" + colors[k]);
-      }
-    }
-    if (typeof ct.radiusBox === "string") lines.push("--radius-box:" + ct.radiusBox);
-    if (typeof ct.radiusField === "string") lines.push("--radius-field:" + ct.radiusField);
-    if (typeof ct.radiusSelector === "string") lines.push("--radius-selector:" + ct.radiusSelector);
-    if (typeof ct.sizeField === "string") lines.push("--size-field:" + ct.sizeField);
-    if (typeof ct.sizeSelector === "string") lines.push("--size-selector:" + ct.sizeSelector);
-    if (typeof ct.borderWidth === "string") lines.push("--border:" + ct.borderWidth);
-    if (typeof ct.depth === "boolean") lines.push("--depth:" + (ct.depth ? "1" : "0"));
-    if (typeof ct.noise === "boolean") lines.push("--noise:" + (ct.noise ? "1" : "0"));
-    if (lines.length) {
-      var styleEl = document.getElementById(${JSON.stringify(customThemeStyleId)});
-      if (!styleEl) {
-        styleEl = document.createElement("style");
-        styleEl.id = ${JSON.stringify(customThemeStyleId)};
-        document.head.appendChild(styleEl);
-      }
-      styleEl.textContent = ":root{" + lines.join(";") + ";}";
-    }
-  }
 } catch (_) {}
 `
 
 export default jsxRenderer(({ children }, c) => {
   const csrfToken = getPreparedCsrfToken(c)
   const variant = resolveLayoutVariantFromRequest(c) ?? layoutPreset.variant
+  const initialTheme = layoutPreset.defaultTheme === systemThemeName
+    ? 'light'
+    : layoutPreset.defaultTheme
+  const initialSidebarCollapsed = layoutPreset.sidebarCollapsed ? 'true' : 'false'
+  const initialTopMenuCentered = layoutPreset.topMenuCentered ? 'true' : 'false'
 
   return (
     <html
       lang="en"
-      data-theme="light"
-      data-sidebar-collapsed="false"
+      data-theme={initialTheme}
+      data-layout-main-width={layoutPreset.mainWidth}
+      data-layout-top-menu-centered={initialTopMenuCentered}
+      data-sidebar-collapsed={initialSidebarCollapsed}
       data-layout-variant={variant}
     >
       <head>

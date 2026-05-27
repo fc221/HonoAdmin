@@ -1,29 +1,18 @@
+import type { LayoutVariant } from '../config'
 import type {
   BorderWidthValue,
   DaisyColorPalette,
-  LayoutVariant,
   RadiusValue,
   SizeValue,
-  ThemeName,
-} from '../config'
+} from '../theme-css'
+import { defaultLayoutConfig, isTopNavVariant, layoutPreset } from '../config'
 import {
   borderWidthScale,
-  defaultLayoutConfig,
-  layoutPreset,
+  defaultDaisyThemeDraft,
   radiusScale,
   sizeScale,
-} from '../config'
-
-const themeOptions: Array<{
-  label: string
-  value: ThemeName
-  icon: string
-}> = [
-  { label: '系统', value: 'system', icon: 'icon-[ri--computer-line]' },
-  { label: '亮色', value: 'light', icon: 'icon-[ri--sun-line]' },
-  { label: '暗色', value: 'dark', icon: 'icon-[ri--moon-clear-line]' },
-  { label: '纯黑', value: 'black', icon: 'icon-[ri--contrast-2-line]' },
-]
+} from '../theme-css'
+import { themeOptions } from './theme-options'
 
 const radiusLabels = ['0', '0.25', '0.5', '1', '2']
 const sizeLabels = ['XS', 'S', 'M', 'L', 'XL']
@@ -95,9 +84,16 @@ interface Props {
 export default function SettingsDrawer({ triggerClass }: Props = {}) {
   const selectedTheme = defaultLayoutConfig.theme
   const selectedVariant = layoutPreset.variant
-  const defaultCollapsed = defaultLayoutConfig.sidebarCollapsed
-  const customTheme = layoutPreset.customTheme
+  const mainWidthNarrow = layoutPreset.mainWidth === 'narrow'
+  const defaultCollapsed = layoutPreset.sidebarCollapsed
+  const topMenuCentered = layoutPreset.topMenuCentered
+  const topNavSelected = isTopNavVariant(selectedVariant)
+  const themeDraft = defaultDaisyThemeDraft
   const isDev = import.meta.env.DEV
+
+  if (!isDev) {
+    return null
+  }
 
   return (
     <div data-controller="settings">
@@ -136,33 +132,24 @@ export default function SettingsDrawer({ triggerClass }: Props = {}) {
         <div class="flex-1 overflow-y-auto p-4 space-y-6">
           <section>
             <h3 class="mb-3 text-sm font-semibold text-base-content/80">主题</h3>
-            <div class="grid grid-cols-2 gap-2">
-              {themeOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  aria-pressed={selectedTheme === option.value}
-                  class={`btn btn-sm justify-start gap-2 ${
-                    selectedTheme === option.value ? 'btn-primary' : 'btn-ghost border border-base-300'
-                  }`}
-                  data-action="settings#selectTheme"
-                  data-settings-target="themeOption"
-                  data-settings-theme-value={option.value}
-                >
-                  <i class={option.icon}></i>
-                  <span class="flex-1 text-left">{option.label}</span>
-                  <i
-                    class={`icon-[ri--check-line] ${selectedTheme === option.value ? '' : 'hidden'}`}
-                    data-settings-target="themeCheck"
-                    data-settings-theme-value={option.value}
-                  >
-                  </i>
-                </button>
-              ))}
+            <div class="flex justify-center">
+              <select
+                aria-label="默认主题"
+                class="select select-bordered select-sm w-full max-w-40 text-center"
+                data-action="change->settings#selectTheme"
+                data-settings-target="themeSelect"
+                value={selectedTheme}
+              >
+                {themeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </section>
           <section>
-            <h3 class="mb-3 text-sm font-semibold text-base-content/80">布局变体</h3>
+            <h3 class="mb-3 text-sm font-semibold text-base-content/80">布局</h3>
             <div class="grid grid-cols-2 gap-3">
               {variantOptions.map((option) => (
                 <button
@@ -195,20 +182,75 @@ export default function SettingsDrawer({ triggerClass }: Props = {}) {
             </div>
           </section>
           <section>
-            <h3 class="mb-3 text-sm font-semibold text-base-content/80">界面偏好</h3>
-            <label class="flex cursor-pointer items-center justify-between rounded-box border border-base-300 p-3">
-              <span class="flex flex-col">
-                <span class="text-sm font-medium">默认折叠侧边栏</span>
-                <span class="text-xs text-base-content/60">仅作用于含侧边栏的布局</span>
-              </span>
+            <h3 class="mb-3 text-sm font-semibold text-base-content/80">偏好</h3>
+            <div class="space-y-2">
+              <label
+                class={`flex items-center justify-between rounded-box border border-base-300 p-3 ${
+                  topNavSelected ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                }`}
+                data-settings-target="sidebarOnlyControl"
+              >
+                <span class="flex flex-col">
+                  <span class="text-sm font-medium">默认折叠侧边栏</span>
+                  <span class="text-xs text-base-content/60">仅作用于含侧边栏的布局</span>
+                </span>
+                <input
+                  type="checkbox"
+                  class="toggle toggle-primary"
+                  checked={defaultCollapsed}
+                  disabled={topNavSelected}
+                  data-action="change->settings#toggleSidebarCollapsed"
+                  data-settings-target="sidebarCollapsed"
+                />
+              </label>
+              <label
+                class={`flex cursor-pointer items-center justify-between rounded-box border border-base-300 p-3 ${topNavSelected ? '' : 'opacity-50'}`}
+                data-settings-target="topNavOnlyControl"
+              >
+                <span class="flex flex-col">
+                  <span class="text-sm font-medium">顶部菜单居中</span>
+                  <span class="text-xs text-base-content/60">菜单在 header 中居中</span>
+                </span>
+                <input
+                  type="checkbox"
+                  class="toggle toggle-primary"
+                  checked={topMenuCentered}
+                  disabled={!topNavSelected}
+                  data-action="change->settings#toggleTopMenuCentered"
+                  data-settings-target="topMenuCentered"
+                />
+              </label>
+              <label
+                class={`flex cursor-pointer items-center justify-between rounded-box border border-base-300 p-3 ${topNavSelected ? '' : 'opacity-50'}`}
+                data-settings-target="topNavOnlyControl"
+              >
+                <span class="flex flex-col">
+                  <span class="text-sm font-medium">Main 窄屏</span>
+                  <span class="text-xs text-base-content/60">同步收窄 main 和顶部 header 内容</span>
+                </span>
+                <input
+                  type="checkbox"
+                  class="toggle toggle-primary"
+                  checked={mainWidthNarrow}
+                  disabled={!topNavSelected}
+                  data-action="change->settings#toggleMainWidth"
+                  data-settings-target="mainWidthToggle"
+                />
+              </label>
+            </div>
+          </section>
+          <section>
+            <h3 class="mb-3 text-sm font-semibold text-base-content/80">Name</h3>
+            <div class="flex justify-center">
               <input
-                type="checkbox"
-                class="toggle toggle-primary"
-                checked={defaultCollapsed}
-                data-action="change->settings#toggleSidebarCollapsed"
-                data-settings-target="sidebarCollapsed"
+                aria-label="主题名称"
+                class="input input-bordered input-sm w-full max-w-40 text-center"
+                data-action="change->settings#updateThemeDraftName"
+                data-settings-target="themeName"
+                placeholder="主题Name"
+                value={selectedTheme}
               />
-            </label>
+            </div>
           </section>
           <section>
             <div class="mb-3 flex items-center justify-between">
@@ -216,7 +258,7 @@ export default function SettingsDrawer({ triggerClass }: Props = {}) {
               <button
                 type="button"
                 class="btn btn-ghost btn-xs"
-                data-action="settings#resetCustomTheme"
+                data-action="settings#resetThemeDraft"
               >
                 <i class="icon-[ri--refresh-line]"></i>
                 <span>重置</span>
@@ -233,8 +275,8 @@ export default function SettingsDrawer({ triggerClass }: Props = {}) {
                         colorKey={pair.key}
                         contentKey={pair.contentKey}
                         label={pair.label}
-                        value={customTheme.colors[pair.key]}
-                        contentValue={pair.contentKey ? customTheme.colors[pair.contentKey] : undefined}
+                        value={themeDraft.colors[pair.key]}
+                        contentValue={pair.contentKey ? themeDraft.colors[pair.contentKey] : undefined}
                       />
                     ))}
                   </div>
@@ -247,17 +289,17 @@ export default function SettingsDrawer({ triggerClass }: Props = {}) {
             <RadiusRow
               label="Box"
               field="radiusBox"
-              value={customTheme.radiusBox}
+              value={themeDraft.radiusBox}
             />
             <RadiusRow
               label="Field"
               field="radiusField"
-              value={customTheme.radiusField}
+              value={themeDraft.radiusField}
             />
             <RadiusRow
               label="Selector"
               field="radiusSelector"
-              value={customTheme.radiusSelector}
+              value={themeDraft.radiusSelector}
             />
           </section>
           <section>
@@ -265,17 +307,17 @@ export default function SettingsDrawer({ triggerClass }: Props = {}) {
             <SizeRow
               label="Field"
               field="sizeField"
-              value={customTheme.sizeField}
+              value={themeDraft.sizeField}
             />
             <SizeRow
               label="Selector"
               field="sizeSelector"
-              value={customTheme.sizeSelector}
+              value={themeDraft.sizeSelector}
             />
           </section>
           <section>
             <h3 class="mb-3 text-sm font-semibold text-base-content/80">边框宽度</h3>
-            <BorderRow value={customTheme.borderWidth} />
+            <BorderRow value={themeDraft.borderWidth} />
           </section>
           <section>
             <h3 class="mb-3 text-sm font-semibold text-base-content/80">效果</h3>
@@ -285,7 +327,7 @@ export default function SettingsDrawer({ triggerClass }: Props = {}) {
                 <input
                   type="checkbox"
                   class="toggle toggle-primary"
-                  checked={customTheme.depth}
+                  checked={themeDraft.depth}
                   data-action="change->settings#toggleDepth"
                   data-settings-target="depthToggle"
                 />
@@ -295,7 +337,7 @@ export default function SettingsDrawer({ triggerClass }: Props = {}) {
                 <input
                   type="checkbox"
                   class="toggle toggle-primary"
-                  checked={customTheme.noise}
+                  checked={themeDraft.noise}
                   data-action="change->settings#toggleNoise"
                   data-settings-target="noiseToggle"
                 />
@@ -303,23 +345,23 @@ export default function SettingsDrawer({ triggerClass }: Props = {}) {
             </div>
           </section>
         </div>
-        <footer class="border-t border-base-200 px-4 py-3 space-y-2">
-          <p class="text-xs text-base-content/60">
-            切换布局会刷新当前页面以应用更新。
-          </p>
-          {isDev
-            ? (
-                <button
-                  type="button"
-                  class="btn btn-block btn-sm btn-outline"
-                  data-action="settings#copyConfig"
-                  data-settings-target="copyButton"
-                >
-                  <i class="icon-[ri--clipboard-line]"></i>
-                  <span data-settings-target="copyLabel">复制配置到 layout/config.ts</span>
-                </button>
-              )
-            : null}
+        <footer class="border-t border-base-200 px-4 py-3 join">
+          <button
+            type="button"
+            class="btn btn-sm btn-outline join-item w-1/2"
+            data-action="settings#copyLayoutConfig"
+          >
+            <i class="icon-[ri--layout-line]"></i>
+            <span data-settings-copy-label>复制 layout config</span>
+          </button>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline join-item w-1/2"
+            data-action="settings#copyThemeCss"
+          >
+            <i class="icon-[ri--palette-line]"></i>
+            <span data-settings-copy-label>复制 CSS 到 style.css</span>
+          </button>
         </footer>
       </aside>
     </div>

@@ -2,6 +2,7 @@ import type { MenuItem } from '../../../../../service/admin/system/menu/consts'
 import { isMenuItemActive } from '../../../../../service/admin/system/menu'
 import { getSiteLogoText } from '../../../utils/branding'
 import Menu from './menu'
+import Theme from './theme'
 
 interface Props {
   currentMenuName: string
@@ -71,8 +72,9 @@ export default function Aside({
         {/* aside options */}
         <div
           data-layout-aside-options
-          class="w-full max-w-full min-w-0 overflow-hidden pt-2 gap-2 border-t border-base-300 transition-[gap] duration-150 ease-out flex flex-row items-center justify-end"
+          class="w-full max-w-full min-w-0 overflow-hidden pt-2 gap-2 border-t border-base-300 transition-[gap] duration-150 ease-out flex flex-row items-center justify-between"
         >
+          <Theme />
           {/* options collapsed */}
           <button
             data-action="layout#toggle"

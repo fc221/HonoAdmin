@@ -30,16 +30,19 @@ export default function TopNav({
   return (
     <header
       class={navClass}
+      data-layout-top-nav-bar
       data-controller={`dropdown${hasAdminMenuHref(menus) ? ' update-status' : ''}`}
     >
-      <div class="flex min-w-0 items-center gap-3">
-        <Logo siteTitle={siteTitle} />
-      </div>
-      <nav class="ml-2 flex flex-1 min-w-0" aria-label="主导航">
-        <TopMenu currentMenuName={currentMenuName} items={menus} />
-      </nav>
-      <div class="ml-auto flex shrink-0 items-center gap-1">
-        <HeaderActions menus={menus} user={user} />
+      <div class="flex w-full min-w-0 items-center gap-3" data-layout-top-nav-content>
+        <div class="flex min-w-0 items-center gap-3" data-layout-top-nav-brand>
+          <Logo siteTitle={siteTitle} />
+        </div>
+        <nav class="ml-2 flex flex-1 min-w-0" aria-label="主导航" data-layout-top-menu>
+          <TopMenu currentMenuName={currentMenuName} items={menus} />
+        </nav>
+        <div class="ml-auto flex shrink-0 items-center gap-1" data-layout-top-nav-actions>
+          <HeaderActions menus={menus} user={user} />
+        </div>
       </div>
     </header>
   )

@@ -3,10 +3,10 @@ import { Controller } from '@hotwired/stimulus'
 import {
   defaultLayoutConfig,
   desktopBreakpoint,
+  isLayoutMainWidth,
   isLayoutVariant,
   isThemeName,
   layoutConfigStorageKey,
-  sanitizeCustomTheme,
 } from '../../components/layout/config'
 
 const headerIconBaseClass = 'transition-transform duration-150 ease-out text-sm'
@@ -204,14 +204,19 @@ function readStoredLayoutConfig(): LayoutConfig {
     const parsed = value ? JSON.parse(value) as Partial<LayoutConfig> : {}
 
     return {
+      mainWidth: isLayoutMainWidth(parsed.mainWidth)
+        ? parsed.mainWidth
+        : defaultLayoutConfig.mainWidth,
       sidebarCollapsed: typeof parsed.sidebarCollapsed === 'boolean'
         ? parsed.sidebarCollapsed
         : defaultLayoutConfig.sidebarCollapsed,
       theme: isThemeName(parsed.theme) ? parsed.theme : defaultLayoutConfig.theme,
+      topMenuCentered: typeof parsed.topMenuCentered === 'boolean'
+        ? parsed.topMenuCentered
+        : defaultLayoutConfig.topMenuCentered,
       variant: isLayoutVariant(parsed.variant)
         ? parsed.variant
         : defaultLayoutConfig.variant,
-      customTheme: sanitizeCustomTheme(parsed.customTheme),
     }
   } catch {
     return { ...defaultLayoutConfig }

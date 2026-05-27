@@ -112,6 +112,92 @@ html[data-spa-action-pending='true'] .modal-toggle:checked + .modal label[for] {
   width: 0;
 }
 
+html:is([data-layout-variant='top-nav'], [data-layout-variant='top-nav-flush']) {
+  --layout-main-max-width: 88rem;
+}
+
+html:is([data-layout-variant='top-nav'], [data-layout-variant='top-nav-flush']) [data-app-page-root] {
+  margin-inline: auto;
+  padding-inline: 1rem;
+  width: 100%;
+}
+
+html:is([data-layout-variant='top-nav'], [data-layout-variant='top-nav-flush'])[data-layout-main-width='narrow']
+  [data-app-page-root] {
+  max-width: var(--layout-main-max-width);
+}
+
+html[data-layout-variant='top-nav'][data-layout-main-width='narrow'] [data-layout-top-nav-bar],
+html[data-layout-variant='top-nav-flush'][data-layout-main-width='narrow'] [data-layout-top-nav-content] {
+  margin-inline: auto;
+  max-width: var(--layout-main-max-width);
+  width: 100%;
+}
+
+html[data-layout-top-menu-centered='true'] [data-layout-top-nav-content] {
+  display: grid;
+  grid-template-columns:
+    minmax(10rem, 1fr)
+    minmax(0, 1fr)
+    minmax(10rem, 1fr);
+}
+
+html[data-layout-top-menu-centered='true'] [data-layout-top-nav-brand] {
+  justify-self: start;
+}
+
+html[data-layout-top-menu-centered='true'] [data-layout-top-menu] {
+  justify-content: center;
+  justify-self: center;
+  margin-inline: 0;
+  width: 100%;
+}
+
+html[data-layout-top-menu-centered='true'] [data-layout-top-menu] > .menu {
+  justify-content: center;
+}
+
+html[data-layout-top-menu-centered='true'] [data-layout-top-nav-actions] {
+  justify-self: end;
+  margin-inline-start: 0;
+}
+
+@media (min-width: 1024px) {
+  html:is([data-layout-variant='top-nav'], [data-layout-variant='top-nav-flush'])[data-layout-main-width='wide']
+    [data-app-page-root] {
+    padding-inline: 1.5rem;
+  }
+
+  html:is([data-layout-variant='top-nav'], [data-layout-variant='top-nav-flush'])[data-layout-main-width='narrow']
+    [data-app-page-root] {
+    padding-inline: 1.25rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  html:is([data-layout-variant='top-nav'], [data-layout-variant='top-nav-flush'])[data-layout-main-width='wide']
+    [data-app-page-root] {
+    padding-inline: 2rem;
+  }
+
+  html:is([data-layout-variant='top-nav'], [data-layout-variant='top-nav-flush'])[data-layout-main-width='narrow']
+    [data-app-page-root] {
+    padding-inline: 1.5rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  html:is([data-layout-variant='top-nav'], [data-layout-variant='top-nav-flush'])[data-layout-main-width='wide']
+    [data-app-page-root] {
+    padding-inline: 2.5rem;
+  }
+
+  html:is([data-layout-variant='top-nav'], [data-layout-variant='top-nav-flush'])[data-layout-main-width='narrow']
+    [data-app-page-root] {
+    padding-inline: 2rem;
+  }
+}
+
 /* 和 layout config 的 desktopBreakpoint 保持一致。 */
 @media (min-width: 1024px) {
   html[data-sidebar-collapsed='true'] [data-layout-aside-panel] {

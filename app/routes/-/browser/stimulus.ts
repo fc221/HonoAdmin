@@ -13,6 +13,7 @@ import PageAlertController from './controllers/page-alert-controller'
 import RichTextController from './controllers/rich-text-controller'
 import RolePermissionController from './controllers/role-permission-controller'
 import SettingsController from './controllers/settings-controller'
+import ThemeController from './controllers/theme-controller'
 import UpdateStatusController from './controllers/update-status-controller'
 
 let stimulusApplication: Application | null = null
@@ -38,6 +39,7 @@ export function installStimulus() {
   application.register('rich-text', RichTextController)
   application.register('role-permission', RolePermissionController)
   application.register('settings', SettingsController)
+  application.register('theme', ThemeController)
   application.register('update-status', UpdateStatusController)
 
   stimulusApplication = application

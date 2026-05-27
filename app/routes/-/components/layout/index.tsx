@@ -1,7 +1,7 @@
 import type { Child } from 'hono/jsx'
 import type { MenuItem } from '../../../../service/admin/system/menu/consts'
 import type { UserHeaderProfile } from '../../../../service/admin/system/user/dto'
-import type { LayoutVariant } from './config'
+import type { LayoutMainWidth, LayoutVariant } from './config'
 import { defaultMenus } from '../../../../service/admin/system/menu/consts'
 import Aside from './components/aside'
 import Header from './components/header'
@@ -14,6 +14,8 @@ interface Props {
   menus?: MenuItem[]
   siteTitle?: string
   user?: UserHeaderProfile | null
+  mainWidth?: LayoutMainWidth
+  topMenuCentered?: boolean
   variant?: LayoutVariant
 }
 
@@ -23,6 +25,8 @@ export default function Layout({
   menus = defaultMenus,
   siteTitle = 'HonoAdmin',
   user = null,
+  mainWidth = layoutPreset.mainWidth,
+  topMenuCentered = layoutPreset.topMenuCentered,
   variant = layoutPreset.variant,
 }: Props) {
   const flush = isFlushVariant(variant)
@@ -41,6 +45,8 @@ export default function Layout({
       <div
         class={rootClass}
         data-controller="layout"
+        data-layout-main-width={mainWidth}
+        data-layout-top-menu-centered={topMenuCentered ? 'true' : 'false'}
         data-layout-variant={variant}
       >
         <div class="drawer h-full! min-w-0 overflow-x-hidden">
@@ -100,6 +106,8 @@ export default function Layout({
     <div
       class={rootClass}
       data-controller="layout"
+      data-layout-main-width={mainWidth}
+      data-layout-top-menu-centered={topMenuCentered ? 'true' : 'false'}
       data-layout-variant={variant}
     >
       <div class={drawerClass}>

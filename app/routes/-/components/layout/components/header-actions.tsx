@@ -24,11 +24,12 @@ interface HeaderActionsProps {
 
 export default function HeaderActions({ menus, user }: HeaderActionsProps) {
   const canSwitchRole = (user?.roles.length ?? 0) > 1
+  const btnClass = 'btn btn-sm btn-ghost btn-circle opacity-80 bg-transparent border-0'
 
   return (
     <>
       <button
-        class="btn btn-sm btn-ghost btn-circle opacity-80"
+        class={btnClass}
         aria-label="刷新当前页面"
         type="button"
         data-action="layout#refresh"
@@ -40,6 +41,7 @@ export default function HeaderActions({ menus, user }: HeaderActionsProps) {
             <RoleSwitchDropdown
               activeRoleId={user.activeRoleId}
               roles={user.roles}
+              triggerClass={btnClass}
             />
           )
         : null}
@@ -47,7 +49,7 @@ export default function HeaderActions({ menus, user }: HeaderActionsProps) {
         ? (
             <a
               aria-label="数据库需要迁移"
-              class="btn btn-sm btn-ghost btn-circle opacity-80"
+              class={btnClass}
               data-update-status-target="link"
               hidden
               href="/admin/system/update"
@@ -57,7 +59,7 @@ export default function HeaderActions({ menus, user }: HeaderActionsProps) {
             </a>
           )
         : null}
-      <SettingsDrawer />
+      <SettingsDrawer triggerClass={btnClass} />
       <UserDropdown user={user} />
     </>
   )
@@ -116,9 +118,11 @@ function UserDropdown({ user }: { user: UserHeaderProfile | null }) {
 function RoleSwitchDropdown({
   activeRoleId,
   roles,
+  triggerClass,
 }: {
   activeRoleId: number | null
   roles: UserSessionRole[]
+  triggerClass: string
 }) {
   const activeRole = roles.find((role) => role.id === activeRoleId)
 
@@ -128,7 +132,7 @@ function RoleSwitchDropdown({
         aria-expanded="false"
         aria-haspopup="menu"
         aria-label={`切换角色${activeRole ? `，当前为${activeRole.name}` : ''}`}
-        class="btn btn-sm btn-ghost btn-circle opacity-80"
+        class={triggerClass}
         data-action="dropdown#toggle"
         data-dropdown-key="role"
         data-dropdown-target="button"
@@ -174,6 +178,7 @@ function RoleSwitchMenuItem({
         method="post"
         {...topLevelFormTurboAttrs}
       >
+        <CsrfField />
         <input name="roleId" type="hidden" value={role.id} />
         <button
           class="flex w-full items-center justify-between rounded-field px-3 py-2 text-left hover:bg-base-200 disabled:cursor-default disabled:opacity-60"

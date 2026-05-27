@@ -88,13 +88,7 @@ function attachCsrfTokenToForm(form: HTMLFormElement, token: string) {
 }
 
 function addTurboCsrfHeader(event: Event) {
-  const detail = (event as CustomEvent<{
-    fetchOptions?: {
-      headers?: HeadersInit
-      method?: string
-    }
-    url?: URL
-  }>).detail
+  const detail = (event as CustomEvent<TurboFetchRequestDetail>).detail
 
   if (!detail?.fetchOptions || isSafeMethod(detail.fetchOptions.method)) {
     return
@@ -105,7 +99,29 @@ function addTurboCsrfHeader(event: Event) {
     return
   }
 
-  setTurboCsrfHeader(detail.fetchOptions, getCsrfToken())
+  if (!detail.resume) {
+    setTurboCsrfHeader(detail.fetchOptions, getCsrfToken())
+    return
+  }
+
+  event.preventDefault()
+
+  const fetchOptions = detail.fetchOptions
+  void ensureFreshCsrfToken()
+    .catch(() => getCsrfToken())
+    .then((token) => {
+      setTurboCsrfHeader(fetchOptions, token)
+      detail.resume?.()
+    })
+}
+
+interface TurboFetchRequestDetail {
+  fetchOptions?: {
+    headers?: HeadersInit
+    method?: string
+  }
+  resume?: () => void
+  url?: URL
 }
 
 function setTurboCsrfHeader(
