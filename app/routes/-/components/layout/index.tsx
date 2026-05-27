@@ -50,7 +50,7 @@ export default function Layout({
   const effectiveTopMenuCentered = hybrid ? false : topMenuCentered
   const rootClass = `h-screen overflow-x-hidden bg-base-200 ${flush ? '' : 'p-4'}`
   const footer = (
-    <footer class="mt-auto px-4 pb-1 pt-3 text-center text-xs text-base-content/50">
+    <footer class={getFooterClass({ flush })}>
       {`Copyright © 2026 ${siteTitle}. All rights reserved.`}
     </footer>
   )
@@ -242,4 +242,8 @@ export default function Layout({
 
 function getPageRootClass({ padded = true }: { padded?: boolean } = {}) {
   return `min-w-0 overflow-x-clip${padded ? ' p-4' : ''}`
+}
+
+function getFooterClass({ flush }: { flush: boolean }) {
+  return `mt-auto px-4 ${flush ? 'pb-4' : 'pb-1'} pt-3 text-center text-xs text-base-content/50`
 }

@@ -51,6 +51,22 @@ describe('server-first UI rendering', () => {
     expect(panelHtml).not.toContain('h-[calc(100vh-2rem)]')
   })
 
+  test('flush layouts keep the footer inset from the viewport edge', async () => {
+    const defaultHtml = await render(
+      <Layout currentMenuName="admin.dashboard">
+        <div>content</div>
+      </Layout>,
+    )
+    const flushHtml = await render(
+      <Layout currentMenuName="admin.dashboard" variant="top-nav-flush">
+        <div>content</div>
+      </Layout>,
+    )
+
+    expect(defaultHtml).toContain('class="mt-auto px-4 pb-1 pt-3 text-center text-xs text-base-content/50"')
+    expect(flushHtml).toContain('class="mt-auto px-4 pb-4 pt-3 text-center text-xs text-base-content/50"')
+  })
+
   test('top nav layouts use the mobile sidebar drawer on small screens', async () => {
     const topNavHtml = await render(
       <Layout currentMenuName="admin.dashboard" variant="top-nav">
