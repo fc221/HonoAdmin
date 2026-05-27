@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, test } from 'bun:test'
 import { Hono } from 'hono'
 import Layout from '../app/routes/-/components/layout'
@@ -16,6 +17,15 @@ describe('server-first UI rendering', () => {
     expect(hasCollapsibleSidebarVariant('hybrid')).toBe(true)
     expect(hasCollapsibleSidebarVariant('hybrid-flush')).toBe(true)
     expect(hasCollapsibleSidebarVariant('top-nav')).toBe(false)
+  })
+
+  test('hybrid layouts apply sidebar menu style on desktop', () => {
+    const desktopCss = readFileSync('app/style.css', 'utf8')
+      .split('@media (max-width: 1023.98px)')[0] ?? ''
+
+    expect(desktopCss).toMatch(
+      /data-layout-variant='hybrid'[\s\S]*data-layout-variant='hybrid-flush'[\s\S]*data-layout-sidebar-menu-style='plain'[\s\S]*\[data-layout-aside-menu-shell\][\s\S]*>\s*\.menu/,
+    )
   })
 
   test('layout renders Stimulus hooks while keeping existing shell classes', async () => {
