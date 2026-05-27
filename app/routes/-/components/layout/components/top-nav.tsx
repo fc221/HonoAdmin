@@ -11,6 +11,7 @@ import HeaderActions, { hasAdminMenuHref } from './header-actions'
 interface Props {
   currentMenuName: string
   flush?: boolean
+  rootOnly?: boolean
   menus: MenuItem[]
   siteTitle: string
   user: UserHeaderProfile | null
@@ -19,6 +20,7 @@ interface Props {
 export default function TopNav({
   currentMenuName,
   flush = false,
+  rootOnly = false,
   menus,
   siteTitle,
   user,
@@ -38,7 +40,11 @@ export default function TopNav({
           <Logo siteTitle={siteTitle} />
         </div>
         <nav class="ml-2 flex flex-1 min-w-0" aria-label="主导航" data-layout-top-menu>
-          <TopMenu currentMenuName={currentMenuName} items={menus} />
+          <TopMenu
+            currentMenuName={currentMenuName}
+            items={menus}
+            rootOnly={rootOnly}
+          />
         </nav>
         <div class="ml-auto flex shrink-0 items-center gap-1" data-layout-top-nav-actions>
           <HeaderActions menus={menus} user={user} />
@@ -66,9 +72,11 @@ function Logo({ siteTitle }: { siteTitle: string }) {
 function TopMenu({
   currentMenuName,
   items,
+  rootOnly,
 }: {
   currentMenuName: string
   items: MenuItem[]
+  rootOnly: boolean
 }) {
   return (
     <ul class="menu menu-horizontal min-w-0 flex-nowrap items-center gap-1 overflow-x-auto p-0">
@@ -77,6 +85,7 @@ function TopMenu({
           currentMenuName={currentMenuName}
           item={item}
           key={item.name}
+          rootOnly={rootOnly}
         />
       ))}
     </ul>
@@ -86,12 +95,34 @@ function TopMenu({
 function TopMenuItem({
   currentMenuName,
   item,
+  rootOnly,
 }: {
   currentMenuName: string
   item: MenuItem
+  rootOnly: boolean
 }) {
   const active = isMenuItemActive(item, currentMenuName)
   const activeClass = active ? 'menu-active' : ''
+
+  if (rootOnly) {
+    const href = item.href ?? getFirstMenuHref(item)
+    if (!href) {
+      return null
+    }
+
+    return (
+      <li class="min-w-0">
+        <a
+          class={`${activeClass} gap-2`}
+          href={href}
+          title={item.label}
+        >
+          <i class={`${item.icon} shrink-0`}></i>
+          <span class="min-w-0 truncate">{item.label}</span>
+        </a>
+      </li>
+    )
+  }
 
   if (item.children?.length) {
     const popoverId = getTopMenuPopoverId(item.name)
@@ -195,4 +226,17 @@ function TopSubMenuItem({
 
 function getTopMenuPopoverId(name: string) {
   return `top-menu-${name.split('.').join('-')}`
+}
+
+function getFirstMenuHref(item: MenuItem): string | undefined {
+  if (item.href) {
+    return item.href
+  }
+
+  for (const child of item.children ?? []) {
+    const href = getFirstMenuHref(child)
+    if (href) {
+      return href
+    }
+  }
 }

@@ -1,14 +1,20 @@
 import type { MenuItem } from '../../../../../service/admin/system/menu/consts'
-import { isMenuItemActive } from '../../../../../service/admin/system/menu'
+import {
+  getActiveMenuPath,
+  isMenuItemActive,
+} from '../../../../../service/admin/system/menu'
 import { getSiteLogoText } from '../../../utils/branding'
 import Menu from './menu'
 import Theme from './theme'
+
+type AsideMode = 'root' | 'active-children'
 
 interface Props {
   currentMenuName: string
   flush?: boolean
   id: string
   menus: MenuItem[]
+  mode?: AsideMode
   siteTitle: string
 }
 
@@ -17,8 +23,13 @@ export default function Aside({
   flush = false,
   id,
   menus,
+  mode = 'root',
   siteTitle,
 }: Props) {
+  const desktopMenus = mode === 'active-children'
+    ? getActiveChildrenMenus(menus, currentMenuName)
+    : menus
+  const splitDesktopMenus = mode === 'active-children'
   const panelClass = flush
     ? 'flex min-w-0 flex-col items-center overflow-x-hidden bg-base-100 p-4 gap-3 w-64 h-full rounded-none transition-[width,box-shadow] duration-150 ease-out shadow-none lg:w-64'
     : 'flex min-w-0 flex-col items-center overflow-x-hidden bg-base-100 p-4 gap-3 rounded-box w-64 m-3 h-[calc(100vh-2rem)] transition-[width,box-shadow] duration-150 ease-out lg:m-0 lg:h-full shadow-none lg:w-64'
@@ -41,7 +52,10 @@ export default function Aside({
           data-layout-aside-logo
           class="bg-linear-to-br from-primary to-primary/30 rounded-box flex max-w-full min-w-0 flex-row items-center overflow-hidden transition-[padding,gap,width] duration-150 ease-out w-full p-4 gap-3"
         >
-          <div class="rounded-box bg-white/20 w-12 h-12 flex items-center justify-center">
+          <div
+            data-layout-aside-logo-mark
+            class="rounded-box bg-white/20 w-12 h-12 flex items-center justify-center"
+          >
             <span class="text-white text-lg font-bold">{getSiteLogoText(siteTitle)}</span>
           </div>
           <div
@@ -52,12 +66,27 @@ export default function Aside({
           </div>
         </div>
         {/* menu */}
-        <div class="w-full min-w-0 flex-1 min-h-0 overflow-x-hidden">
+        <div
+          class="w-full min-w-0 flex-1 min-h-0 overflow-x-hidden"
+          data-layout-aside-menu-shell
+        >
+          {splitDesktopMenus
+            ? (
+                <Menu
+                  dataLayoutMenuExpanded
+                  currentMenuName={currentMenuName}
+                  items={menus}
+                  className="menu w-full h-full space-y-1 overflow-y-auto flex-nowrap p-4 bg-base-200 rounded-box lg:hidden"
+                />
+              )
+            : null}
           <Menu
             dataLayoutMenuExpanded
             currentMenuName={currentMenuName}
-            items={menus}
-            className="menu w-full h-full space-y-1 overflow-y-auto flex-nowrap p-4 bg-base-200 rounded-box"
+            items={desktopMenus}
+            className={`menu w-full h-full space-y-1 overflow-y-auto flex-nowrap p-4 bg-base-200 rounded-box ${
+              splitDesktopMenus ? 'hidden lg:flex' : ''
+            }`}
           />
           <div
             data-layout-menu-collapsed
@@ -65,7 +94,7 @@ export default function Aside({
           >
             <CollapsedMenu
               currentMenuName={currentMenuName}
-              items={menus}
+              items={desktopMenus}
             />
           </div>
         </div>
@@ -109,6 +138,18 @@ export default function Aside({
       </div>
     </aside>
   )
+}
+
+function getActiveChildrenMenus(
+  menus: MenuItem[],
+  currentMenuName: string,
+): MenuItem[] {
+  const activeRoot = getActiveMenuPath(menus, currentMenuName)?.[0] ?? menus[0]
+  if (!activeRoot) {
+    return []
+  }
+
+  return activeRoot.children?.length ? activeRoot.children : [activeRoot]
 }
 
 function CollapsedMenu({

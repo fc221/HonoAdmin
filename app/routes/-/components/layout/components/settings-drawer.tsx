@@ -1,11 +1,21 @@
-import type { LayoutVariant } from '../config'
+import type {
+  LayoutSidebarLogoStyle,
+  LayoutSidebarMenuStyle,
+  LayoutVariant,
+} from '../config'
 import type {
   BorderWidthValue,
   DaisyColorPalette,
   RadiusValue,
   SizeValue,
 } from '../theme-css'
-import { defaultLayoutConfig, isTopNavVariant, layoutPreset } from '../config'
+import {
+  defaultLayoutConfig,
+  hasCollapsibleSidebarVariant,
+  hasMobileSidebarVariant,
+  isTopNavVariant,
+  layoutPreset,
+} from '../config'
 import {
   borderWidthScale,
   defaultDaisyThemeDraft,
@@ -42,6 +52,33 @@ const variantOptions: Array<{
     value: 'top-nav-flush',
     preview: () => <VariantPreview kind="top-nav-flush" />,
   },
+  {
+    label: '综合布局',
+    value: 'hybrid',
+    preview: () => <VariantPreview kind="hybrid" />,
+  },
+  {
+    label: '综合贴边',
+    value: 'hybrid-flush',
+    preview: () => <VariantPreview kind="hybrid-flush" />,
+  },
+]
+
+const sidebarLogoStyleOptions: Array<{
+  label: string
+  value: LayoutSidebarLogoStyle
+}> = [
+  { label: '品牌卡片', value: 'brand' },
+  { label: '简洁', value: 'plain' },
+  { label: '隐藏', value: 'hidden' },
+]
+
+const sidebarMenuStyleOptions: Array<{
+  label: string
+  value: LayoutSidebarMenuStyle
+}> = [
+  { label: '卡片', value: 'card' },
+  { label: '简洁', value: 'plain' },
 ]
 
 const colorGroups: Array<{
@@ -85,8 +122,12 @@ export default function SettingsDrawer({ triggerClass }: Props = {}) {
   const selectedTheme = defaultLayoutConfig.theme
   const selectedVariant = layoutPreset.variant
   const mainWidthNarrow = layoutPreset.mainWidth === 'narrow'
+  const selectedSidebarLogoStyle = layoutPreset.sidebarLogoStyle
+  const selectedSidebarMenuStyle = layoutPreset.sidebarMenuStyle
   const defaultCollapsed = layoutPreset.sidebarCollapsed
   const topMenuCentered = layoutPreset.topMenuCentered
+  const sidebarLayoutSelected = hasCollapsibleSidebarVariant(selectedVariant)
+  const sidebarStyleSelected = hasMobileSidebarVariant(selectedVariant)
   const topNavSelected = isTopNavVariant(selectedVariant)
   const themeDraft = defaultDaisyThemeDraft
   const isDev = import.meta.env.DEV
@@ -186,7 +227,7 @@ export default function SettingsDrawer({ triggerClass }: Props = {}) {
             <div class="space-y-2">
               <label
                 class={`flex items-center justify-between rounded-box border border-base-300 p-3 ${
-                  topNavSelected ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                  sidebarLayoutSelected ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'
                 }`}
                 data-settings-target="sidebarOnlyControl"
               >
@@ -198,13 +239,71 @@ export default function SettingsDrawer({ triggerClass }: Props = {}) {
                   type="checkbox"
                   class="toggle toggle-primary"
                   checked={defaultCollapsed}
-                  disabled={topNavSelected}
+                  disabled={!sidebarLayoutSelected}
                   data-action="change->settings#toggleSidebarCollapsed"
                   data-settings-target="sidebarCollapsed"
                 />
               </label>
+              <div
+                class={`rounded-box border border-base-300 p-3 ${
+                  sidebarStyleSelected ? '' : 'opacity-50'
+                }`}
+                data-settings-target="sidebarPresentControl"
+              >
+                <div class="mb-2 flex flex-col">
+                  <span class="text-sm font-medium">侧边栏样式</span>
+                  <span class="text-xs text-base-content/60">分别配置 logo 和 menu 风格</span>
+                </div>
+                <div class="grid grid-cols-[4rem_minmax(0,1fr)] items-center gap-2">
+                  <label
+                    class={`text-xs text-base-content/70 ${
+                      sidebarStyleSelected ? '' : 'opacity-50'
+                    }`}
+                    data-settings-target="sidebarLogoOnlyControl"
+                    for="settings-sidebar-logo-style"
+                  >
+                    Logo
+                  </label>
+                  <select
+                    id="settings-sidebar-logo-style"
+                    class="select select-bordered select-sm w-full"
+                    disabled={!sidebarStyleSelected}
+                    data-action="change->settings#selectSidebarLogoStyle"
+                    data-settings-target="sidebarLogoStyleSelect"
+                    value={selectedSidebarLogoStyle}
+                  >
+                    {sidebarLogoStyleOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  <label
+                    class="text-xs text-base-content/70"
+                    for="settings-sidebar-menu-style"
+                  >
+                    Menu
+                  </label>
+                  <select
+                    id="settings-sidebar-menu-style"
+                    class="select select-bordered select-sm w-full"
+                    disabled={!sidebarStyleSelected}
+                    data-action="change->settings#selectSidebarMenuStyle"
+                    data-settings-target="sidebarMenuStyleSelect"
+                    value={selectedSidebarMenuStyle}
+                  >
+                    {sidebarMenuStyleOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
               <label
-                class={`flex cursor-pointer items-center justify-between rounded-box border border-base-300 p-3 ${topNavSelected ? '' : 'opacity-50'}`}
+                class={`flex items-center justify-between rounded-box border border-base-300 p-3 ${
+                  topNavSelected ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'
+                }`}
                 data-settings-target="topNavOnlyControl"
               >
                 <span class="flex flex-col">
@@ -221,7 +320,9 @@ export default function SettingsDrawer({ triggerClass }: Props = {}) {
                 />
               </label>
               <label
-                class={`flex cursor-pointer items-center justify-between rounded-box border border-base-300 p-3 ${topNavSelected ? '' : 'opacity-50'}`}
+                class={`flex items-center justify-between rounded-box border border-base-300 p-3 ${
+                  topNavSelected ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'
+                }`}
                 data-settings-target="topNavOnlyControl"
               >
                 <span class="flex flex-col">
@@ -657,6 +758,34 @@ function VariantPreview({ kind }: { kind: LayoutVariant }) {
         <div class="flex h-full flex-col gap-1">
           <div class="h-2 rounded-sm bg-primary/70"></div>
           <div class="flex-1 rounded-sm bg-base-100"></div>
+        </div>
+      </div>
+    )
+  }
+
+  if (kind === 'hybrid') {
+    return (
+      <div class={wrap}>
+        <div class="flex h-full flex-col gap-1">
+          <div class="h-2 rounded-sm bg-primary/70"></div>
+          <div class="flex min-h-0 flex-1 gap-1">
+            <div class="w-1/4 rounded-sm bg-primary/50"></div>
+            <div class="flex-1 rounded-sm bg-base-100"></div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (kind === 'hybrid-flush') {
+    return (
+      <div class="aspect-[4/3] w-full overflow-hidden rounded-md bg-base-200">
+        <div class="flex h-full flex-col">
+          <div class="h-3 bg-primary/70"></div>
+          <div class="flex min-h-0 flex-1">
+            <div class="w-1/4 bg-primary/50"></div>
+            <div class="flex-1 bg-base-100/70"></div>
+          </div>
         </div>
       </div>
     )

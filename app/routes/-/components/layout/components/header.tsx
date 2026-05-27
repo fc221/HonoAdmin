@@ -83,7 +83,7 @@ function Breadcrumbs({ items }: { items: MenuBreadcrumbItem[] }) {
 }
 
 function renderBreadcrumbItem(item: MenuBreadcrumbItem, isLastItem: boolean) {
-  const className = 'min-w-0 truncate'
+  const className = 'min-w-0 truncate '
 
   if (!item.href || isLastItem) {
     return <span class={className}>{item.label}</span>

@@ -14,8 +14,13 @@ import type {
 import { Controller } from '@hotwired/stimulus'
 import {
   defaultLayoutConfig,
+  hasCollapsibleSidebarVariant,
+  hasMobileSidebarVariant,
   isDaisyThemeName,
+  isHybridVariant,
   isLayoutMainWidth,
+  isLayoutSidebarLogoStyle,
+  isLayoutSidebarMenuStyle,
   isLayoutVariant,
   isThemeName,
   isTopNavVariant,
@@ -51,6 +56,10 @@ export default class SettingsController extends Controller<HTMLElement> {
     'mainWidthToggle',
     'sidebarOnlyControl',
     'sidebarCollapsed',
+    'sidebarLogoOnlyControl',
+    'sidebarPresentControl',
+    'sidebarLogoStyleSelect',
+    'sidebarMenuStyleSelect',
     'topMenuCentered',
     'topNavOnlyControl',
     'colorSwatch',
@@ -83,6 +92,10 @@ export default class SettingsController extends Controller<HTMLElement> {
   declare readonly sidebarOnlyControlTargets: HTMLElement[]
   declare readonly sidebarCollapsedTarget: HTMLInputElement
   declare readonly hasSidebarCollapsedTarget: boolean
+  declare readonly sidebarLogoOnlyControlTargets: HTMLElement[]
+  declare readonly sidebarPresentControlTargets: HTMLElement[]
+  declare readonly sidebarLogoStyleSelectTargets: HTMLSelectElement[]
+  declare readonly sidebarMenuStyleSelectTargets: HTMLSelectElement[]
   declare readonly topMenuCenteredTarget: HTMLInputElement
   declare readonly hasTopMenuCenteredTarget: boolean
   declare readonly topNavOnlyControlTargets: HTMLElement[]
@@ -217,7 +230,8 @@ export default class SettingsController extends Controller<HTMLElement> {
       return
     }
 
-    persistLayoutConfig({ ...config, variant })
+    const nextConfig = getLayoutConfigForVariant({ ...config, variant })
+    persistLayoutConfig(nextConfig)
     writeVariantCookie(variant)
     window.location.reload()
   }
@@ -235,10 +249,34 @@ export default class SettingsController extends Controller<HTMLElement> {
     document.documentElement.dataset.layoutMainWidth = mainWidth
   }
 
+  selectSidebarLogoStyle(event: Event) {
+    const target = event.currentTarget as HTMLSelectElement
+    const config = readStoredLayoutConfig()
+    if (!isLayoutSidebarLogoStyle(target.value) || !hasMobileSidebarVariant(config.variant)) {
+      this.syncSidebarStyleControls(config)
+      return
+    }
+
+    persistLayoutConfig({ ...config, sidebarLogoStyle: target.value })
+    document.documentElement.dataset.layoutSidebarLogoStyle = target.value
+  }
+
+  selectSidebarMenuStyle(event: Event) {
+    const target = event.currentTarget as HTMLSelectElement
+    const config = readStoredLayoutConfig()
+    if (!isLayoutSidebarMenuStyle(target.value) || !hasMobileSidebarVariant(config.variant)) {
+      this.syncSidebarStyleControls(config)
+      return
+    }
+
+    persistLayoutConfig({ ...config, sidebarMenuStyle: target.value })
+    document.documentElement.dataset.layoutSidebarMenuStyle = target.value
+  }
+
   toggleSidebarCollapsed(event: Event) {
     const target = event.currentTarget as HTMLInputElement
     const config = readStoredLayoutConfig()
-    if (isTopNavVariant(config.variant)) {
+    if (!hasCollapsibleSidebarVariant(config.variant)) {
       target.checked = config.sidebarCollapsed
       return
     }
@@ -762,6 +800,7 @@ export default class SettingsController extends Controller<HTMLElement> {
     if (this.hasSidebarCollapsedTarget) {
       this.sidebarCollapsedTarget.checked = config.sidebarCollapsed
     }
+    this.syncSidebarStyleControls(config)
     if (this.hasMainWidthToggleTarget) {
       this.mainWidthToggleTarget.checked = config.mainWidth === 'narrow'
     }
@@ -795,6 +834,15 @@ export default class SettingsController extends Controller<HTMLElement> {
     }
   }
 
+  private syncSidebarStyleControls(config: LayoutConfig) {
+    for (const select of this.sidebarLogoStyleSelectTargets) {
+      select.value = config.sidebarLogoStyle
+    }
+    for (const select of this.sidebarMenuStyleSelectTargets) {
+      select.value = config.sidebarMenuStyle
+    }
+  }
+
   private syncVariantOptions(variant: LayoutVariant) {
     for (const option of this.variantOptionTargets) {
       const selected = option.dataset.settingsVariantValue === variant
@@ -807,14 +855,28 @@ export default class SettingsController extends Controller<HTMLElement> {
     for (const check of this.variantCheckTargets) {
       check.classList.toggle('hidden', check.dataset.settingsVariantValue !== variant)
     }
+    const sidebarLayoutSelected = hasCollapsibleSidebarVariant(variant)
+    const sidebarStyleSelected = hasMobileSidebarVariant(variant)
     const topNavSelected = isTopNavVariant(variant)
     if (this.hasSidebarCollapsedTarget) {
-      this.sidebarCollapsedTarget.disabled = topNavSelected
+      this.sidebarCollapsedTarget.disabled = !sidebarLayoutSelected
     }
     for (const control of this.sidebarOnlyControlTargets) {
-      control.classList.toggle('opacity-50', topNavSelected)
-      control.classList.toggle('cursor-not-allowed', topNavSelected)
-      control.classList.toggle('cursor-pointer', !topNavSelected)
+      control.classList.toggle('opacity-50', !sidebarLayoutSelected)
+      control.classList.toggle('cursor-not-allowed', !sidebarLayoutSelected)
+      control.classList.toggle('cursor-pointer', sidebarLayoutSelected)
+    }
+    for (const control of this.sidebarPresentControlTargets) {
+      control.classList.toggle('opacity-50', !sidebarStyleSelected)
+    }
+    for (const control of this.sidebarLogoOnlyControlTargets) {
+      control.classList.toggle('opacity-50', !sidebarStyleSelected)
+    }
+    for (const select of this.sidebarLogoStyleSelectTargets) {
+      select.disabled = !sidebarStyleSelected
+    }
+    for (const select of this.sidebarMenuStyleSelectTargets) {
+      select.disabled = !sidebarStyleSelected
     }
     if (this.hasMainWidthToggleTarget) {
       this.mainWidthToggleTarget.disabled = !topNavSelected
@@ -824,6 +886,8 @@ export default class SettingsController extends Controller<HTMLElement> {
     }
     for (const control of this.topNavOnlyControlTargets) {
       control.classList.toggle('opacity-50', !topNavSelected)
+      control.classList.toggle('cursor-not-allowed', !topNavSelected)
+      control.classList.toggle('cursor-pointer', topNavSelected)
     }
   }
 
@@ -941,13 +1005,19 @@ function readStoredLayoutConfig(): LayoutConfig {
     const value = localStorage.getItem(layoutConfigStorageKey)
     const parsed = value ? JSON.parse(value) as Partial<LayoutConfig> : {}
 
-    return {
+    return getLayoutConfigForVariant({
       mainWidth: isLayoutMainWidth(parsed.mainWidth)
         ? parsed.mainWidth
         : defaultLayoutConfig.mainWidth,
       sidebarCollapsed: typeof parsed.sidebarCollapsed === 'boolean'
         ? parsed.sidebarCollapsed
         : defaultLayoutConfig.sidebarCollapsed,
+      sidebarLogoStyle: isLayoutSidebarLogoStyle(parsed.sidebarLogoStyle)
+        ? parsed.sidebarLogoStyle
+        : defaultLayoutConfig.sidebarLogoStyle,
+      sidebarMenuStyle: isLayoutSidebarMenuStyle(parsed.sidebarMenuStyle)
+        ? parsed.sidebarMenuStyle
+        : defaultLayoutConfig.sidebarMenuStyle,
       theme: isThemeName(parsed.theme)
         ? parsed.theme
         : defaultLayoutConfig.theme,
@@ -957,9 +1027,21 @@ function readStoredLayoutConfig(): LayoutConfig {
       variant: isLayoutVariant(parsed.variant)
         ? parsed.variant
         : defaultLayoutConfig.variant,
-    }
+    })
   } catch {
-    return { ...defaultLayoutConfig }
+    return getLayoutConfigForVariant({ ...defaultLayoutConfig })
+  }
+}
+
+function getLayoutConfigForVariant(config: LayoutConfig): LayoutConfig {
+  if (!isHybridVariant(config.variant)) {
+    return config
+  }
+
+  return {
+    ...config,
+    mainWidth: 'wide',
+    topMenuCentered: false,
   }
 }
 
@@ -1200,6 +1282,8 @@ function renderLayoutConfigSnippet(config: LayoutConfig): string {
     `  defaultTheme: ${quoteTsString(config.theme)},`,
     `  mainWidth: ${quoteTsString(config.mainWidth)},`,
     `  sidebarCollapsed: ${config.sidebarCollapsed ? 'true' : 'false'},`,
+    `  sidebarLogoStyle: ${quoteTsString(config.sidebarLogoStyle)},`,
+    `  sidebarMenuStyle: ${quoteTsString(config.sidebarMenuStyle)},`,
     `  topMenuCentered: ${config.topMenuCentered ? 'true' : 'false'},`,
     `  variant: ${quoteTsString(config.variant)},`,
     '}',

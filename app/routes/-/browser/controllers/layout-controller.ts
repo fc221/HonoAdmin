@@ -3,7 +3,10 @@ import { Controller } from '@hotwired/stimulus'
 import {
   defaultLayoutConfig,
   desktopBreakpoint,
+  hasCollapsibleSidebarVariant,
   isLayoutMainWidth,
+  isLayoutSidebarLogoStyle,
+  isLayoutSidebarMenuStyle,
   isLayoutVariant,
   isThemeName,
   layoutConfigStorageKey,
@@ -60,7 +63,14 @@ export default class LayoutController extends Controller<HTMLElement> {
     }
 
     if (this.isDesktop()) {
-      this.setSidebarCollapsed(!readStoredLayoutConfig().sidebarCollapsed)
+      const config = readStoredLayoutConfig()
+      if (!hasCollapsibleSidebarVariant(config.variant)) {
+        this.setRootSidebarCollapsed(false)
+        this.sync()
+        return
+      }
+
+      this.setSidebarCollapsed(!config.sidebarCollapsed)
       this.sync()
       return
     }
@@ -103,11 +113,19 @@ export default class LayoutController extends Controller<HTMLElement> {
   }
 
   private applyStoredSidebarState() {
-    this.setRootSidebarCollapsed(readStoredLayoutConfig().sidebarCollapsed)
+    const config = readStoredLayoutConfig()
+    this.setRootSidebarCollapsed(
+      hasCollapsibleSidebarVariant(config.variant) && config.sidebarCollapsed,
+    )
   }
 
   private setSidebarCollapsed(sidebarCollapsed: boolean) {
     const config = readStoredLayoutConfig()
+    if (!hasCollapsibleSidebarVariant(config.variant)) {
+      this.setRootSidebarCollapsed(false)
+      return
+    }
+
     persistLayoutConfig({ ...config, sidebarCollapsed })
     this.setRootSidebarCollapsed(sidebarCollapsed)
   }
@@ -121,7 +139,8 @@ export default class LayoutController extends Controller<HTMLElement> {
   private sync() {
     const isDesktop = this.isDesktop()
     const isDrawerOpen = this.drawerToggleTarget.checked
-    const isCollapsed = readStoredLayoutConfig().sidebarCollapsed
+    const config = readStoredLayoutConfig()
+    const isCollapsed = hasCollapsibleSidebarVariant(config.variant) && config.sidebarCollapsed
 
     if (isDesktop && isDrawerOpen) {
       this.drawerToggleTarget.checked = false
@@ -210,6 +229,12 @@ function readStoredLayoutConfig(): LayoutConfig {
       sidebarCollapsed: typeof parsed.sidebarCollapsed === 'boolean'
         ? parsed.sidebarCollapsed
         : defaultLayoutConfig.sidebarCollapsed,
+      sidebarLogoStyle: isLayoutSidebarLogoStyle(parsed.sidebarLogoStyle)
+        ? parsed.sidebarLogoStyle
+        : defaultLayoutConfig.sidebarLogoStyle,
+      sidebarMenuStyle: isLayoutSidebarMenuStyle(parsed.sidebarMenuStyle)
+        ? parsed.sidebarMenuStyle
+        : defaultLayoutConfig.sidebarMenuStyle,
       theme: isThemeName(parsed.theme) ? parsed.theme : defaultLayoutConfig.theme,
       topMenuCentered: typeof parsed.topMenuCentered === 'boolean'
         ? parsed.topMenuCentered

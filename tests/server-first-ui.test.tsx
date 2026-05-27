@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import { Hono } from 'hono'
 import Layout from '../app/routes/-/components/layout'
+import { hasCollapsibleSidebarVariant } from '../app/routes/-/components/layout/config'
 import PageAlert from '../app/routes/-/components/page-alert'
 import FileUploadDropzone from '../app/routes/admin/system/file/-components/file-upload-dropzone'
 import RolePanel from '../app/routes/admin/system/role/-components/role-panel'
@@ -10,6 +11,13 @@ import WebPageForm from '../app/routes/admin/web/page/-components/page-form'
 import WebPagePanel from '../app/routes/admin/web/page/-components/page-panel'
 
 describe('server-first UI rendering', () => {
+  test('hybrid layouts keep desktop sidebar collapse enabled', () => {
+    expect(hasCollapsibleSidebarVariant('sidebar')).toBe(true)
+    expect(hasCollapsibleSidebarVariant('hybrid')).toBe(true)
+    expect(hasCollapsibleSidebarVariant('hybrid-flush')).toBe(true)
+    expect(hasCollapsibleSidebarVariant('top-nav')).toBe(false)
+  })
+
   test('layout renders Stimulus hooks while keeping existing shell classes', async () => {
     const html = await render(
       <Layout currentMenuName="admin.dashboard">
@@ -75,6 +83,42 @@ describe('server-first UI rendering', () => {
     expect(combinedHtml).not.toContain('class="btn btn-ghost btn-circle lg:hidden"')
     expect(combinedHtml).not.toContain('data-top-nav-mobile-menu')
     expect(combinedHtml).not.toContain('<span class="ml-2 text-sm">菜单</span>')
+  })
+
+  test('hybrid layouts render top header with side menu and main content', async () => {
+    const html = await render(
+      <Layout
+        currentMenuName="admin.system.user"
+        sidebarLogoStyle="plain"
+        sidebarMenuStyle="plain"
+        variant="hybrid"
+      >
+        <div>content</div>
+      </Layout>,
+    )
+    const flushHtml = await render(
+      <Layout currentMenuName="admin.system.user" variant="hybrid-flush">
+        <div>content</div>
+      </Layout>,
+    )
+    const desktopSideMenuHtml = getSectionHtml(
+      html,
+      'hidden lg:flex min-w-0 overflow-x-hidden"',
+      'data-layout-menu-collapsed',
+    )
+
+    expect(html).toContain('data-layout-variant="hybrid"')
+    expect(html).toContain('data-layout-main-width="wide"')
+    expect(html).toContain('data-layout-sidebar-logo-style="plain"')
+    expect(html).toContain('data-layout-sidebar-menu-style="plain"')
+    expect(html).toContain('data-layout-top-menu-centered="false"')
+    expect(html).toContain('data-layout-top-nav-bar')
+    expect(html).not.toContain('top-menu-admin-system')
+    expect(desktopSideMenuHtml).toContain('配置管理')
+    expect(desktopSideMenuHtml).toContain('用户管理')
+    expect(desktopSideMenuHtml).not.toContain('网站管理')
+    expect(flushHtml).toContain('data-layout-variant="hybrid-flush"')
+    expect(flushHtml).toContain('w-64 h-full rounded-none')
   })
 
   test('list panel renders a Turbo Frame with search and pagination targets', async () => {

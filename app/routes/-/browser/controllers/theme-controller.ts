@@ -7,6 +7,8 @@ import { Controller } from '@hotwired/stimulus'
 import {
   defaultLayoutConfig,
   isLayoutMainWidth,
+  isLayoutSidebarLogoStyle,
+  isLayoutSidebarMenuStyle,
   isLayoutVariant,
   isThemeName,
   layoutConfigStorageKey,
@@ -113,6 +115,12 @@ function readStoredLayoutConfig(): LayoutConfig {
       sidebarCollapsed: typeof parsed.sidebarCollapsed === 'boolean'
         ? parsed.sidebarCollapsed
         : defaultLayoutConfig.sidebarCollapsed,
+      sidebarLogoStyle: isLayoutSidebarLogoStyle(parsed.sidebarLogoStyle)
+        ? parsed.sidebarLogoStyle
+        : defaultLayoutConfig.sidebarLogoStyle,
+      sidebarMenuStyle: isLayoutSidebarMenuStyle(parsed.sidebarMenuStyle)
+        ? parsed.sidebarMenuStyle
+        : defaultLayoutConfig.sidebarMenuStyle,
       theme: isThemeName(parsed.theme)
         ? parsed.theme
         : defaultLayoutConfig.theme,
