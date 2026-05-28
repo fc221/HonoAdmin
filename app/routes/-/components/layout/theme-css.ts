@@ -172,6 +172,18 @@ export function buildDaisyThemeCss(theme: DaisyThemeDraft): string {
   ].join('\n')
 }
 
+export function buildLiveDaisyThemeCss(theme: DaisyThemeDraft, scopeSelector: string): string {
+  const vars = daisyThemeToCssVars(theme)
+  const lines = Object.entries(vars).map(([key, value]) => `  ${key}: ${value};`)
+
+  return [
+    `${scopeSelector} {`,
+    ...lines,
+    '}',
+    '',
+  ].join('\n')
+}
+
 function daisyThemeToCssVars(theme: DaisyThemeDraft): Record<string, string> {
   const vars: Record<string, string> = {}
   for (const key of daisyColorKeys) {

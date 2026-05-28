@@ -31,6 +31,7 @@ import {
 } from '../../components/layout/config'
 import {
   buildDaisyThemeCss,
+  buildLiveDaisyThemeCss,
   cloneDaisyThemeDraft,
   daisyColorKeys,
   defaultDaisyThemeDraft,
@@ -42,6 +43,7 @@ import {
 
 const drawerAnimationDuration = 220
 const themeChangedEventName = 'hono-admin:theme-changed'
+const liveThemeStyleId = 'hono-admin-theme-live'
 
 export default class SettingsController extends Controller<HTMLElement> {
   static targets = [
@@ -745,6 +747,7 @@ export default class SettingsController extends Controller<HTMLElement> {
       name: toDaisyThemeName(readStoredLayoutConfig().theme),
     })
     this.syncThemeDraft(this.themeDraft)
+    this.applyLiveTheme(this.themeDraft)
   }
 
   async copyThemeCss(event: Event) {
@@ -791,6 +794,7 @@ export default class SettingsController extends Controller<HTMLElement> {
   private updateThemeDraft(updater: (theme: DaisyThemeDraft) => DaisyThemeDraft) {
     this.themeDraft = sanitizeDaisyThemeDraft(updater(cloneDaisyThemeDraft(this.themeDraft)))
     this.syncThemeDraft(this.themeDraft)
+    this.applyLiveTheme(this.themeDraft)
   }
 
   private sync() {
@@ -812,6 +816,7 @@ export default class SettingsController extends Controller<HTMLElement> {
       name: toDaisyThemeName(config.theme),
     })
     this.syncThemeDraft(this.themeDraft)
+    this.applyLiveTheme(this.themeDraft)
   }
 
   private syncThemeOptions(theme: ThemeName) {
@@ -958,6 +963,7 @@ export default class SettingsController extends Controller<HTMLElement> {
 
     root.dataset.themeSwitching = 'true'
     root.setAttribute('data-theme', resolvedTheme)
+    this.applyLiveTheme(this.themeDraft)
 
     cancelAnimationFrame(this.themeSwitchFrame)
     this.themeSwitchFrame = requestAnimationFrame(() => {
@@ -965,6 +971,20 @@ export default class SettingsController extends Controller<HTMLElement> {
         delete root.dataset.themeSwitching
       })
     })
+  }
+
+  private applyLiveTheme(theme: DaisyThemeDraft) {
+    const activeTheme = document.documentElement.getAttribute('data-theme') ?? theme.name
+    const css = buildLiveDaisyThemeCss(theme, `html[data-theme="${activeTheme}"]`)
+    let style = document.getElementById(liveThemeStyleId) as HTMLStyleElement | null
+    if (!style) {
+      style = document.createElement('style')
+      style.id = liveThemeStyleId
+      document.head.appendChild(style)
+    }
+    if (style.textContent !== css) {
+      style.textContent = css
+    }
   }
 
   private handleSystemThemeChange = () => {
