@@ -27,6 +27,16 @@ Admin features follow the server-first Hotwire split:
 
 Do not reintroduce HonoX islands, client hydration, PJAX-style global DOM replacement, or React/SPA flows for ordinary admin CRUD. The only React/SPA exception remains an explicit admin/user SPA migration task with its own compatibility contract.
 
+Local client enhancement is allowed only for components that genuinely need browser state, and only through a Stimulus controller wired to existing SSR markup. Typical accepted cases:
+
+- chart rendering that requires a browser-side library
+- rich-text or code editors
+- complex file upload widgets (chunked, progress, drag-and-drop)
+- realtime notifications, websocket or SSE driven UI
+- keyboard-driven combobox/tree pickers that cannot be expressed as a native `<select>` plus form
+
+Anything outside this list — including ordinary list/search/pagination, modal forms, inline edits, status toggles, and confirmation flows — must stay as SSR + Turbo Drive/Frame + native form submission. If you think a feature needs a new island/SPA flow, raise it in the related issue or PR before writing code.
+
 ## Directory Responsibilities
 
 Use these ownership rules when adding or moving code:

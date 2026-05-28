@@ -19,7 +19,7 @@ AnyAdmin, CloudflareAdmin, HonoxAdmin, HonoAdmin, Hono, HonoX, Cloudflare Worker
 - Online database migrations checked before business handlers run.
 - Built-in admin modules for users, roles, permissions, menus, configs, files, operation logs, and updates.
 - A user panel and admin console in the same product; admins can switch into admin features.
-- Native form submissions with `303` redirects; complex local interactions use HonoX islands.
+- Native form submissions with `303` redirects. Admin CRUD is strictly server-first by default; only components that genuinely need browser state (charts, rich-text editors, complex uploads, realtime notifications) are allowed local Stimulus-based enhancement. See the [Admin Feature Contract](./docs/ADMIN_FEATURE_CONTRACT.md).
 - Standalone APIs can use `hono-openapi + zod` for validation and documentation.
 - Tailwind CSS and daisyUI for a lightweight, customizable interface.
 
