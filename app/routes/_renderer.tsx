@@ -20,6 +20,8 @@ import {
   systemThemeQuery,
 } from './-/components/layout/config'
 import { resolveLayoutVariantFromRequest } from './-/utils/layout-variant'
+// Force honox to recognize islands — without this import, `<Script>` renders nothing
+import './-/$keep'
 
 const mainScript = `
   try {
@@ -115,4 +117,4 @@ export default jsxRenderer(({ children }, c) => {
       <body>{children}</body>
     </html>
   )
-})
+}, { stream: true })

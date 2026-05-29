@@ -14,6 +14,23 @@ declare module 'vite' {
 
 const commonSsrExternal = ['buffer', 'casbin', 'mysql2', 'mysql2/promise', 'postgres']
 
+// Paths whose contents are hash-named by Vite — safe to long-cache.
+const longCachePathPrefixes = ['/static/', '/assets/']
+const longCacheValue = 'public, max-age=31536000, immutable'
+
+// Override the default bun adapter hook: register a Cache-Control middleware
+// on `mainApp` before the auto-injected `serveStatic` for hashed assets,
+// since the inner honox app never sees `/static/*` and `/assets/*` requests.
+function bunStaticCacheBeforeHook(appName: string, options?: { staticPaths?: string[] }) {
+  const cacheMiddlewares = longCachePathPrefixes
+    .map((prefix) => `${appName}.use('${prefix}*', async (c, next) => { await next(); c.header('Cache-Control', '${longCacheValue}') })`)
+    .join('\n')
+  const staticHandlers = (options?.staticPaths ?? [])
+    .map((p) => `${appName}.use('${p}', serveStatic({ root: './' }))`)
+    .join('\n')
+  return `import { serveStatic } from 'hono/bun'\n${cacheMiddlewares}\n${staticHandlers}\n`
+}
+
 export default defineConfig(({ runtime = 'bun' }) => {
   console.log(`Using runtime target: ${runtime}`)
   return {
@@ -47,7 +64,9 @@ export default defineConfig(({ runtime = 'bun' }) => {
         },
       }),
       tailwindcss(),
-      buildBun(),
+      buildBun({
+        entryContentBeforeHooks: [bunStaticCacheBeforeHook],
+      }),
       // runtime === 'cloudflare-workers'
       //   ? buildCloudflareWorkers()
       //   : buildBun(),

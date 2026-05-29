@@ -1,6 +1,7 @@
 import type { Context } from 'hono'
 import type { AppEnv } from '../../infra/runtime/types'
 import { createMiddleware } from 'hono/factory'
+import { secureHeaders } from 'hono/secure-headers'
 import { defaultSecurityRuntimeConfig } from '../../infra/runtime/security-config'
 import { ForbiddenError } from '../../utils/errors'
 import {
@@ -77,12 +78,29 @@ function createBodyStream(chunks: Uint8Array[]): ReadableStream<Uint8Array> {
   })
 }
 
-export const headers = createMiddleware<AppEnv>(async (c, next) => {
-  await next()
-  c.header('X-Content-Type-Options', 'nosniff')
-  c.header('Referrer-Policy', 'same-origin')
-  c.header('X-Frame-Options', 'DENY')
-  c.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+// `unsafe-inline` is required for the inline layout-bootstrap script in
+// `_renderer.tsx` and for honox's streaming-SSR replacement script.
+export const headers = secureHeaders({
+  contentSecurityPolicy: {
+    defaultSrc: ['\'self\''],
+    scriptSrc: ['\'self\'', '\'unsafe-inline\''],
+    styleSrc: ['\'self\'', '\'unsafe-inline\''],
+    imgSrc: ['\'self\'', 'data:', 'https:'],
+    fontSrc: ['\'self\'', 'data:', 'https:'],
+    connectSrc: ['\'self\''],
+    frameAncestors: ['\'none\''],
+    objectSrc: ['\'none\''],
+    formAction: ['\'self\''],
+    baseUri: ['\'self\''],
+  },
+  xFrameOptions: 'DENY',
+  referrerPolicy: 'same-origin',
+  permissionsPolicy: {
+    camera: [],
+    microphone: [],
+    geolocation: [],
+  },
+  crossOriginEmbedderPolicy: false,
 })
 
 export const csrf = createMiddleware<AppEnv>(async (c, next) => {

@@ -1,6 +1,7 @@
 import type { ContentfulStatusCode } from 'hono/utils/http-status'
 import { swaggerUI } from '@hono/swagger-ui'
 import { openAPIRouteHandler } from 'hono-openapi'
+import { compress } from 'hono/compress'
 import { showRoutes } from 'hono/dev'
 import { etag } from 'hono/etag'
 import { logger } from 'hono/logger'
@@ -20,6 +21,7 @@ const app = createApp({
     app.use('*', requestId())
     app.use('*', logger()) // 请求日志
     app.use('*', timing()) // 性能计时
+    app.use('*', compress()) // Gzip/Brotli 压缩；上游已压缩时自动跳过
     app.use('*', etag()) // ETag 缓存
   },
 })
