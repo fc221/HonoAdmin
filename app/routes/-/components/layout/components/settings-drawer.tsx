@@ -155,7 +155,7 @@ export default function SettingsDrawer({ triggerClass }: Props = {}) {
       </div>
       <aside
         data-settings-target="panel"
-        class="fixed inset-y-0 right-0 z-[101] hidden w-96 max-w-[95vw] translate-x-full flex-col bg-base-100 opacity-0 shadow-xl transition-[transform,opacity] duration-200 ease-out"
+        class="fixed inset-y-0 right-0 z-101 hidden w-96 max-w-[95vw] translate-x-full flex-col bg-base-100 opacity-0 shadow-xl transition-[transform,opacity] duration-200 ease-out"
         aria-label="界面设置"
         role="dialog"
       >

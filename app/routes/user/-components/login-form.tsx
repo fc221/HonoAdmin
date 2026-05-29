@@ -1,26 +1,28 @@
 import CsrfField from '../../-/components/csrf-field'
-import { topLevelFormTurboAttrs } from '../../-/components/turbo-frame'
 
 interface Props {
-  error?: string
+  remember: boolean
   returnTo: string
   siteTitle: string
+  username: string
 }
 
-export default function LoginForm({ error, returnTo, siteTitle }: Props) {
+export default function LoginForm({
+  remember,
+  returnTo,
+  siteTitle,
+  username,
+}: Props) {
   return (
-    <form class="space-y-5" method="post" {...topLevelFormTurboAttrs}>
+    <form
+      class="space-y-5"
+      data-action="submit->login-form#start"
+      data-controller="login-form"
+      data-turbo="false"
+      method="post"
+    >
       <CsrfField />
       <input name="returnTo" type="hidden" value={returnTo} />
-
-      {error
-        ? (
-            <div class="alert alert-error">
-              <i class="icon-[ri--error-warning-line]" />
-              <span>{error}</span>
-            </div>
-          )
-        : null}
 
       <fieldset class="fieldset relative" data-form-field="username">
         <legend class="fieldset-legend">账号</legend>
@@ -33,6 +35,7 @@ export default function LoginForm({ error, returnTo, siteTitle }: Props) {
             autocomplete="username"
             placeholder="admin"
             required
+            value={username}
           />
         </label>
         <p
@@ -66,6 +69,7 @@ export default function LoginForm({ error, returnTo, siteTitle }: Props) {
             type="checkbox"
             name="remember"
             class="checkbox checkbox-primary checkbox-sm"
+            checked={remember}
           />
           <span class="label-text">保持登录</span>
         </label>
@@ -79,9 +83,18 @@ export default function LoginForm({ error, returnTo, siteTitle }: Props) {
 
       <button
         class="btn btn-primary w-full"
+        data-login-form-target="button"
         type="submit"
       >
-        <i class="icon-[ri--login-circle-line]" />
+        <span
+          class="loading loading-spinner loading-sm"
+          data-login-form-target="spinner"
+          hidden
+        />
+        <i
+          class="icon-[ri--login-circle-line]"
+          data-login-form-target="icon"
+        />
         登录系统
       </button>
 

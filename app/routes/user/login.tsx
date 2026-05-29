@@ -1,5 +1,9 @@
+import type { Context } from 'hono'
+import { deleteCookie, getCookie, setCookie } from 'hono/cookie'
 import { createRoute } from 'honox/factory'
+import PageAlert from '../-/components/page-alert'
 import { getSiteLogoText } from '../-/utils/branding'
+import { getPageAlert, setPageAlert } from '../-/utils/form'
 import {
   formatPageTitle,
   getRenderableSiteConfig,
@@ -19,12 +23,21 @@ import LoginForm from './-components/login-form'
 const defaultReturnTo = '/user/dashboard'
 const loginPath = '/user/login'
 const logoutPath = '/user/logout'
+const loginFormStateCookieName = 'hono_admin_login_form'
+const loginFormStateMaxAgeSeconds = 60
+
+interface LoginFormState {
+  remember: boolean
+  username: string
+}
 
 export const POST = createRoute(async (c) => {
   const body = await c.req.parseBody()
   const username = getFormValue(body, 'username')
   const password = getFormValue(body, 'password')
+  const remember = getFormValue(body, 'remember') === 'on'
   const returnTo = normalizeReturnTo(getFormValue(body, 'returnTo'))
+  const formState = { remember, username }
   const clientIp = getClientIp(c)
   const ipRateLimitKey = await createRateLimitKey('login-ip', clientIp)
   const accountRateLimitKey = await createRateLimitKey(
@@ -46,7 +59,7 @@ export const POST = createRoute(async (c) => {
     })
   } catch (error) {
     if (error instanceof TooManyRequestsError) {
-      return redirectToLogin(returnTo, error.message)
+      return redirectToLogin(c, returnTo, formState, error.message)
     }
 
     throw error
@@ -54,16 +67,17 @@ export const POST = createRoute(async (c) => {
 
   if (!await loginUser(c, {
     password,
-    remember: getFormValue(body, 'remember') === 'on',
+    remember,
     username,
   })) {
-    return redirectToLogin(returnTo, '账号或密码不正确。')
+    return redirectToLogin(c, returnTo, formState, '账号或密码不正确。')
   }
 
   await Promise.all([
     clearRateLimit(c, accountRateLimitKey),
     clearRateLimit(c, ipRateLimitKey),
   ])
+  clearLoginFormState(c)
   return c.redirect(returnTo, 303)
 })
 
@@ -78,9 +92,12 @@ export default createRoute(async (c) => {
     return c.redirect(returnTo, 302)
   }
 
+  const formState = getLoginFormState(c)
+
   return c.render(
     <main class="min-h-screen bg-base-200 text-base-content">
       <title>{formatPageTitle('登录', siteConfig.title)}</title>
+      <PageAlert alert={getPageAlert(c)} />
       <div class="grid min-h-screen lg:grid-cols-[minmax(0,1fr)_500px]">
         <section class="relative hidden overflow-hidden bg-base-300 lg:flex">
           <div class="absolute inset-0 opacity-[0.08] bg-[linear-gradient(var(--color-base-content)_1px,transparent_1px),linear-gradient(90deg,var(--color-base-content)_1px,transparent_1px)] bg-size-[32px_32px]" />
@@ -148,9 +165,10 @@ export default createRoute(async (c) => {
                 </p>
               </div>
               <LoginForm
-                error={c.req.query('error')}
+                remember={formState?.remember ?? false}
                 returnTo={returnTo}
                 siteTitle={siteConfig.title}
+                username={formState?.username ?? ''}
               />
             </div>
 
@@ -169,17 +187,87 @@ export default createRoute(async (c) => {
   )
 })
 
-function redirectToLogin(returnTo: string, error: string): Response {
+function redirectToLogin(
+  c: Context,
+  returnTo: string,
+  formState: LoginFormState,
+  message: string,
+): Response {
+  setPageAlert(c, {
+    message,
+    type: 'error',
+  })
+  setLoginFormState(c, formState)
   const query = new URLSearchParams({
-    error,
     returnTo,
   })
-  return new Response(null, {
-    headers: {
-      Location: `${loginPath}?${query}`,
-    },
-    status: 303,
+  return c.redirect(`${loginPath}?${query}`, 303)
+}
+
+function setLoginFormState(
+  c: Context,
+  state: LoginFormState,
+): void {
+  setCookie(c, loginFormStateCookieName, JSON.stringify({
+    remember: state.remember,
+    username: state.username,
+  }), {
+    httpOnly: true,
+    maxAge: loginFormStateMaxAgeSeconds,
+    path: loginPath,
+    sameSite: 'Lax',
+    secure: new URL(c.req.url).protocol === 'https:',
   })
+}
+
+function getLoginFormState(
+  c: Context,
+): LoginFormState | undefined {
+  const value = getCookie(c, loginFormStateCookieName)
+  clearLoginFormState(c)
+
+  if (!value) {
+    return undefined
+  }
+
+  for (const candidate of getCookieDecodeCandidates(value)) {
+    try {
+      const parsed = JSON.parse(candidate) as {
+        remember?: unknown
+        username?: unknown
+      }
+
+      return {
+        remember: parsed.remember === true,
+        username: typeof parsed.username === 'string' ? parsed.username : '',
+      }
+    } catch {
+      continue
+    }
+  }
+
+  return undefined
+}
+
+function clearLoginFormState(c: Context): void {
+  deleteCookie(c, loginFormStateCookieName, {
+    path: loginPath,
+  })
+}
+
+function getCookieDecodeCandidates(value: string): string[] {
+  const candidates = [value]
+
+  try {
+    const decoded = decodeURIComponent(value)
+    if (decoded !== value) {
+      candidates.push(decoded)
+    }
+  } catch {
+    // Ignore malformed third-party cookie values and treat the flash state as absent.
+  }
+
+  return candidates
 }
 
 function getFormValue(

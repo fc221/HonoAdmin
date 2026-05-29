@@ -110,7 +110,7 @@ export default jsxRenderer(({ children }, c) => {
         <link rel="icon" href="/favicon.ico" />
         <script dangerouslySetInnerHTML={{ __html: mainScript }} />
         <Link href="/app/style.css" rel="stylesheet" />
-        <Script src="/app/routes/-/browser/index.ts" />
+        <Script src="/app/client.ts" />
       </head>
       <body>{children}</body>
     </html>

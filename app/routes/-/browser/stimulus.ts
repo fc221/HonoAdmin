@@ -7,6 +7,7 @@ import FileDropzoneController from './controllers/file-dropzone-controller'
 import FileUploadFieldController from './controllers/file-upload-field-controller'
 import HistoryBackController from './controllers/history-back-controller'
 import LayoutController from './controllers/layout-controller'
+import LoginFormController from './controllers/login-form-controller'
 import ModalController from './controllers/modal-controller'
 import MultiSelectController from './controllers/multi-select-controller'
 import PageAlertController from './controllers/page-alert-controller'
@@ -33,6 +34,7 @@ export function installStimulus() {
   application.register('file-upload-field', FileUploadFieldController)
   application.register('history-back', HistoryBackController)
   application.register('layout', LayoutController)
+  application.register('login-form', LoginFormController)
   application.register('modal', ModalController)
   application.register('multi-select', MultiSelectController)
   application.register('page-alert', PageAlertController)
