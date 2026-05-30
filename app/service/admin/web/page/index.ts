@@ -7,6 +7,7 @@ import type {
   WebPageRecord,
 } from './dto'
 import type { WebPageEntity } from './entity'
+import { hasField } from '../../../../utils/common'
 import { NotFoundError, ValidationError } from '../../../../utils/errors'
 import { sanitizeRichTextHtml } from '../../../../utils/html'
 import {
@@ -249,8 +250,4 @@ async function assertPageAliasAvailable(
   if (row) {
     throw new ValidationError('页面别名已存在。', { alias })
   }
-}
-
-function hasField<T extends object>(value: T, key: keyof T): boolean {
-  return Object.hasOwn(value, key)
 }

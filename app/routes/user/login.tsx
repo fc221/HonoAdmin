@@ -14,10 +14,10 @@ import {
   clearRateLimit,
   consumeRateLimit,
   createRateLimitKey,
-  getClientIp,
 } from '../../service/security/rate-limit'
 import { loginUser } from '../../service/user/login'
 import { TooManyRequestsError } from '../../utils/errors'
+import { getClientIp } from '../../utils/request'
 import LoginForm from './-components/login-form'
 
 const defaultReturnTo = '/user/dashboard'

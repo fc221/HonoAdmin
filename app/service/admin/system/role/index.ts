@@ -1,4 +1,3 @@
-import type { SQLParameter } from '../../../../infra/database/types'
 import type { PaginatedResult } from '../../../common/pagination'
 import type { ServiceContext } from '../../../types'
 import type { MenuItem } from '../menu/consts'
@@ -17,8 +16,8 @@ import type {
   RolePermissionEntity,
   RolePolicyEntity,
 } from './entity'
-import { newEnforcer, newModelFromString } from 'casbin'
 import { buildCacheKey } from '../../../../infra/cache/types'
+import { createPlaceholders } from '../../../../utils/common'
 import { NotFoundError, ValidationError } from '../../../../utils/errors'
 import {
   createPaginatedResult,
@@ -32,23 +31,6 @@ import {
 import { bumpAdminLayoutCacheVersion } from '../../layout-cache'
 import { adminMenus } from '../menu/consts'
 import { createRoleSchema, listRoleSchema, updateRoleSchema } from './dto'
-
-const adminRbacModel = `
-[request_definition]
-r = sub, obj, act, root
-
-[policy_definition]
-p = sub, obj, act
-
-[role_definition]
-g = _, _
-
-[policy_effect]
-e = some(where (p.eft == allow))
-
-[matchers]
-m = r.root == true || (g(r.sub, p.sub) && keyMatch2(r.obj, p.obj) && (p.act == "*" || r.act == p.act))
-`
 
 const roleColumns = `
   id,
@@ -285,32 +267,42 @@ export async function canAccessAdminPath(
     return false
   }
 
-  const enforcer = await newEnforcer(newModelFromString(adminRbacModel))
-  const subject = getUserSubject(user.id)
+  if (user.isRoot) {
+    return true
+  }
 
-  if (user.roleId) {
-    const { policies } = await getRoleAccess(ctx, user.roleId)
-    if (!user.isRoot && policies.length === 0) {
-      return false
-    }
+  const { policies } = await getRoleAccess(ctx, user.roleId!)
+  if (policies.length === 0) {
+    return false
+  }
 
-    const role = getRoleSubject(user.roleId)
-    await enforcer.addRoleForUser(subject, role)
-    for (const policy of policies) {
-      await enforcer.addPolicy(
-        role,
-        policy.pathPattern,
-        getPolicyAction(policy),
-      )
+  const requestAction = getRequestAction(method, actionKey)
+
+  for (const policy of policies) {
+    if (pathMatchesKey2(path, policy.pathPattern)) {
+      const policyAction = getPolicyAction(policy)
+      if (policyAction === '*' || policyAction === requestAction) {
+        return true
+      }
     }
   }
 
-  return enforcer.enforce(
-    subject,
-    path,
-    getRequestAction(method, actionKey),
-    user.isRoot,
-  )
+  return false
+}
+
+/** Casbin keyMatch2 equivalent: matches RESTful path patterns.
+ *  `/foo/*` matches `/foo/anything`, `/:param` matches `/value`. */
+function pathMatchesKey2(path: string, pattern: string): boolean {
+  let p = pattern.replace(/\/\*/g, '/.*')
+  const paramRe = /([^/]*):[^/]+([^/]*)/g
+  while (p.includes('/:')) {
+    // eslint-disable-next-line regexp/no-misleading-capturing-group -- intentional: $1 and $2 capture prefix/suffix around :param
+    p = p.replace(paramRe, '$1[^/]+$2')
+  }
+  if (p === '*') {
+    p = '(.*)'
+  }
+  return new RegExp(`^${p}$`).test(path)
 }
 
 export function getDefaultRolePolicies(menuNames: string[]): RolePolicyInput[] {
@@ -753,10 +745,6 @@ function uniquePolicies(policies: RolePolicyInput[]): RolePolicyInput[] {
   return unique
 }
 
-function createPlaceholders(values: SQLParameter[]): string {
-  return values.map(() => '?').join(', ')
-}
-
 function normalizeMethod(method: string): string {
   const normalizedMethod = method.trim().toUpperCase()
   return normalizedMethod === 'HEAD' ? 'GET' : normalizedMethod
@@ -780,12 +768,4 @@ function getPolicyAction(policy: RolePolicyInput): string {
 
 function isAlwaysAllowedAdminPath(path: string): boolean {
   return alwaysAllowedAdminPaths.has(path)
-}
-
-function getUserSubject(userId: number): string {
-  return `user:${userId}`
-}
-
-function getRoleSubject(roleId: number): string {
-  return `role:${roleId}`
 }

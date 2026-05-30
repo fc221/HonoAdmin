@@ -7,6 +7,7 @@ import type {
   WebFeedbackRecord,
 } from './dto'
 import type { WebFeedbackEntity } from './entity'
+import { hasField } from '../../../../utils/common'
 import { NotFoundError } from '../../../../utils/errors'
 import {
   createPaginatedResult,
@@ -196,8 +197,4 @@ function toWebFeedbackRecord(row: WebFeedbackEntity): WebFeedbackRecord {
     updatedAt: row.updated_at,
     userId: row.user_id,
   }
-}
-
-function hasField<T extends object>(value: T, key: keyof T): boolean {
-  return Object.hasOwn(value, key)
 }

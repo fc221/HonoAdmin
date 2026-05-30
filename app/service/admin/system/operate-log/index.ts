@@ -7,6 +7,7 @@ import type {
 } from './dto'
 import type { OperateLogEntity } from './entity'
 import { NotFoundError } from '../../../../utils/errors'
+import { getClientIp } from '../../../../utils/request'
 import {
   createPaginatedResult,
   getPaginationOffset,
@@ -182,15 +183,6 @@ function serializeLogValue(value: unknown): string | null {
   }
 
   return JSON.stringify(value)
-}
-
-function getClientIp(c: ServiceRequestContext): string | null {
-  return (
-    c.req.header('cf-connecting-ip')
-    ?? c.req.header('x-real-ip')
-    ?? c.req.header('x-forwarded-for')?.split(',')[0]?.trim()
-    ?? null
-  )
 }
 
 function toOperateLogRecord(row: OperateLogEntity): OperateLogRecord {

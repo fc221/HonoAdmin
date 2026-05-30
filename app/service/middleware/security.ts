@@ -3,6 +3,7 @@ import type { AppEnv } from '../../infra/runtime/types'
 import { createMiddleware } from 'hono/factory'
 import { secureHeaders } from 'hono/secure-headers'
 import { defaultSecurityRuntimeConfig } from '../../infra/runtime/security-config'
+import { formatSize } from '../../utils/common'
 import { ForbiddenError } from '../../utils/errors'
 import {
   prepareCsrfToken,
@@ -118,11 +119,6 @@ export const csrf = createMiddleware<AppEnv>(async (c, next) => {
   await prepareCsrfToken(c)
   await next()
 })
-
-function formatSize(bytes: number): string {
-  const mb = bytes / 1024 / 1024
-  return Number.isInteger(mb) ? `${mb}MB` : `${bytes} bytes`
-}
 
 function shouldVerifyCsrf(method: string, path: string): boolean {
   if (['GET', 'HEAD', 'OPTIONS'].includes(method.toUpperCase())) {

@@ -85,6 +85,7 @@ export class SqliteAdapter implements DBAdapter {
   readonly dialect = 'sqlite' as const
   readonly kind = 'sqlite' as const
   private readonly database: SqliteDatabase
+  private inTransaction = false
 
   /** 创建 SQLite 适配器并初始化常用 pragma。 */
   constructor(database: SqliteDatabase) {
@@ -170,21 +171,33 @@ export class SqliteAdapter implements DBAdapter {
   /** 用显式 BEGIN/COMMIT/ROLLBACK 包装事务回调。 */
   async transaction<T>(callback: (db: DBAdapter) => Promise<T>): Promise<T> {
     this.database.exec('BEGIN')
+    this.inTransaction = true
 
     try {
       const result = await callback(this)
       this.database.exec('COMMIT')
+      this.inTransaction = false
       return result
     } catch (error) {
       this.database.exec('ROLLBACK')
+      this.inTransaction = false
       throw error
     }
   }
 
-  /** 在同一事务里顺序执行多条 SQL 语句。 */
+  /** 在同一事务里顺序执行多条 SQL 语句。
+   * 如果调用方已在 transaction() 内，直接顺序执行；
+   * 否则用显式 BEGIN/COMMIT 包装。 */
   async batch(
     statements: Array<{ sql: string, params?: SQLParameter[] }>,
   ): Promise<void> {
+    if (this.inTransaction) {
+      for (const s of statements) {
+        this.database.prepare(s.sql).run(...(s.params ?? []))
+      }
+      return
+    }
+
     this.database.exec('BEGIN')
     try {
       for (const s of statements) {

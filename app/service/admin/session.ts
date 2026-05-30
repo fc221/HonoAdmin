@@ -1,6 +1,7 @@
 import type { ServiceRequestContext } from '../types'
 import type { UserCredential } from './system/user'
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie'
+import { constantTimeEqual, toHex } from '../../utils/crypto'
 import {
   getUserCredentialById,
   listUserSessionRoles,
@@ -172,25 +173,6 @@ async function signAdminSession(
   )
 
   return `${user.id}.${issuedAt}.${toHex(new Uint8Array(signature))}`
-}
-
-function constantTimeEqual(left: string, right: string): boolean {
-  if (left.length !== right.length) {
-    return false
-  }
-
-  let diff = 0
-  for (let i = 0; i < left.length; i += 1) {
-    diff |= left.charCodeAt(i) ^ right.charCodeAt(i)
-  }
-
-  return diff === 0
-}
-
-function toHex(bytes: Uint8Array): string {
-  return [...bytes]
-    .map((byte) => byte.toString(16).padStart(2, '0'))
-    .join('')
 }
 
 async function withSessionActiveRole(

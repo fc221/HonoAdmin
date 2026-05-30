@@ -1,4 +1,5 @@
 import type { ServiceRequestContext } from '../types'
+import { constantTimeEqual } from '../../utils/crypto'
 
 export function verifyAdminBearerToken(
   token: string,
@@ -6,5 +7,5 @@ export function verifyAdminBearerToken(
 ): boolean {
   const expectedToken = c.config.jwtSecret
 
-  return !!expectedToken && token === expectedToken
+  return !!expectedToken && constantTimeEqual(token, expectedToken)
 }

@@ -41,9 +41,9 @@ import {
 import {
   consumeRateLimit,
   createRateLimitKey,
-  getClientIp,
 } from '../../../service/security/rate-limit'
 import { toErrorShape } from '../../../utils/errors'
+import { getClientIp } from '../../../utils/request'
 
 const app = new Hono<AppEnv>()
 
@@ -207,7 +207,7 @@ app.delete(
   validator('param', idParamSchema),
   async (c) => {
     await deleteConfig(c, c.req.valid('param').id)
-    return c.json({ ok: true })
+    return c.body(null, 204)
   },
 )
 
@@ -311,7 +311,7 @@ app.delete(
   validator('param', idParamSchema),
   async (c) => {
     await deleteUser(c, c.req.valid('param').id)
-    return c.json({ ok: true })
+    return c.body(null, 204)
   },
 )
 

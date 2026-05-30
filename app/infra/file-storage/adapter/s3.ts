@@ -3,6 +3,7 @@ import type {
   FileStoragePutInput,
   S3FileStorageConfig,
 } from '../types'
+import { toHex } from '../../../utils/crypto'
 
 const algorithm = 'AWS4-HMAC-SHA256'
 const serviceName = 's3'
@@ -199,7 +200,7 @@ async function createSignature(
   const regionKey = await hmac(dateKey, region)
   const serviceKey = await hmac(regionKey, serviceName)
   const signingKey = await hmac(serviceKey, 'aws4_request')
-  return toHex(await hmac(signingKey, stringToSign))
+  return toHex(new Uint8Array(await hmac(signingKey, stringToSign)))
 }
 
 async function hmac(
@@ -219,7 +220,7 @@ async function hmac(
 
 async function sha256Hex(value: ArrayBuffer | string): Promise<string> {
   const body = typeof value === 'string' ? encodeUtf8(value) : value
-  return toHex(await crypto.subtle.digest('SHA-256', body))
+  return toHex(new Uint8Array(await crypto.subtle.digest('SHA-256', body)))
 }
 
 function createCanonicalQuery(values: Record<string, string>): string {
@@ -245,10 +246,4 @@ function encodeUtf8(value: string): ArrayBuffer {
     bytes.byteOffset,
     bytes.byteOffset + bytes.byteLength,
   ) as ArrayBuffer
-}
-
-function toHex(value: ArrayBuffer): string {
-  return [...new Uint8Array(value)]
-    .map((byte) => byte.toString(16).padStart(2, '0'))
-    .join('')
 }

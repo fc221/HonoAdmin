@@ -1,5 +1,6 @@
 import type { Context } from 'hono'
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie'
+import { constantTimeEqual, toHex } from '../../utils/crypto'
 
 export const csrfCookieName = 'hono_admin_csrf'
 export const csrfFieldName = '_csrf'
@@ -123,23 +124,4 @@ function randomHex(length: number): string {
   const bytes = new Uint8Array(length)
   crypto.getRandomValues(bytes)
   return toHex(bytes)
-}
-
-function toHex(bytes: Uint8Array): string {
-  return [...bytes]
-    .map((byte) => byte.toString(16).padStart(2, '0'))
-    .join('')
-}
-
-function constantTimeEqual(left: string, right: string): boolean {
-  if (left.length !== right.length) {
-    return false
-  }
-
-  let diff = 0
-  for (let index = 0; index < left.length; index += 1) {
-    diff |= left.charCodeAt(index) ^ right.charCodeAt(index)
-  }
-
-  return diff === 0
 }

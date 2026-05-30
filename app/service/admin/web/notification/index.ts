@@ -7,6 +7,7 @@ import type {
   WebNotificationRecord,
 } from './dto'
 import type { WebNotificationEntity } from './entity'
+import { hasField } from '../../../../utils/common'
 import { NotFoundError, ValidationError } from '../../../../utils/errors'
 import { sanitizeRichTextHtml } from '../../../../utils/html'
 import {
@@ -255,8 +256,4 @@ async function assertNotificationAliasAvailable(
   if (row) {
     throw new ValidationError('公告别名已存在。', { alias })
   }
-}
-
-function hasField<T extends object>(value: T, key: keyof T): boolean {
-  return Object.hasOwn(value, key)
 }

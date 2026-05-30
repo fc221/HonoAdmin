@@ -9,6 +9,8 @@ import type {
   UserSessionRole,
 } from './dto'
 import type { UserEntity } from './entity'
+import { createPlaceholders, hasField } from '../../../../utils/common'
+import { constantTimeEqual, toHex } from '../../../../utils/crypto'
 import { NotFoundError, ValidationError } from '../../../../utils/errors'
 import {
   createPaginatedResult,
@@ -699,18 +701,20 @@ async function replaceUserRoles(
 
   await ctx.db.execute('DELETE FROM sys_user_role WHERE user_id = ?', [userId])
 
-  for (const roleId of roleIds) {
-    await ctx.db.execute(
-      `
-        INSERT INTO sys_user_role (
-          user_id,
-          role_id,
-          created_at,
-          updated_at
-        )
-        VALUES (?, ?, ?, ?)
-      `,
-      [userId, roleId, now, now],
+  if (roleIds.length > 0) {
+    await ctx.db.batch(
+      roleIds.map((roleId) => ({
+        sql: `
+          INSERT INTO sys_user_role (
+            user_id,
+            role_id,
+            created_at,
+            updated_at
+          )
+          VALUES (?, ?, ?, ?)
+        `,
+        params: [userId, roleId, now, now],
+      })),
     )
   }
 }
@@ -901,10 +905,6 @@ function mergeSessionRoles(
   return mergedRoles
 }
 
-function createPlaceholders(values: unknown[]): string {
-  return values.map(() => '?').join(', ')
-}
-
 async function hashPassword(password: string): Promise<string> {
   const salt = randomHex(16)
   const digest = await pbkdf2Hex(password, salt, passwordHashIterations)
@@ -946,30 +946,4 @@ function randomHex(length: number): string {
   const bytes = new Uint8Array(length)
   crypto.getRandomValues(bytes)
   return toHex(bytes)
-}
-
-function toHex(bytes: Uint8Array): string {
-  return [...bytes]
-    .map((byte) => byte.toString(16).padStart(2, '0'))
-    .join('')
-}
-
-function constantTimeEqual(left: string, right: string): boolean {
-  if (left.length !== right.length) {
-    return false
-  }
-
-  let diff = 0
-  for (let i = 0; i < left.length; i += 1) {
-    diff |= left.charCodeAt(i) ^ right.charCodeAt(i)
-  }
-
-  return diff === 0
-}
-
-function hasField<T extends object>(
-  value: T,
-  key: keyof T,
-): boolean {
-  return Object.hasOwn(value, key)
 }

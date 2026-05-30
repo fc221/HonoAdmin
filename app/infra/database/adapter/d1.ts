@@ -96,10 +96,13 @@ export class D1Adapter implements DBAdapter {
     return Number(result.lastInsertId)
   }
 
-  /** 在 D1 环境下复用回调形式，保持与其他适配器一致的调用面。 */
+  /** 在 D1 环境下复用回调形式，保持与其他适配器一致的调用面。
+   *
+   * ⚠️ D1 API 不支持真正的 BEGIN/COMMIT/ROLLBACK。
+   * 如需原子写入，请优先使用 `batch()` — D1 batch 在一个隐式事务中执行。
+   * 此方法仅作为不依赖原子性的 fallback（如只读查询、单条写入等）。
+   */
   async transaction<T>(callback: (tx: DBAdapter) => Promise<T>): Promise<T> {
-    // D1 doesn't have real transactions via API; use batch for atomicity
-    // For now, we execute sequentially (D1 limitation)
     return callback(this)
   }
 

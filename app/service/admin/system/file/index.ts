@@ -9,6 +9,7 @@ import type {
 import type { FileEntity } from './entity'
 import type { FileStorageMode, FileUploadType } from './enum'
 import { createFileStorageAdapter } from '../../../../infra/file-storage/factory'
+import { formatSize } from '../../../../utils/common'
 import { ConfigurationError, NotFoundError, ValidationError } from '../../../../utils/errors'
 import {
   createPaginatedResult,
@@ -261,11 +262,6 @@ async function normalizeUploadedFile(
     originalName,
     size: file.size,
   }
-}
-
-function formatSize(bytes: number): string {
-  const mb = bytes / 1024 / 1024
-  return Number.isInteger(mb) ? `${mb}MB` : `${bytes} bytes`
 }
 
 function normalizeMimeType(value: string): string {

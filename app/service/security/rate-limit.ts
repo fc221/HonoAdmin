@@ -56,15 +56,6 @@ export async function createRateLimitKey(
   return buildCacheKey('security', 'rate-limit', namespace, await sha256Hex(value))
 }
 
-export function getClientIp(c: ServiceRequestContext): string {
-  return (
-    c.req.header('cf-connecting-ip')
-    ?? c.req.header('x-real-ip')
-    ?? c.req.header('x-forwarded-for')?.split(',')[0]?.trim()
-    ?? 'unknown'
-  )
-}
-
 function isRateLimitEntry(value: unknown): value is RateLimitEntry {
   if (!value || typeof value !== 'object') {
     return false
