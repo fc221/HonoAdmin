@@ -26,6 +26,17 @@ body {
   background: var(--color-base-100);
 }
 
+[data-login-page='true'] {
+  background:
+    radial-gradient(circle at top right, color-mix(in oklch, var(--color-primary), transparent 86%), transparent 40%),
+    radial-gradient(circle at bottom left, color-mix(in oklch, var(--color-primary), transparent 92%), transparent 42%),
+    var(--color-base-200);
+}
+
+[data-login-form-panel='true'] [data-login-divider-label='true'] {
+  background: color-mix(in oklch, var(--color-base-100), transparent 10%);
+}
+
 html[data-theme-switching='true'],
 html[data-theme-switching='true'] *,
 html[data-theme-switching='true'] *::before,

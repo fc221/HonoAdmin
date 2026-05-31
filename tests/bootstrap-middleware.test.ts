@@ -59,7 +59,7 @@ describe('bootstrap migration guard', () => {
     const html = await response.text()
 
     expect(response.status).toBe(200)
-    expect(html).toContain('登录系统')
+    expect(html).toContain('欢迎回来')
     expect(html).not.toContain('服务暂时不可用')
   })
 

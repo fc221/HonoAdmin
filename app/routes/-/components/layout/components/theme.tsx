@@ -1,25 +1,41 @@
 import { defaultLayoutConfig } from '../config'
 import { themeOptions } from './theme-options'
 
-export default function Theme() {
+type Placement = 'bottom-end' | 'top'
+
+interface Props {
+  buttonClassName?: string
+  id?: string
+  placement?: Placement
+}
+
+export default function Theme({
+  buttonClassName = 'btn btn-circle btn-ghost',
+  id = 'aside-theme-dropdown',
+  placement = 'top',
+}: Props) {
+  const anchorName = `--${id}`
   const selectedTheme = defaultLayoutConfig.theme
+  const popoverClass = placement === 'bottom-end'
+    ? 'dropdown dropdown-end menu p-3 z-1 mt-3 w-44 rounded-box bg-base-100 shadow space-y-1'
+    : 'dropdown dropdown-top menu p-3 z-1 mb-3 w-44 rounded-box bg-base-100 shadow space-y-1'
 
   return (
     <div data-controller="theme">
       <button
-        class="btn btn-circle btn-ghost"
+        class={buttonClassName}
         aria-label="切换主题"
-        popovertarget="aside-theme-dropdown"
-        style="anchor-name:--aside-theme-dropdown"
+        popovertarget={id}
+        style={`anchor-name:${anchorName}`}
         type="button"
       >
         <i class="icon-[ri--palette-line]"></i>
       </button>
       <ul
         popover="auto"
-        id="aside-theme-dropdown"
-        style="position-anchor:--aside-theme-dropdown"
-        class="dropdown dropdown-top menu p-3 z-1 mb-3 w-44 rounded-box bg-base-100 shadow space-y-1"
+        id={id}
+        style={`position-anchor:${anchorName}`}
+        class={popoverClass}
       >
         {themeOptions.map((option) => (
           <li key={option.value}>
