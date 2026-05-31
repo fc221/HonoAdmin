@@ -1,4 +1,5 @@
 import type { Context } from 'hono'
+import { idParamSchema } from '../../../-/schemas/response'
 import {
   getActionReturnPath,
   getFormValue,
@@ -12,7 +13,6 @@ import {
   updateWebFeedback,
 } from '../../../../service/admin/web/feedback'
 import { updateWebFeedbackSchema } from '../../../../service/admin/web/feedback/dto'
-import { idParamSchema } from '../../../../service/common/response'
 import { ValidationError } from '../../../../utils/errors'
 
 const pagePath = '/admin/web/feedback'

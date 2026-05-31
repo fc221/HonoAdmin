@@ -1,6 +1,7 @@
 import { createRoute } from 'honox/factory'
 import PageAlert from '../../../-/components/page-alert'
 import PageHeader from '../../../-/components/page-header'
+import { idParamSchema } from '../../../-/schemas/response'
 import {
   getActionErrorMessage,
   getPageAlert,
@@ -10,7 +11,6 @@ import {
 import { adminMenus } from '../../../../service/admin/system/menu/consts'
 import { listPermissions } from '../../../../service/admin/system/permission'
 import { getRoleById } from '../../../../service/admin/system/role'
-import { idParamSchema } from '../../../../service/common/response'
 import { handleRoleUpdateAction } from './-actions'
 import RoleForm from './-components/role-form'
 

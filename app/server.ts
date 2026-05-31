@@ -1,6 +1,4 @@
 import type { ContentfulStatusCode } from 'hono/utils/http-status'
-import { swaggerUI } from '@hono/swagger-ui'
-import { openAPIRouteHandler } from 'hono-openapi'
 import { compress } from 'hono/compress'
 import { showRoutes } from 'hono/dev'
 import { etag } from 'hono/etag'
@@ -27,27 +25,6 @@ const app = createApp({
 })
 
 showRoutes(app)
-
-app.get('/openapi.json', openAPIRouteHandler(app, {
-  documentation: {
-    info: {
-      description: 'HonoAdmin admin management API.',
-      title: 'HonoAdmin Admin API',
-      version: '0.0.0',
-    },
-    openapi: '3.1.0',
-    components: {
-      securitySchemes: {
-        bearerAuth: {
-          scheme: 'bearer',
-          type: 'http',
-        },
-      },
-    },
-  },
-}))
-
-app.get('/docs', swaggerUI({ url: '/openapi.json' }))
 
 app.get('/uploads/*', async (c) => {
   const storageKey = decodeURIComponent(c.req.path.slice('/uploads/'.length))

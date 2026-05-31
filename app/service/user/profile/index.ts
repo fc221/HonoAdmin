@@ -40,7 +40,14 @@ export async function getCurrentUserProfile(
   c: ServiceRequestContext,
 ): Promise<UserRecord> {
   const sessionUser = await requireCurrentUserSession(c)
-  return getUserById(c, sessionUser.id)
+  return getUserProfileById(c, sessionUser.id)
+}
+
+export async function getUserProfileById(
+  c: ServiceRequestContext,
+  userId: number,
+): Promise<UserRecord> {
+  return getUserById(c, userId)
 }
 
 export async function getCurrentUserProfilePageData(
@@ -65,10 +72,18 @@ export async function updateCurrentUserProfile(
   input: UserProfileUpdateInput,
 ): Promise<UserRecord> {
   const sessionUser = await requireCurrentUserSession(c)
+  return updateUserProfileById(c, sessionUser.id, input)
+}
+
+export async function updateUserProfileById(
+  c: ServiceRequestContext,
+  userId: number,
+  input: UserProfileUpdateInput,
+): Promise<UserRecord> {
   const profileInput = userProfileUpdateSchema.parse(input)
   const user = await updateUser(
     c,
-    sessionUser.id,
+    userId,
     updateUserSchema.parse(profileInput),
   )
 
@@ -76,7 +91,7 @@ export async function updateCurrentUserProfile(
     logMsg: '更新个人中心',
     logType: 'updateOne',
     method: 'user.profile.update',
-    userId: sessionUser.id,
+    userId,
   })
 
   return user

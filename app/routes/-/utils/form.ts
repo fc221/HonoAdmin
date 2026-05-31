@@ -1,14 +1,14 @@
 import type { Context } from 'hono'
-import type { PageAlertState } from '../../../service/common/page-alert'
+import type { PageAlertState } from './page-alert'
 import { ZodError } from 'zod'
-import { setPageAlert } from '../../../service/common/page-alert'
 import { AppError, toErrorShape } from '../../../utils/errors'
+import { setPageAlert } from './page-alert'
 
 type FormBody = Record<string, unknown>
 type FieldErrors = Record<string, string[]>
 
 export const returnToFieldName = '_returnTo'
-export { getPageAlert, setPageAlert } from '../../../service/common/page-alert'
+export { getPageAlert, setPageAlert } from './page-alert'
 
 export function getFormValue(body: FormBody, key: string): string {
   const value = body[key]

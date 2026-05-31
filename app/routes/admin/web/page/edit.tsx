@@ -1,6 +1,7 @@
 import { createRoute } from 'honox/factory'
 import PageAlert from '../../../-/components/page-alert'
 import PageHeader from '../../../-/components/page-header'
+import { idParamSchema } from '../../../-/schemas/response'
 import {
   getActionErrorMessage,
   getPageAlert,
@@ -8,7 +9,6 @@ import {
   redirectWithAlert,
 } from '../../../-/utils/form'
 import { getWebPageById } from '../../../../service/admin/web/page'
-import { idParamSchema } from '../../../../service/common/response'
 import { handleWebPageUpdateAction } from './-actions'
 import WebPageForm from './-components/page-form'
 

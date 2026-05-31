@@ -1,10 +1,6 @@
 import { z } from 'zod'
 
-export const idParamSchema = z.object({
-  id: z.coerce.number().int().positive(),
-})
-
-export const errorResponseSchema = z.object({
+export const apiErrorResponseSchema = z.object({
   error: z.object({
     code: z.string(),
     details: z.unknown().optional(),
@@ -13,6 +9,6 @@ export const errorResponseSchema = z.object({
   ok: z.literal(false),
 })
 
-export const deletedResponseSchema = z.object({
+export const apiOkResponseSchema = z.object({
   ok: z.literal(true),
 })

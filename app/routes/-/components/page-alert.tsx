@@ -1,6 +1,6 @@
-import type { PageAlertState } from '../../../service/common/page-alert'
+import type { PageAlertState } from '../utils/page-alert'
 
-export type { PageAlertState } from '../../../service/common/page-alert'
+export type { PageAlertState } from '../utils/page-alert'
 
 interface Props {
   alert?: PageAlertState

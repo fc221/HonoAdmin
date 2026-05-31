@@ -1,4 +1,5 @@
 import type { Context } from 'hono'
+import { idParamSchema } from '../../../-/schemas/response'
 import {
   getActionReturnPath,
   getFormValue,
@@ -17,7 +18,6 @@ import {
   createWebPageSchema,
   updateWebPageSchema,
 } from '../../../../service/admin/web/page/dto'
-import { idParamSchema } from '../../../../service/common/response'
 import { ValidationError } from '../../../../utils/errors'
 import { sanitizeRichTextHtml } from '../../../../utils/html'
 

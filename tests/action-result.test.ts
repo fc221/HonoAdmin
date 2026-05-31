@@ -7,9 +7,9 @@ import {
   respondWithActionError,
   returnToFieldName,
 } from '../app/routes/-/utils/form'
+import { pageAlertCookieName } from '../app/routes/-/utils/page-alert'
 import { updateUserSchema } from '../app/service/admin/system/user/dto'
 import { createWebNotificationSchema } from '../app/service/admin/web/notification/dto'
-import { pageAlertCookieName } from '../app/service/common/page-alert'
 
 function createActionTestApp() {
   const app = new Hono()

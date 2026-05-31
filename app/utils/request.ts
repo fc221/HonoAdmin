@@ -5,8 +5,9 @@ export function getClientIp(source: { req: { header: (name: string) => string | 
       : source.req.header(name)
 
   return (
-    header('x-forwarded-for')?.split(',')[0]?.trim()
+    header('cf-connecting-ip')
     ?? header('x-real-ip')
+    ?? header('x-forwarded-for')?.split(',')[0]?.trim()
     ?? 'unknown'
   )
 }

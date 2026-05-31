@@ -294,11 +294,8 @@ export async function canAccessAdminPath(
  *  `/foo/*` matches `/foo/anything`, `/:param` matches `/value`. */
 function pathMatchesKey2(path: string, pattern: string): boolean {
   let p = pattern.replace(/\/\*/g, '/.*')
-  const paramRe = /([^/]*):[^/]+([^/]*)/g
-  while (p.includes('/:')) {
-    // eslint-disable-next-line regexp/no-misleading-capturing-group -- intentional: $1 and $2 capture prefix/suffix around :param
-    p = p.replace(paramRe, '$1[^/]+$2')
-  }
+  // Replace /:param segments with the regex token for any non-slash value (keyMatch2 semantics)
+  p = p.replace(/\/:[^/]+/g, '/[^/]+')
   if (p === '*') {
     p = '(.*)'
   }

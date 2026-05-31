@@ -2,6 +2,7 @@ import type { Context } from 'hono'
 import type { ContentfulStatusCode } from 'hono/utils/http-status'
 import type { FileRecord } from '../../../../service/admin/system/file/dto'
 import type { FileUploadType } from '../../../../service/admin/system/file/enum'
+import { idParamSchema } from '../../../-/schemas/response'
 import {
   getActionReturnPath,
   getFormValue,
@@ -16,7 +17,6 @@ import {
 } from '../../../../service/admin/system/file'
 import { uploadFileFormSchema } from '../../../../service/admin/system/file/dto'
 import { createRequestOperateLog } from '../../../../service/admin/system/operate-log'
-import { idParamSchema } from '../../../../service/common/response'
 import { toErrorShape, ValidationError } from '../../../../utils/errors'
 
 const pagePath = '/admin/system/file'

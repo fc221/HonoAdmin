@@ -1,4 +1,5 @@
 import type { Context } from 'hono'
+import { idParamSchema } from '../../../-/schemas/response'
 import {
   getActionReturnPath,
   getFormValue,
@@ -10,7 +11,6 @@ import {
   createRequestOperateLog,
   deleteOperateLog,
 } from '../../../../service/admin/system/operate-log'
-import { idParamSchema } from '../../../../service/common/response'
 import { ValidationError } from '../../../../utils/errors'
 
 const pagePath = '/admin/system/operate-log'

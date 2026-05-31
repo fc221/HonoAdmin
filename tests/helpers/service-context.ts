@@ -35,6 +35,7 @@ export async function createTestServiceContext(options: {
         requirements: [],
         runtimeTarget: 'bun' as const,
       },
+      jwtSecret: 'test-jwt-secret-1234567890',
       sessionSecret: 'test-session-secret-1234567890',
       runtimeTarget: 'bun' as const,
       security: defaultSecurityRuntimeConfig,
