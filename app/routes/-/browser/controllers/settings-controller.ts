@@ -126,6 +126,8 @@ export default class SettingsController extends Controller<HTMLElement> {
   private drawerAnimationFrame = 0
   private drawerCloseTimer = 0
   private themeDraft = cloneDaisyThemeDraft(defaultDaisyThemeDraft)
+  private themeDraftBaseline = cloneDaisyThemeDraft(defaultDaisyThemeDraft)
+  private liveThemePreviewEnabled = false
   private colorPickerState = new Map<string, { h: number, s: number, v: number, a: number }>()
 
   connect() {
@@ -202,9 +204,10 @@ export default class SettingsController extends Controller<HTMLElement> {
     }
 
     persistLayoutConfig({ ...config, theme })
-    this.updateThemeDraft((draft) => ({ ...draft, name: toDaisyThemeName(theme) }))
+    this.removeLiveTheme()
     this.applyTheme(theme)
     this.syncThemeOptions(theme)
+    this.syncThemeDraftFromActiveTheme(theme)
     window.dispatchEvent(new CustomEvent(themeChangedEventName, { detail: { theme } }))
     hideClosestPopover(target)
   }
@@ -217,7 +220,8 @@ export default class SettingsController extends Controller<HTMLElement> {
       return
     }
 
-    this.updateThemeDraft((draft) => ({ ...draft, name }))
+    this.themeDraft = sanitizeDaisyThemeDraft({ ...this.themeDraft, name })
+    this.syncThemeDraft(this.themeDraft)
   }
 
   selectVariant(event: Event) {
@@ -742,12 +746,9 @@ export default class SettingsController extends Controller<HTMLElement> {
   }
 
   resetThemeDraft() {
-    this.themeDraft = cloneDaisyThemeDraft({
-      ...defaultDaisyThemeDraft,
-      name: toDaisyThemeName(readStoredLayoutConfig().theme),
-    })
+    this.removeLiveTheme()
+    this.themeDraft = cloneDaisyThemeDraft(this.themeDraftBaseline)
     this.syncThemeDraft(this.themeDraft)
-    this.applyLiveTheme(this.themeDraft)
   }
 
   async copyThemeCss(event: Event) {
@@ -793,6 +794,7 @@ export default class SettingsController extends Controller<HTMLElement> {
 
   private updateThemeDraft(updater: (theme: DaisyThemeDraft) => DaisyThemeDraft) {
     this.themeDraft = sanitizeDaisyThemeDraft(updater(cloneDaisyThemeDraft(this.themeDraft)))
+    this.liveThemePreviewEnabled = true
     this.syncThemeDraft(this.themeDraft)
     this.applyLiveTheme(this.themeDraft)
   }
@@ -811,12 +813,8 @@ export default class SettingsController extends Controller<HTMLElement> {
     if (this.hasTopMenuCenteredTarget) {
       this.topMenuCenteredTarget.checked = config.topMenuCentered
     }
-    this.themeDraft = sanitizeDaisyThemeDraft({
-      ...this.themeDraft,
-      name: toDaisyThemeName(config.theme),
-    })
-    this.syncThemeDraft(this.themeDraft)
-    this.applyLiveTheme(this.themeDraft)
+    this.removeLiveTheme()
+    this.syncThemeDraftFromActiveTheme(config.theme)
   }
 
   private syncThemeOptions(theme: ThemeName) {
@@ -954,6 +952,13 @@ export default class SettingsController extends Controller<HTMLElement> {
     return isDaisyThemeName(value) ? value : this.themeDraft.name
   }
 
+  private syncThemeDraftFromActiveTheme(theme: ThemeName) {
+    const draft = readActiveDaisyThemeDraft(toDaisyThemeName(theme))
+    this.themeDraftBaseline = cloneDaisyThemeDraft(draft)
+    this.themeDraft = cloneDaisyThemeDraft(draft)
+    this.syncThemeDraft(this.themeDraft)
+  }
+
   private applyTheme(theme: ThemeName) {
     const root = document.documentElement
     const resolvedTheme = resolveTheme(theme)
@@ -963,7 +968,6 @@ export default class SettingsController extends Controller<HTMLElement> {
 
     root.dataset.themeSwitching = 'true'
     root.setAttribute('data-theme', resolvedTheme)
-    this.applyLiveTheme(this.themeDraft)
 
     cancelAnimationFrame(this.themeSwitchFrame)
     this.themeSwitchFrame = requestAnimationFrame(() => {
@@ -974,6 +978,10 @@ export default class SettingsController extends Controller<HTMLElement> {
   }
 
   private applyLiveTheme(theme: DaisyThemeDraft) {
+    if (!this.liveThemePreviewEnabled) {
+      return
+    }
+
     const activeTheme = document.documentElement.getAttribute('data-theme') ?? theme.name
     const css = buildLiveDaisyThemeCss(theme, `html[data-theme="${activeTheme}"]`)
     let style = document.getElementById(liveThemeStyleId) as HTMLStyleElement | null
@@ -987,9 +995,16 @@ export default class SettingsController extends Controller<HTMLElement> {
     }
   }
 
+  private removeLiveTheme() {
+    this.liveThemePreviewEnabled = false
+    document.getElementById(liveThemeStyleId)?.remove()
+  }
+
   private handleSystemThemeChange = () => {
     if (readStoredLayoutConfig().theme === systemThemeName) {
+      this.removeLiveTheme()
       this.applyTheme(systemThemeName)
+      this.syncThemeDraftFromActiveTheme(systemThemeName)
     }
   }
 
@@ -999,9 +1014,10 @@ export default class SettingsController extends Controller<HTMLElement> {
       return
     }
 
+    this.removeLiveTheme()
     this.applyTheme(theme)
     this.syncThemeOptions(theme)
-    this.updateThemeDraft((draft) => ({ ...draft, name: toDaisyThemeName(theme) }))
+    this.syncThemeDraftFromActiveTheme(theme)
   }
 }
 
@@ -1083,7 +1099,50 @@ function resolveTheme(theme: ThemeName): DaisyThemeName {
 }
 
 function toDaisyThemeName(theme: ThemeName): DaisyThemeName {
-  return theme === systemThemeName ? defaultDaisyThemeDraft.name : theme
+  return theme === systemThemeName ? resolveTheme(theme) : theme
+}
+
+function readActiveDaisyThemeDraft(name: DaisyThemeName): DaisyThemeDraft {
+  const styles = window.getComputedStyle(document.documentElement)
+  const colors: DaisyColorPalette = { ...defaultDaisyThemeDraft.colors }
+
+  for (const key of daisyColorKeys) {
+    colors[key] = readCssVar(styles, `--color-${key}`) ?? colors[key]
+  }
+
+  return sanitizeDaisyThemeDraft({
+    ...defaultDaisyThemeDraft,
+    name,
+    colors,
+    radiusBox: readCssVar(styles, '--radius-box'),
+    radiusField: readCssVar(styles, '--radius-field'),
+    radiusSelector: readCssVar(styles, '--radius-selector'),
+    sizeField: readCssVar(styles, '--size-field'),
+    sizeSelector: readCssVar(styles, '--size-selector'),
+    borderWidth: readCssVar(styles, '--border'),
+    depth: readBooleanCssVar(styles, '--depth', defaultDaisyThemeDraft.depth),
+    noise: readBooleanCssVar(styles, '--noise', defaultDaisyThemeDraft.noise),
+  })
+}
+
+function readCssVar(styles: CSSStyleDeclaration, name: string): string | undefined {
+  const value = styles.getPropertyValue(name).trim()
+  return value || undefined
+}
+
+function readBooleanCssVar(
+  styles: CSSStyleDeclaration,
+  name: string,
+  fallback: boolean,
+): boolean {
+  const value = readCssVar(styles, name)
+  if (value === '0') {
+    return false
+  }
+  if (value === '1') {
+    return true
+  }
+  return fallback
 }
 
 function getPopoverToggleState(event: Event): 'open' | 'closed' | null {
