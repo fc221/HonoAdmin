@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "bun test",
+    "audit:structure": "bun run scripts/audit-agent-structure.ts",
     "check": "bun run typecheck && bun run lint && bun test && bun run build",
     "build": "vite build --mode client && vite build",
     "build:workers": "vite build --mode client && vite build --runtime cloudflare-workers",

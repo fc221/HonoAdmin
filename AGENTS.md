@@ -2,6 +2,14 @@
 
 This file is the persistent project contract for agents and contributors. Read it before changing code.
 
+## Session Workflow
+
+- Start every code-changing session by reading this file and the relevant project guide: `docs/AGENT_DEVELOPMENT.md`, plus `docs/ARCHITECTURE.md`, `docs/ADMIN_CRUD.md`, `docs/ADMIN_FEATURE_CONTRACT.md`, `docs/PERFORMANCE_BOUNDARIES.md`, or `docs/SECURITY.md` when the task touches that area.
+- Before editing, identify the owning layer and existing pattern you are extending. Keep route rendering, local components, service SQL, schemas, migrations, and browser behavior in their own modules.
+- Prefer changing the smallest existing feature folder that owns the behavior. Do not create parallel implementations or new client/API flows when the current HonoX route/action pattern already fits.
+- While implementing, keep an eye on changed file size and responsibility creep with `bun run audit:structure`. Warnings are not automatically failures, but they require either a split or a short explanation in the final response.
+- End runtime-affecting work with the relevant checks and at least one request-path exercise, not only a static build.
+
 ## Non-Negotiable Architecture
 
 - Use HonoX as the application framework.
@@ -16,7 +24,12 @@ This file is the persistent project contract for agents and contributors. Read i
 
 - Keep structure clear and modular. A file should have one obvious responsibility.
 - Do not pack unrelated page rendering, client state, forms, tables, schemas, and service logic into one large file. Split by feature and responsibility once a file owns more than one domain concept.
+- Existing large files are not templates to copy. When touching a large legacy file, avoid adding a new responsibility to it; extract the touched behavior if the edit would make the file harder to scan.
 - Prefer feature folders for admin pages, for example `app/routes/admin/user` and `app/routes/admin/config`, with local `-components` for page-specific islands and widgets.
+- Keep HonoX route entries thin: load request data, call services/actions, and compose components. Move tables, forms, panels, modals, and local view helpers into the feature `-components` directory.
+- Keep POST parsing and redirect logic in route-local `-actions.ts` files when it is non-trivial or shared by add/edit/list actions.
+- Keep browser-only state in `app/routes/-/browser` and split Stimulus controllers by behavior instead of growing one cross-feature controller.
+- Keep service `index.ts` files as the public service surface. Split DTO, entity, enum, constants, query helpers, and write/read helpers once SQL branches or mapping logic start to dominate the file.
 - Keep functions small and single-purpose. Extract only when it reduces real complexity.
 - Keep core logic extensible. Adding a new type, strategy, field, adapter, or runtime should add a module or registration entry, not rewrite the main flow.
 - Keep naming explicit and stable. Prefer domain names over generic names like `handler`, `data`, or `item` when the domain is known.
@@ -72,6 +85,6 @@ When implementing a task, the final response must include:
 - Code changes: what changed and where.
 - Structure notes: how the change fits the architecture.
 - Extension method: how to add the next type/strategy/field/adapter.
-- Verification: commands run and any remaining risk.
+- Verification: commands run, request paths exercised for runtime-affecting changes, structure audit result, and any remaining risk.
 
 Before sending the final response after code changes, run the relevant checks yourself. For runtime-affecting changes, do not stop at `build`; also start the dev server or exercise the affected request path so loader/runtime errors are caught.
