@@ -81,12 +81,13 @@ function createBodyStream(chunks: Uint8Array[]): ReadableStream<Uint8Array> {
 
 // `unsafe-inline` is required for the inline layout-bootstrap script in
 // `_renderer.tsx` and for honox's streaming-SSR replacement script.
-export const headers = secureHeaders({
+const secureHeaderMiddleware = secureHeaders({
   contentSecurityPolicy: {
     defaultSrc: ['\'self\''],
     scriptSrc: ['\'self\'', '\'unsafe-inline\''],
     styleSrc: ['\'self\'', '\'unsafe-inline\''],
-    imgSrc: ['\'self\'', 'data:', 'https:'],
+    imgSrc: ['\'self\'', 'data:', 'https:', 'blob:'],
+    mediaSrc: ['\'self\'', 'data:', 'https:', 'blob:'],
     fontSrc: ['\'self\'', 'data:', 'https:'],
     connectSrc: ['\'self\''],
     frameAncestors: ['\'none\''],
@@ -96,6 +97,7 @@ export const headers = secureHeaders({
   },
   xFrameOptions: 'DENY',
   referrerPolicy: 'same-origin',
+  crossOriginOpenerPolicy: false,
   permissionsPolicy: {
     camera: [],
     microphone: [],
@@ -103,6 +105,54 @@ export const headers = secureHeaders({
   },
   crossOriginEmbedderPolicy: false,
 })
+
+export const headers = createMiddleware<AppEnv>(async (c, next) => {
+  await secureHeaderMiddleware(c, next)
+
+  if (isPotentiallyTrustworthyUrl(c.req.url)) {
+    c.header('Cross-Origin-Opener-Policy', 'same-origin')
+  }
+})
+
+function isPotentiallyTrustworthyUrl(url: string): boolean {
+  try {
+    const parsedUrl = new URL(url)
+    if (parsedUrl.protocol === 'https:') {
+      return true
+    }
+
+    if (parsedUrl.protocol !== 'http:') {
+      return false
+    }
+
+    const hostname = parsedUrl.hostname.toLowerCase()
+    return (
+      hostname === 'localhost'
+      || hostname.endsWith('.localhost')
+      || hostname === '[::1]'
+      || hostname === '::1'
+      || isLoopbackIpv4(hostname)
+    )
+  } catch {
+    return false
+  }
+}
+
+function isLoopbackIpv4(hostname: string): boolean {
+  const parts = hostname.split('.')
+  if (parts.length !== 4 || parts[0] !== '127') {
+    return false
+  }
+
+  return parts.every((part) => {
+    if (!(/^\d+$/).test(part)) {
+      return false
+    }
+
+    const value = Number(part)
+    return value >= 0 && value <= 255
+  })
+}
 
 export const csrf = createMiddleware<AppEnv>(async (c, next) => {
   if (c.req.path === csrfTokenRefreshPath) {

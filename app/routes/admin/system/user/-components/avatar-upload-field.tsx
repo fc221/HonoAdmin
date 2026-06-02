@@ -14,17 +14,17 @@ export default function AvatarUploadField({ user }: Props) {
 
   return (
     <div
-      class="min-w-0 space-y-2"
+      class="min-w-0 max-w-full space-y-2"
       data-avatar-upload="true"
       data-avatar-upload-pending-message-value="正在上传头像..."
-      data-avatar-upload-success-message-value="头像已上传并回填。"
+      data-avatar-upload-success-message-value="头像上传成功"
       data-controller="avatar-upload"
       data-form-field="avatar"
     >
       <label class="text-sm font-medium" for={fieldId}>
         头像 URL
       </label>
-      <div class="flex min-w-0 items-center gap-3">
+      <div class="flex min-w-0 max-w-full items-center gap-3">
         <button
           aria-label="点击上传头像"
           class="group avatar shrink-0 disabled:cursor-wait disabled:opacity-70"
@@ -32,7 +32,7 @@ export default function AvatarUploadField({ user }: Props) {
           data-avatar-upload-target="button"
           type="button"
         >
-          <span class="relative h-14 w-14 overflow-hidden rounded bg-primary/80 text-white ring-1 ring-base-300">
+          <span class="relative h-12 w-12 overflow-hidden rounded bg-primary/80 text-white ring-1 ring-base-300">
             <LazyAvatarImage
               alt="用户头像"
               fallbackClass="text-lg font-bold text-white"
@@ -63,7 +63,7 @@ export default function AvatarUploadField({ user }: Props) {
         type="file"
       />
       <p
-        class="label"
+        class="text-sm leading-5 text-base-content/60"
         data-avatar-upload-target="message"
       >
         {help}

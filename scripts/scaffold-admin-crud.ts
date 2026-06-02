@@ -817,7 +817,7 @@ export default function ${pascal}Table({ listHref, records }: Props) {
           <tr>
             <th>ID</th>
 ${heads}
-            <th></th>
+            <th class="w-28 min-w-28 whitespace-nowrap text-right">操作</th>
           </tr>
         </thead>
         <tbody>
@@ -825,24 +825,26 @@ ${heads}
             <tr key={record.id}>
               <td>{record.id}</td>
 ${cells}
-              <td class="text-right">
-                <a
-                  class="btn btn-ghost btn-xs"
-                  data-turbo-frame="_top"
-                  href={withReturnToPath(\`/admin/${options.route}/edit?id=\${record.id}\`, listHref)}
-                >
-                  编辑
-                </a>
-                <ConfirmActionModal
-                  id={\`${options.name}-delete-\${record.id}\`}
-                  inputs={[
-                    { name: 'intent', value: 'delete' },
-                    { name: 'id', value: record.id },
-                    { name: returnToFieldName, value: listHref },
-                  ]}
-                  message={\`${options.title}「\${record.id}」删除后不可恢复。\`}
-                  title="删除${options.title}"
-                />
+              <td class="w-28 min-w-28 whitespace-nowrap text-right">
+                <div class="flex min-w-max flex-nowrap items-center justify-end gap-2">
+                  <a
+                    class="btn btn-ghost btn-xs shrink-0 whitespace-nowrap px-1"
+                    data-turbo-frame="_top"
+                    href={withReturnToPath(\`/admin/${options.route}/edit?id=\${record.id}\`, listHref)}
+                  >
+                    编辑
+                  </a>
+                  <ConfirmActionModal
+                    id={\`${options.name}-delete-\${record.id}\`}
+                    inputs={[
+                      { name: 'intent', value: 'delete' },
+                      { name: 'id', value: record.id },
+                      { name: returnToFieldName, value: listHref },
+                    ]}
+                    message={\`${options.title}「\${record.id}」删除后不可恢复。\`}
+                    title="删除${options.title}"
+                  />
+                </div>
               </td>
             </tr>
           ))}

@@ -81,7 +81,7 @@ export default function OperateLogPanel({
                   <th>请求</th>
                   <th>IP</th>
                   <th>时间</th>
-                  <th></th>
+                  <th class="w-24 min-w-24 whitespace-nowrap text-right">操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -106,17 +106,19 @@ export default function OperateLogPanel({
                     </td>
                     <td>{log.clientIp ?? '-'}</td>
                     <td>{formatDateTime(log.createdAt, timezone)}</td>
-                    <td>
-                      <ConfirmActionModal
-                        id={`operate-log-delete-${log.id}`}
-                        inputs={[
-                          { name: 'intent', value: 'delete' },
-                          { name: 'id', value: log.id },
-                          { name: returnToFieldName, value: listHref },
-                        ]}
-                        message={`操作日志 #${log.id} 删除后不可恢复。`}
-                        title="删除操作日志"
-                      />
+                    <td class="w-24 min-w-24 whitespace-nowrap text-right">
+                      <div class="flex min-w-max flex-nowrap items-center justify-end gap-2">
+                        <ConfirmActionModal
+                          id={`operate-log-delete-${log.id}`}
+                          inputs={[
+                            { name: 'intent', value: 'delete' },
+                            { name: 'id', value: log.id },
+                            { name: returnToFieldName, value: listHref },
+                          ]}
+                          message={`操作日志 #${log.id} 删除后不可恢复。`}
+                          title="删除操作日志"
+                        />
+                      </div>
                     </td>
                   </tr>
                 ))}

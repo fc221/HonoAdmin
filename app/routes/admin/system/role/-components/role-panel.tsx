@@ -63,7 +63,7 @@ export default function RolePanel({
                   <th>角色</th>
                   <th>权限</th>
                   <th>更新时间</th>
-                  <th class="text-right"></th>
+                  <th class="w-28 min-w-28 whitespace-nowrap text-right">操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -98,10 +98,10 @@ export default function RolePanel({
                       </div>
                     </td>
                     <td>{formatDateTime(role.updatedAt, timezone)}</td>
-                    <td class="text-right">
-                      <div class="flex flex-nowrap items-center justify-end gap-2">
+                    <td class="w-28 min-w-28 whitespace-nowrap text-right">
+                      <div class="flex min-w-max flex-nowrap items-center justify-end gap-2">
                         <a
-                          class="btn btn-link btn-xs"
+                          class="btn btn-link btn-xs shrink-0 whitespace-nowrap px-1"
                           data-turbo-frame="_top"
                           href={withReturnToPath(`${pagePath}/edit?id=${role.id}`, listHref)}
                         >

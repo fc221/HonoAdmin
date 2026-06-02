@@ -5,7 +5,7 @@ export default class AvatarUploadController extends Controller<HTMLElement> {
   static targets = ['button', 'fileInput', 'message', 'valueInput']
   static values = {
     pendingMessage: { default: '正在上传头像...', type: String },
-    successMessage: { default: '头像已上传并回填。', type: String },
+    successMessage: { default: '头像上传成功', type: String },
   }
 
   declare readonly buttonTarget: HTMLButtonElement

@@ -9,7 +9,7 @@ import {
   needsPasswordRehash,
   verifyUserPassword,
 } from '../app/service/admin/system/user'
-import { csrf, requestBodyLimit } from '../app/service/middleware/security'
+import { csrf, headers, requestBodyLimit } from '../app/service/middleware/security'
 import {
   csrfCookieName,
   csrfFieldName,
@@ -79,6 +79,25 @@ describe('security utilities', () => {
 
     expect(response.status).toBe(413)
     expect(await response.text()).toContain('6MB')
+  })
+
+  test('security headers allow upload blob previews without COOP warnings on LAN HTTP', async () => {
+    const app = new Hono()
+    app.use('*', headers)
+    app.get('/admin/system/file', (c) => c.text('ok'))
+
+    const lanResponse = await app.request(
+      new Request('http://192.168.66.106:5173/admin/system/file'),
+    )
+    const localhostResponse = await app.request(
+      new Request('http://localhost:5173/admin/system/file'),
+    )
+    const csp = lanResponse.headers.get('Content-Security-Policy') ?? ''
+
+    expect(csp).toContain('img-src \'self\' data: https: blob:')
+    expect(csp).toContain('media-src \'self\' data: https: blob:')
+    expect(lanResponse.headers.get('Cross-Origin-Opener-Policy')).toBeNull()
+    expect(localhostResponse.headers.get('Cross-Origin-Opener-Policy')).toBe('same-origin')
   })
 
   test('csrf middleware requires a signed same-origin token for form posts', async () => {

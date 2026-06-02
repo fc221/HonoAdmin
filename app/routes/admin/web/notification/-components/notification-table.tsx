@@ -24,7 +24,7 @@ export default function WebNotificationTable({
             <th>别名</th>
             <th>配置</th>
             <th>内容</th>
-            <th></th>
+            <th class="w-40 min-w-40 whitespace-nowrap text-right">操作</th>
           </tr>
         </thead>
         <tbody>
@@ -49,17 +49,17 @@ export default function WebNotificationTable({
               <td class="max-w-96 whitespace-normal text-sm text-base-content/70">
                 {getTextPreview(notification.content)}
               </td>
-              <td>
-                <div class="flex flex-nowrap items-center justify-end gap-2">
+              <td class="w-40 min-w-40 whitespace-nowrap text-right">
+                <div class="flex min-w-max flex-nowrap items-center justify-end gap-2">
                   <a
-                    class="btn btn-link btn-xs"
+                    class="btn btn-link btn-xs shrink-0 whitespace-nowrap px-1"
                     href={`/announcement/${notification.alias}`}
                     target="_blank"
                   >
                     访问
                   </a>
                   <a
-                    class="btn btn-link btn-xs"
+                    class="btn btn-link btn-xs shrink-0 whitespace-nowrap px-1"
                     data-turbo-frame="_top"
                     href={withReturnToPath(
                       `/admin/web/notification/edit?id=${notification.id}`,

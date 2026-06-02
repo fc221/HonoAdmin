@@ -54,7 +54,7 @@ export default function WebFeedbackPanel({
                   <th>图片</th>
                   <th>状态</th>
                   <th>回复</th>
-                  <th class="text-right"></th>
+                  <th class="w-28 min-w-28 whitespace-nowrap text-right">操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -110,10 +110,10 @@ export default function WebFeedbackPanel({
                         {feedback.reply ?? ''}
                       </textarea>
                     </td>
-                    <td class="text-right">
-                      <div class="flex flex-nowrap items-center justify-end gap-2">
+                    <td class="w-28 min-w-28 whitespace-nowrap text-right">
+                      <div class="flex min-w-max flex-nowrap items-center justify-end gap-2">
                         <button
-                          class="btn btn-link btn-xs"
+                          class="btn btn-link btn-xs shrink-0 whitespace-nowrap px-1"
                           form={`feedback-update-${feedback.id}`}
                           type="submit"
                         >

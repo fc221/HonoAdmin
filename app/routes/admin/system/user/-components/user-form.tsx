@@ -34,7 +34,7 @@ export default function UserForm({
 
   return (
     <form
-      class="grid min-w-0 gap-4 md:grid-cols-2"
+      class="grid min-w-0 max-w-full gap-4 md:grid-cols-2"
       data-validate-trigger="blur"
       method="post"
       {...topLevelFormTurboAttrs}
@@ -56,7 +56,7 @@ export default function UserForm({
           emptyText="暂无角色可选"
           selectedValues={selectedRoleIds}
         />
-        <p class="label">可分配多个角色，用户可在头像菜单中切换当前生效角色。</p>
+        <p class="text-sm leading-5 text-base-content/60">可分配多个角色，用户可在头像菜单中切换当前生效角色。</p>
       </div>
 
       <AvatarUploadField user={user} />
@@ -74,7 +74,7 @@ export default function UserForm({
           required
           value={user?.username ?? ''}
         />
-        <p class="label">用于登录和后台识别，创建后仍可编辑。</p>
+        <p class="text-sm leading-5 text-base-content/60">用于登录和后台识别，创建后仍可编辑。</p>
       </div>
 
       <div class="min-w-0 space-y-2" data-form-field="nickname">
@@ -86,7 +86,7 @@ export default function UserForm({
           placeholder="请输入昵称"
           value={user?.nickname ?? ''}
         />
-        <p class="label">列表和个人资料中展示的名称。</p>
+        <p class="text-sm leading-5 text-base-content/60">列表和个人资料中展示的名称。</p>
       </div>
 
       <div class="min-w-0 space-y-2" data-form-field="mail">
@@ -100,7 +100,7 @@ export default function UserForm({
           type="email"
           value={user?.mail ?? ''}
         />
-        <p class="label">可选，留空表示未绑定邮箱。</p>
+        <p class="text-sm leading-5 text-base-content/60">可选，留空表示未绑定邮箱。</p>
       </div>
 
       <div class="min-w-0 space-y-2" data-form-field="phone">
@@ -114,7 +114,7 @@ export default function UserForm({
           type="tel"
           value={user?.phone ?? ''}
         />
-        <p class="label">可选，留空表示未绑定手机。</p>
+        <p class="text-sm leading-5 text-base-content/60">可选，留空表示未绑定手机。</p>
       </div>
 
       <div class="min-w-0 space-y-2" data-form-field="password">
@@ -129,7 +129,7 @@ export default function UserForm({
           required={!isUpdate}
           type="password"
         />
-        <p class="label">
+        <p class="text-sm leading-5 text-base-content/60">
           {isUpdate ? '编辑时留空则保持原密码。' : '新用户必须设置初始密码。'}
         </p>
       </div>
@@ -147,7 +147,7 @@ export default function UserForm({
             </option>
           ))}
         </select>
-        <p class="label">禁用用户无法登录后台。</p>
+        <p class="text-sm leading-5 text-base-content/60">禁用用户无法登录后台。</p>
       </div>
 
       <div class="modal-action min-w-0 border-t border-base-300 pt-4 md:col-span-2">

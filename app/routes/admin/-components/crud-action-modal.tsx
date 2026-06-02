@@ -16,6 +16,8 @@ interface CreateActionModalProps {
   title: string
 }
 
+type ActionModalProps = CreateActionModalProps
+
 interface ConfirmActionModalProps {
   buttonClass?: string
   buttonLabel?: string
@@ -49,10 +51,10 @@ export function CreateActionModal({
 }
 
 export function EditActionModal({
-  buttonClass = 'btn btn-link btn-xs',
+  buttonClass = 'btn btn-link btn-xs shrink-0 whitespace-nowrap px-1',
   buttonLabel,
   children,
-  iconClass = 'icon-[ri--edit-line]',
+  iconClass,
   id,
   title,
 }: CreateActionModalProps) {
@@ -76,11 +78,11 @@ function ActionModal({
   iconClass,
   id,
   title,
-}: Required<CreateActionModalProps>) {
+}: ActionModalProps) {
   return (
     <span class="contents" data-controller="modal">
       <label class={buttonClass} for={id} role="button" tabindex={0}>
-        <i class={iconClass}></i>
+        {iconClass ? <i class={iconClass}></i> : null}
         {buttonLabel}
       </label>
       <input class="modal-toggle" id={id} type="checkbox" />
@@ -98,7 +100,7 @@ function ActionModal({
           <div class="shrink-0 border-b border-base-300 px-4 py-4 pr-14 sm:px-6">
             <h2 class="text-xl font-bold">{title}</h2>
           </div>
-          <div class="min-h-0 min-w-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6">{children}</div>
+          <div class="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-5 sm:px-6">{children}</div>
         </div>
         <label class="modal-backdrop" data-action="modal#close" for={id}>
           关闭
@@ -109,7 +111,7 @@ function ActionModal({
 }
 
 export function ConfirmActionModal({
-  buttonClass = 'btn btn-link btn-xs text-error',
+  buttonClass = 'btn btn-link btn-xs shrink-0 whitespace-nowrap px-1 text-error',
   buttonLabel = '删除',
   confirmLabel = '确认删除',
   id,

@@ -190,7 +190,7 @@ function FileTable({
             <th>存储</th>
             <th>上传用户</th>
             <th class="w-52 min-w-52">上传时间</th>
-            <th class="text-right w-20 min-w-20"></th>
+            <th class="w-24 min-w-24 whitespace-nowrap text-right">操作</th>
           </tr>
         </thead>
         <tbody>
@@ -231,17 +231,19 @@ function FileTable({
               </td>
               <td>{file.userId ?? '-'}</td>
               <td>{formatDateTime(file.createdAt, timezone)}</td>
-              <td class="text-right">
-                <ConfirmActionModal
-                  id={`file-delete-${file.id}`}
-                  inputs={[
-                    { name: 'intent', value: 'delete' },
-                    { name: 'id', value: file.id },
-                    { name: returnToFieldName, value: listHref },
-                  ]}
-                  message={`文件「${file.originalName}」删除后，已引用该文件的头像、公告或页面内容将无法显示。`}
-                  title="删除文件"
-                />
+              <td class="w-24 min-w-24 whitespace-nowrap text-right">
+                <div class="flex min-w-max flex-nowrap items-center justify-end gap-2">
+                  <ConfirmActionModal
+                    id={`file-delete-${file.id}`}
+                    inputs={[
+                      { name: 'intent', value: 'delete' },
+                      { name: 'id', value: file.id },
+                      { name: returnToFieldName, value: listHref },
+                    ]}
+                    message={`文件「${file.originalName}」删除后，已引用该文件的头像、公告或页面内容将无法显示。`}
+                    title="删除文件"
+                  />
+                </div>
               </td>
             </tr>
           ))}
