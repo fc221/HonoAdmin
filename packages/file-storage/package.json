@@ -1,0 +1,15 @@
+{
+  "name": "@hono-admin/file-storage",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./adapter/*": "./src/adapter/*.ts",
+    "./factory": "./src/factory.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit"
+  },
+  "devDependencies": {}
+}

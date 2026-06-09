@@ -1,6 +1,0 @@
-import { createRoute } from 'honox/factory'
-
-export default createRoute(async (c) => c.redirect(
-  '/admin/dashboard',
-  302,
-))

@@ -29,7 +29,15 @@ export default antfu(
     jsdoc: false,
     react: false,
     vue: true,
-    ignores: ['**/.wrangler/**', '**/dist/**', '**/drizzle/**', '**/*.md'],
+    ignores: [
+      '**/.astro/**',
+      '**/.wrangler/**',
+      '**/dist/**',
+      '**/drizzle/**',
+      '**/node_modules/**',
+      '**/*.md',
+      '**/*.tsbuildinfo',
+    ],
   },
   {
     files: ['**/*.{js,ts,tsx}'],
@@ -80,9 +88,9 @@ export default antfu(
   },
   {
     files: [
-      'app/routes/**/*.{ts,tsx}',
-      'app/service/**/*.{ts,tsx}',
-      'app/utils/**/*.{ts,tsx}',
+      'apps/server/src/api/**/*.{ts,tsx}',
+      'apps/server/src/service/**/*.{ts,tsx}',
+      'apps/server/src/utils/**/*.{ts,tsx}',
     ],
     rules: {
       'no-restricted-imports': [

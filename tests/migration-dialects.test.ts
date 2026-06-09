@@ -3,27 +3,27 @@ import type {
   DBAdapter,
   QueryResult,
   QueryRow,
-} from '../app/infra/database/types'
+} from '@hono-admin/db'
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { describe, expect, test } from 'bun:test'
-import { normalizeSqlForDialect } from '../app/infra/database/adapter/sql-normalize'
-import {
-  getMigrationStatus,
-  runMigrations,
-} from '../app/infra/database/migrator'
+import { normalizeSqlForDialect } from '@hono-admin/db/adapter/sql-normalize'
 import {
   createLocalDatabaseAdapter,
   createLocalSqliteAdapter,
   getDatabaseDialect,
-} from '../app/infra/runtime/local-sqlite'
+} from '@hono-admin/runtime/local-sqlite'
+import { describe, expect, test } from 'bun:test'
+import {
+  getMigrationStatus,
+  runMigrations,
+} from '../apps/server/src/migrations/migrator'
 import {
   getMigrationsForDialect,
   mysqlMigrations,
   pgMigrations,
   sqliteMigrations,
-} from '../app/migrations/registry'
+} from '../apps/server/src/migrations/registry'
 
 describe('migration dialects', () => {
   test('migration registries keep matching id, name, and order', () => {
@@ -78,7 +78,7 @@ describe('migration dialects', () => {
   })
 
   test('Bun SQL runtime dialect is selected from database URL', async () => {
-    expect(getDatabaseDialect('./honox-admin.sqlite')).toBe('sqlite')
+    expect(getDatabaseDialect('./hono-admin.sqlite')).toBe('sqlite')
     expect(getDatabaseDialect('mysql://user:pass@localhost/app')).toBe('mysql')
     expect(getDatabaseDialect('mysql2://user:pass@localhost/app')).toBe('mysql')
     expect(getDatabaseDialect('postgres://user:pass@localhost/app')).toBe('pg')

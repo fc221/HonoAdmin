@@ -15,6 +15,13 @@ HonoAdmin keeps installation, sessions, authorization, and migrations in server-
 - The session cookie is `httpOnly` and `sameSite=Lax` by default, and `secure` is enabled automatically on HTTPS requests.
 - The "remember me" option keeps a session for up to 7 days. Without it, the browser session lifecycle is used.
 
+## Current Auth Boundary
+
+- The console uses browser session cookies. `/api/auth/login` writes `hono_admin_session`, and the console API client sends `credentials: 'include'`.
+- `/api/admin/*` and `/api/user/*` are currently protected by session middleware. Admin APIs also check menu/action permissions.
+- API tokens are for external clients and open API use cases, not for the console. The service layer already has Bearer JWT issue/verify/expiry/cache-revoke logic; expose it only through dedicated token routes and Bearer middleware.
+- Do not mix `SESSION_SECRET` and `JWT_SECRET`. Session cookies use `SESSION_SECRET`; Bearer tokens use `JWT_SECRET`.
+
 ## Authorization And Audit Logs
 
 - Non-root users receive menu permissions and operation permissions through roles.

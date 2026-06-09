@@ -1,0 +1,40 @@
+{
+  "name": "@hono-admin/server",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./src/app.ts",
+    "./app": "./src/app.ts",
+    "./api/routes": "./src/api/index.ts",
+    "./api/client": "./src/api/client.ts",
+    "./api/openapi": "./src/api/openapi.ts",
+    "./api/schema": "./src/api/schema.ts",
+    "./migrations/*": "./src/migrations/*",
+    "./service/admin/system/menu/consts": "./src/service/admin/system/menu/consts.ts",
+    "./service/*": "./src/service/*",
+    "./utils/*": "./src/utils/*"
+  },
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 3000",
+    "typecheck": "tsc --noEmit",
+    "build": "bun build src/bun.ts --target=bun --outdir=dist",
+    "build:bun": "bun build src/bun.ts --target=bun --outdir=dist",
+    "build:workers": "bun build src/worker.ts --target=browser --outdir=dist/workers",
+    "compile:bun": "bun run build:bun && bun build --compile --minify --sourcemap --bytecode dist/bun.js --outfile dist/hono-admin"
+  },
+  "dependencies": {
+    "@hono-admin/cache": "workspace:*",
+    "@hono-admin/db": "workspace:*",
+    "@hono-admin/domain": "workspace:*",
+    "@hono-admin/file-storage": "workspace:*",
+    "@hono-admin/runtime": "workspace:*",
+    "hono": "^4.12.18",
+    "zod": "^4.4.2",
+    "zod-openapi": "^5.4.6"
+  },
+  "devDependencies": {
+    "@hono/vite-dev-server": "^0.26.0",
+    "typescript": "^5.9.3",
+    "vite": "^6.3.5"
+  }
+}

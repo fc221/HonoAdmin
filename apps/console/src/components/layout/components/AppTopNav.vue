@@ -1,0 +1,143 @@
+<script setup lang="ts">
+import type { UserProfile } from '@hono-admin/server/api/schema'
+import type { DropdownOption, MenuOption } from 'naive-ui'
+import { NAvatar, NButton, NDropdown, NMenu, useThemeVars } from 'naive-ui'
+import { computed, defineAsyncComponent } from 'vue'
+import AppIcon from '../../AppIcon.vue'
+import { findMenuHref, getLogoText } from '../helpers'
+
+const props = withDefaults(defineProps<{
+  activeMenuName: string
+  flush?: boolean
+  logoText: string
+  menuOptions: MenuOption[]
+  roleDropdownOptions?: DropdownOption[]
+  selectedMenuKey: string
+  siteTitle: string
+  themeDropdownOptions: DropdownOption[]
+  topMenuCentered?: boolean
+  user: UserProfile | null
+  userDropdownOptions: DropdownOption[]
+  userLabel: string
+}>(), {
+  flush: false,
+  roleDropdownOptions: () => [],
+  topMenuCentered: false,
+})
+
+const emit = defineEmits<{
+  navigate: [href: string]
+  refresh: []
+  roleSwitch: [key: string | number]
+  selectTheme: [key: string | number]
+  userAction: [key: string | number]
+}>()
+
+const canEditInterface = import.meta.env.DEV
+const SettingsDrawer = canEditInterface
+  ? defineAsyncComponent(() => import('./SettingsDrawer.vue'))
+  : null
+const themeVars = useThemeVars()
+const homeHref = computed(() => findFirstMenuHref(props.menuOptions) || '/')
+const selectedMenuKeyModel = computed({
+  get: () => props.selectedMenuKey || props.activeMenuName,
+  set: (key) => {
+    const href = findMenuHref(props.menuOptions, key)
+    if (href) {
+      emit('navigate', href)
+    }
+  },
+})
+
+function findFirstMenuHref(options: MenuOption[]): string {
+  for (const option of options) {
+    if (typeof option.href === 'string') {
+      return option.href
+    }
+
+    const href = findFirstMenuHref((option.children ?? []) as MenuOption[])
+    if (href) {
+      return href
+    }
+  }
+
+  return ''
+}
+</script>
+
+<template>
+  <header
+    class="flex h-16 shrink-0 items-center px-4"
+    :style="{
+      background: themeVars.cardColor,
+      borderBottom: flush ? `1px solid ${themeVars.borderColor}` : '0',
+      borderRadius: flush ? '0' : themeVars.borderRadius,
+      color: themeVars.textColor1,
+    }"
+  >
+    <div class="flex h-full w-full min-w-0 items-center gap-3">
+      <button
+        type="button"
+        class="flex min-w-0 shrink-0 items-center gap-2 px-2"
+        :aria-label="siteTitle"
+        @click="emit('navigate', homeHref)"
+      >
+        <span
+          class="grid size-9 shrink-0 place-items-center text-sm font-bold text-white"
+          :style="{
+            background: `linear-gradient(135deg, ${themeVars.primaryColor}, ${themeVars.primaryColorHover})`,
+            borderRadius: themeVars.borderRadius,
+          }"
+        >
+          {{ logoText }}
+        </span>
+        <span class="max-w-40 truncate text-base font-semibold" :style="{ color: themeVars.textColor1 }">
+          {{ siteTitle }}
+        </span>
+      </button>
+
+      <nav
+        class="min-w-0 flex-1 overflow-hidden"
+        :class="topMenuCentered ? 'flex justify-center' : ''"
+        aria-label="主导航"
+      >
+        <NMenu
+          v-model:value="selectedMenuKeyModel"
+          mode="horizontal"
+          responsive
+          :icon-size="18"
+          :options="menuOptions"
+        />
+      </nav>
+
+      <div class="ml-auto flex shrink-0 items-center gap-3 text-lg text-base-muted">
+        <AppIcon name="refresh" @click="emit('refresh')" />
+        <NDropdown :options="themeDropdownOptions" trigger="hover" :width="176" @select="key => emit('selectTheme', key)">
+          <AppIcon name="palette" />
+        </NDropdown>
+        <NDropdown
+          v-if="roleDropdownOptions.length > 1"
+          trigger="hover"
+          :options="roleDropdownOptions"
+          @select="key => emit('roleSwitch', key)"
+        >
+          <AppIcon name="role" />
+        </NDropdown>
+        <component :is="SettingsDrawer" v-if="canEditInterface && SettingsDrawer" />
+        <NDropdown
+          trigger="hover"
+          :options="userDropdownOptions"
+          @select="key => emit('userAction', key)"
+        >
+          <NButton quaternary class="h-9! gap-2! px-2!" title="用户菜单">
+            <NAvatar round size="small" :src="user?.avatar || undefined">
+              {{ getLogoText(userLabel) }}
+            </NAvatar>
+            <span class="ml-2 hidden max-w-28 truncate text-sm xl:inline">{{ userLabel }}</span>
+            <AppIcon class="hidden xl:inline-block" name="chevron-down" />
+          </NButton>
+        </NDropdown>
+      </div>
+    </div>
+  </header>
+</template>

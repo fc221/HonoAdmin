@@ -1,8 +1,6 @@
 {
   "compilerOptions": {
     "target": "ESNext",
-    "jsx": "react-jsx",
-    "jsxImportSource": "hono/jsx",
     "lib": [
       "ESNext",
       "DOM"
@@ -14,11 +12,20 @@
       "bun-types",
       "@cloudflare/workers-types"
     ],
+    "allowSyntheticDefaultImports": true,
+    "verbatimModuleSyntax": true,
     "strict": true,
     "skipLibCheck": true
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx"
-  ]
+  "references": [
+    { "path": "./packages/domain" },
+    { "path": "./packages/db" },
+    { "path": "./packages/cache" },
+    { "path": "./packages/file-storage" },
+    { "path": "./packages/runtime" },
+    { "path": "./apps/server" },
+    { "path": "./apps/console" },
+    { "path": "./apps/public" }
+  ],
+  "files": []
 }

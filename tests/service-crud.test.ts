@@ -1,14 +1,16 @@
 import type { TestServiceContext } from './helpers/service-context'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import {
+  getConfigValue,
   getSiteConfig,
   listConfigs,
+  updateConfigValues,
   upsertConfig,
-} from '../app/service/admin/system/config'
+} from '../apps/server/src/service/admin/system/config'
 import {
   createOperateLog,
   listOperateLogs,
-} from '../app/service/admin/system/operate-log'
+} from '../apps/server/src/service/admin/system/operate-log'
 import {
   canAccessAdminPath,
   createRole,
@@ -17,7 +19,7 @@ import {
   listAuthorizedAdminMenus,
   listRoles,
   updateRole,
-} from '../app/service/admin/system/role'
+} from '../apps/server/src/service/admin/system/role'
 import {
   createUser,
   deleteUser,
@@ -29,22 +31,22 @@ import {
   needsPasswordRehash,
   updateUser,
   verifyUserPassword,
-} from '../app/service/admin/system/user'
-import { UserGender, UserStatus } from '../app/service/admin/system/user/enum'
+} from '../apps/server/src/service/admin/system/user'
+import { UserGender, UserStatus } from '../apps/server/src/service/admin/system/user/enum'
 import {
   createWebNotification,
   deleteWebNotification,
   getWebNotificationByAlias,
   listWebNotifications,
   updateWebNotification,
-} from '../app/service/admin/web/notification'
+} from '../apps/server/src/service/admin/web/notification'
 import {
   createWebPage,
   deleteWebPage,
   getWebPageByAlias,
   listWebPages,
   updateWebPage,
-} from '../app/service/admin/web/page'
+} from '../apps/server/src/service/admin/web/page'
 import { createTestServiceContext } from './helpers/service-context'
 
 let testContext: TestServiceContext
@@ -80,6 +82,15 @@ describe('service CRUD', () => {
       description: 'Admin console for Hono apps.',
       title: 'Hono Admin Pro',
     })
+
+    expect(await updateConfigValues(ctx, {
+      configType: 'site',
+      values: {
+        site_name: 'Tabbed HonoAdmin',
+        site_subtitle: 'Panel split',
+      },
+    })).toBe(2)
+    expect(await getConfigValue(ctx, 'site', 'site_name')).toBe('Tabbed HonoAdmin')
 
     const configs = await listConfigs(ctx)
     expect(configs.slice(0, 4).map((config) => config.configKey)).toEqual([

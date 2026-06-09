@@ -3,10 +3,12 @@ dist/
 
 # dev
 .hono/
+.astro/
 .wrangler/
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
+*.tsbuildinfo
 .yarn/
 !.yarn/releases
 .vscode/*
@@ -36,4 +38,5 @@ lerna-debug.log*
 
 # misc
 .DS_Store
+.codex-artifacts/
 wrangler.local.jsonc

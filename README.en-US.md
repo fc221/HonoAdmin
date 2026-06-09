@@ -2,53 +2,74 @@
 
 [中文](./README.md) | English
 
-HonoAdmin is a modern admin framework built on Hono and HonoX. It targets AnyAdmin, CloudflareAdmin, HonoxAdmin, and similar admin-console use cases where teams need a lightweight, fast, runtime-portable system that can run locally with Bun and deploy to Cloudflare Workers.
+HonoAdmin is a front/back separated admin foundation. The server is a Hono API with native SQL, online migrations, and runtime adapters. The console is a Vue 3 SPA for `/admin/*` and `/user/*` built with Naive UI and Tailwind CSS. The public app is an Astro placeholder for future SEO pages.
 
-It is not a template locked to one platform. HonoAdmin is a Hono-based framework designed for any runtime: runtime capabilities are injected through adapters, while business code reads shared Hono Context resources such as `c.runtime`, `c.db`, `c.cache`, `c.config`, and `c.now()`. This keeps pages, forms, permissions, migrations, and native SQL access portable.
+Runtime resources are exposed through Hono Context as `c.runtime`, `c.db`, `c.cache`, `c.config`, and `c.now()`. Bun, Cloudflare Workers/D1, SQLite, MySQL, and PostgreSQL differences stay inside adapters.
 
-## Keywords
+## Stack
 
-AnyAdmin, CloudflareAdmin, HonoxAdmin, HonoAdmin, Hono, HonoX, Cloudflare Workers, Bun, D1, SQLite, MySQL, PostgreSQL, native SQL, runtime agnostic admin framework.
+- Monorepo: Bun Workspaces.
+- Server: Hono + TypeScript + Zod + OpenAPI metadata.
+- Console: Vue 3 + Vite + Vue Router + Pinia + Naive UI + Tailwind CSS.
+- Public: Astro placeholder.
+- Database: native SQL + SQLite/D1, MySQL, PostgreSQL adapters and migrations.
+- Runtime: Bun and Cloudflare Workers builds.
 
-## Features
-
-- Server-rendered HonoX pages with same-route actions.
-- Bun for local development and Cloudflare Workers for deployment.
-- Adapter-based SQLite, Cloudflare D1, MySQL, PostgreSQL, cache, and file storage support.
-- Native SQL by default, with no ORM lock-in.
-- Online database migrations checked before business handlers run.
-- Built-in admin modules for users, roles, permissions, menus, configs, files, operation logs, and updates.
-- A user panel and admin console in the same product; admins can switch into admin features.
-- Native form submissions with `303` redirects. Admin CRUD is strictly server-first by default; only components that genuinely need browser state (charts, rich-text editors, complex uploads, realtime notifications) are allowed local Stimulus-based enhancement. See the [Admin Feature Contract](./docs/ADMIN_FEATURE_CONTRACT.md).
-- Standalone APIs can use `hono-openapi + zod` for validation and documentation.
-- Tailwind CSS and daisyUI for a lightweight, customizable interface.
-
-## Architecture
+## Layout
 
 ```txt
-app/routes      HonoX routes, pages, actions, layouts, and components
-app/service     Business services, DTOs, permissions, sessions, migrations, responses
-app/infra       Database, cache, file storage, and runtime adapters
-app/utils       Framework-independent utilities, errors, and formatting helpers
-app/migrations  Append-only database migrations split by sqlite/mysql/pg dialect
-docs            Architecture, CRUD, and performance boundary notes
+apps/server   Hono API, services, migrations, Bun/Workers entries, backend utils
+apps/console  Vue SPA with admin/user pages, router, stores, components
+apps/public   Astro public app placeholder
+packages/db   DBAdapter and SQLite/D1/MySQL/PostgreSQL implementations
+packages/cache  CacheAdapter and memory/KV/noop implementations
+packages/file-storage  file storage contract and local/S3 implementations
+packages/runtime  runtime factory, bootstrap, security config, context types
+packages/domain  reusable pure domain logic
+docs          architecture, CRUD, security, deployment, performance guides
 ```
 
-Runtime resources are created in `app/infra/runtime` and attached to the Hono Context by middleware. Pages and services depend on context resources only, so they do not need to know whether the current runtime is Bun, Cloudflare Workers, or another adapter-backed target.
+## Development
 
-## Quick Start
+Install dependencies:
 
 ```bash
 bun install
-cp .env.example .env
-bun run dev
 ```
 
-Adjust `.env` as needed, then open the local app and visit `/install` to complete runtime configuration, database migrations, and administrator creation.
+Run server and console in two terminals:
 
-`bun run dev` uses the Bun runtime and supports SQLite, MySQL, and PostgreSQL. Use `bun run dev:workers` or `bun run preview` when testing Cloudflare Workers/D1 locally. The default `bun run build` emits a Cloudflare Workers build; use `bun run build:bun` for Bun production runtime builds.
+```bash
+bun run dev:server
+bun run dev:console
+```
 
-Useful commands:
+Default URLs:
+
+- Server API: `http://127.0.0.1:3000`
+- Console: `http://127.0.0.1:5173`
+- Install: `http://127.0.0.1:5173/install`
+
+If `5173` is occupied:
+
+```bash
+cd apps/console
+bunx vite --host 127.0.0.1 --port 5175
+```
+
+## Auth
+
+The console currently uses browser sessions:
+
+- `/api/auth/login` writes the `hono_admin_session` httpOnly cookie.
+- `/api/auth/session` reads the current user.
+- `/api/auth/logout` clears the cookie.
+- `/api/admin/*` and `/api/user/*` are protected by session middleware; admin paths also check menu/action permissions.
+- The console client sends `credentials: 'include'`.
+
+API tokens are reserved for external clients. `apps/server/src/service/user/api-token.ts` contains Bearer JWT issue/verify/revoke logic, but the console does not use it.
+
+## Checks
 
 ```bash
 bun run typecheck
@@ -56,35 +77,8 @@ bun run lint
 bun test
 bun run build
 bun run build:bun
-bun run dev:workers
+bun run build:workers
+bun run audit:structure
 ```
 
-For Cloudflare Workers deployment, see the [deployment guide](./docs/CLOUDFLARE_WORKERS.en-US.md).
-
-## Admin Modules
-
-- User management: accounts, status, roles, profile fields, avatar, and password flows.
-- Role permissions: menu permissions and operation permissions are separated for fine-grained admin access.
-- Config management: site, system, and file configuration.
-- File management: local storage and object storage adapters.
-- Operation logs: login, logout, business operations, and error records.
-- Update management: online migration status and execution.
-- Web management: pages, notifications, and feedback entries.
-
-## Extension Points
-
-- Add a runtime: create a runtime factory under `app/infra/runtime` and expose resources through context.
-- Add a database: implement `DBAdapter` and wire it into the runtime factory.
-- Add a cache: implement `CacheAdapter` and register it with the runtime.
-- Add a migration: create matching migration ids/names/orders in `app/migrations/sqlite`, `app/migrations/mysql`, and `app/migrations/pg`, then append them to each registry.
-- Add an admin CRUD: start with `bun run scaffold:crud`, then add migration, menu entry, service export, and tests.
-- Add a normal admin form: prefer HonoX `GET` render + same-route `POST` action before adding an API.
-
-See [Architecture](./docs/ARCHITECTURE.md), [Admin CRUD](./docs/ADMIN_CRUD.md), and [Performance Boundaries](./docs/PERFORMANCE_BOUNDARIES.md) for more details.
-
-## Deployment And Security
-
-- [Live demo](https://hono-admin-demo.wkuola.workers.dev)
-- [Cloudflare Workers deployment](./docs/CLOUDFLARE_WORKERS.en-US.md)
-- [Default security configuration](./docs/SECURITY.en-US.md)
-- [MIT License](./LICENSE)
+See [Cloudflare Workers deployment](./docs/CLOUDFLARE_WORKERS.en-US.md) and [Security](./docs/SECURITY.en-US.md).

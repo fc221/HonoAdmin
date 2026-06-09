@@ -1,0 +1,162 @@
+import type {
+  LayoutMainWidth,
+  LayoutSidebarLogoStyle,
+  LayoutSidebarMenuStyle,
+  LayoutVariant,
+} from '../components/layout/layout-config'
+import { defineStore } from 'pinia'
+import { computed, ref } from 'vue'
+import {
+  buildLayoutConfigSnippet,
+  defaultLayoutConfig,
+  hasCollapsibleSidebarVariant,
+  hasMobileSidebarVariant,
+  isHybridVariant,
+  isLayoutMainWidth,
+  isLayoutSidebarLogoStyle,
+  isLayoutSidebarMenuStyle,
+  isLayoutVariant,
+  isTopNavVariant,
+  layoutConfigStorageKey,
+} from '../components/layout/layout-config'
+
+const canEditInterface = import.meta.env.DEV
+
+export const useLayoutStore = defineStore('layout', () => {
+  const variant = ref<LayoutVariant>(defaultLayoutConfig.variant)
+  const mainWidth = ref<LayoutMainWidth>(defaultLayoutConfig.mainWidth)
+  const sidebarCollapsed = ref(defaultLayoutConfig.sidebarCollapsed)
+  const sidebarLogoStyle = ref<LayoutSidebarLogoStyle>(defaultLayoutConfig.sidebarLogoStyle)
+  const sidebarMenuStyle = ref<LayoutSidebarMenuStyle>(defaultLayoutConfig.sidebarMenuStyle)
+  const topMenuCentered = ref(defaultLayoutConfig.topMenuCentered)
+
+  const config = computed(() => ({
+    mainWidth: mainWidth.value,
+    sidebarCollapsed: sidebarCollapsed.value,
+    sidebarLogoStyle: sidebarLogoStyle.value,
+    sidebarMenuStyle: sidebarMenuStyle.value,
+    topMenuCentered: topMenuCentered.value,
+    variant: variant.value,
+  }))
+  const canCollapseSidebar = computed(() => hasCollapsibleSidebarVariant(variant.value))
+  const canUseSidebarStyle = computed(() => hasMobileSidebarVariant(variant.value))
+  const canUseTopNavOptions = computed(() => isTopNavVariant(variant.value))
+  const layoutConfigSnippet = computed(() => buildLayoutConfigSnippet(config.value))
+
+  function setVariant(value: string | number): void {
+    if (!canEditInterface) {
+      return
+    }
+
+    if (!isLayoutVariant(value)) {
+      return
+    }
+
+    variant.value = value
+    if (isHybridVariant(value)) {
+      mainWidth.value = 'wide'
+      topMenuCentered.value = false
+    }
+  }
+
+  function setMainWidth(value: LayoutMainWidth): void {
+    if (!canEditInterface) {
+      return
+    }
+
+    if (isLayoutMainWidth(value)) {
+      mainWidth.value = value
+    }
+  }
+
+  function setSidebarCollapsed(value: boolean): void {
+    if (canCollapseSidebar.value) {
+      sidebarCollapsed.value = value
+    }
+  }
+
+  function setSidebarLogoStyle(value: string | number): void {
+    if (!canEditInterface) {
+      return
+    }
+
+    if (isLayoutSidebarLogoStyle(value) && canUseSidebarStyle.value) {
+      sidebarLogoStyle.value = value
+    }
+  }
+
+  function setSidebarMenuStyle(value: string | number): void {
+    if (!canEditInterface) {
+      return
+    }
+
+    if (isLayoutSidebarMenuStyle(value) && canUseSidebarStyle.value) {
+      sidebarMenuStyle.value = value
+    }
+  }
+
+  function setTopMenuCentered(value: boolean): void {
+    if (!canEditInterface) {
+      return
+    }
+
+    if (canUseTopNavOptions.value) {
+      topMenuCentered.value = value
+    }
+  }
+
+  function normalizeForConsole(): void {
+    if (!canEditInterface) {
+      mainWidth.value = defaultLayoutConfig.mainWidth
+      sidebarLogoStyle.value = defaultLayoutConfig.sidebarLogoStyle
+      sidebarMenuStyle.value = defaultLayoutConfig.sidebarMenuStyle
+      topMenuCentered.value = defaultLayoutConfig.topMenuCentered
+      variant.value = defaultLayoutConfig.variant
+      return
+    }
+
+    if (!isLayoutVariant(variant.value)) {
+      variant.value = defaultLayoutConfig.variant
+    }
+
+    if (isHybridVariant(variant.value)) {
+      mainWidth.value = 'wide'
+      topMenuCentered.value = false
+    }
+  }
+
+  return {
+    canCollapseSidebar,
+    canUseSidebarStyle,
+    canUseTopNavOptions,
+    config,
+    layoutConfigSnippet,
+    mainWidth,
+    normalizeForConsole,
+    setMainWidth,
+    setSidebarCollapsed,
+    setSidebarLogoStyle,
+    setSidebarMenuStyle,
+    setTopMenuCentered,
+    setVariant,
+    sidebarCollapsed,
+    sidebarLogoStyle,
+    sidebarMenuStyle,
+    topMenuCentered,
+    variant,
+  }
+}, {
+  persist: canEditInterface
+    ? {
+        key: layoutConfigStorageKey,
+        pick: [
+          'mainWidth',
+          'sidebarCollapsed',
+          'sidebarLogoStyle',
+          'sidebarMenuStyle',
+          'topMenuCentered',
+          'variant',
+        ],
+      }
+    : false,
+})

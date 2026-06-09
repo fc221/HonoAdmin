@@ -1,0 +1,26 @@
+{
+  "name": "@hono-admin/console",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 5173",
+    "typecheck": "vue-tsc --noEmit",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@hono-admin/server": "workspace:*",
+    "@tailwindcss/vite": "^4.0.9",
+    "@vicons/ionicons5": "^0.13.0",
+    "@vitejs/plugin-vue": "^6.0.3",
+    "naive-ui": "^2.43.2",
+    "pinia": "^3.0.4",
+    "pinia-plugin-persistedstate": "^4.7.1",
+    "vue": "^3.5.25",
+    "vue-router": "^4.6.3"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vite": "^6.3.5",
+    "vue-tsc": "^3.1.6"
+  }
+}

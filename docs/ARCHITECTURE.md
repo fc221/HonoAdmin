@@ -2,21 +2,36 @@
 
 ## Summary
 
-HonoAdmin is a HonoX application with a small runtime core, native SQL database access, context-based dependency passing, and API validation/documentation through `hono-openapi + zod`.
+HonoAdmin is a front/back separated monorepo:
 
-The architecture should make common extension work additive: adding a runtime, database adapter, cache adapter, migration, API route, or business strategy should not require rewriting core request flow.
+- `apps/server`: Hono API, Bun and Workers entrypoints, service layer, migrations, and backend utilities.
+- `apps/console`: Vue 3 SPA for both Admin (`/admin/*`) and User (`/user/*`).
+- `apps/public`: Astro public SEO app. It is buildable and documented only until the SEO scope starts.
+- `apps/console/src/components`: Naive UI wrappers plus Tailwind CSS layout primitives.
+- `packages/runtime`: runtime factory, bootstrap, security config, and runtime context types.
+- `packages/db`: DB adapter contract and SQLite/D1/MySQL/PostgreSQL adapters.
+- `packages/cache`: cache adapter contract and memory/KV/noop adapters.
+- `packages/file-storage`: file storage contract and local/S3 adapters.
+- `packages/domain`: reusable pure domain targets.
+
+Console pages are Vue routes, not server-rendered route files.
 
 ## Layers
 
-- `app/routes`: HonoX route entries, pages, API route entries, renderers, SSR components, and browser behavior.
-- `app/service`: business workflows and middleware. This layer consumes context resources but does not detect runtime details.
-- `app/infra`: adapters and runtime factories for database, cache, and platform bindings.
-- `app/utils`: framework-independent helpers, errors, response shapes, and small shared utilities.
+- `apps/server/src/api`: Hono API route entries, OpenAPI registration, API boundary validation, and route grouping.
+- `apps/server/src/api/schema.ts`, `client.ts`, and `openapi.ts`: shared API DTO schemas, the typed API client used by console, and documentation metadata.
+- `apps/server/src/service`: business workflows and middleware. This layer consumes context resources but does not detect runtime details.
+- `apps/server/src/migrations`: append-only database migrations and migration runner.
+- `apps/server/src/utils`: backend helpers, errors, response shapes, and small shared utilities.
+- `apps/console/src/views`: route-view level data loading and Vue composition.
+- `apps/console/src/components`: shared layout primitives, theme tokens, menu/sidebar/header, forms, tables, modals, drawers, tabs, upload, and common controls.
+- `packages/runtime`: runtime creation, bootstrap config, security runtime config, and runtime context types.
+- `packages/db`, `packages/cache`, `packages/file-storage`: adapter contracts and implementations.
 - `docs`: persistent architecture and implementation guidance.
 
 ## Runtime Context
 
-Runtime resources are created by `infra/runtime` and attached by `service/middleware/context`.
+Runtime resources are created by `packages/runtime` and attached by `apps/server/src/service/middleware/context`.
 
 Handlers should read:
 
@@ -30,43 +45,9 @@ Business code must not inspect `Bun`, Cloudflare bindings, or environment global
 
 The direct context fields are a project-level Hono `Context` extension. Do not introduce new core resources by ad-hoc assignment in route files. Add the field to the runtime/context type, attach it in `service/middleware/context`, and document the extension point here.
 
-## HonoX Pages And Browser Behavior
-
-HonoX pages should render meaningful initial state on the server when data is available through context resources.
-
-Shared SSR markup lives in `app/routes/-/components`. These components output HTML, daisyUI/Tailwind classes, forms, tables, modals, menus, and `data-*` hooks.
-
-Browser-only behavior lives in `app/routes/-/browser`. This directory owns Turbo setup, Stimulus controllers, loading/confirm/CSRF helpers, upload behavior, and lifecycle code that touches `window`, `document`, `fetch`, or `localStorage`.
-
-When a feature is only used by the HonoX page, prefer integrated mode:
-
-- `GET /feature` renders the page from context resources.
-- `POST /feature` handles form actions and redirects back to the page.
-- No client-side `fetch` or standalone API is introduced unless another client needs that contract.
-
-Admin feature pages use feature folders:
-
-- `app/routes/admin/system/config`: configuration management page and local components.
-- `app/routes/admin/system/user`: user management page and local components.
-
-Avoid large mixed files that combine route rendering, API clients, forms, tables, and unrelated domain panels. Split page-specific UI into local `-components`, and move shared admin UI into `app/routes/admin/-components`.
-
-Feature constants live beside the module that owns them. Layout components render their local navigation constants instead of duplicating labels, paths, or icons.
-
-For the full admin extension checklist, see `docs/ADMIN_FEATURE_CONTRACT.md`.
-
-## Admin Layout Cache
-
-Admin layout data is cached in two layers:
-
-- request-level cache avoids duplicate session/layout work during one render.
-- cache-adapter TTL cache stores header profile, active menu set, roles, and site title for repeated page visits.
-
-The cache key includes the user id, active role id, and a layout cache version. Services that change layout-visible data must call `bumpAdminLayoutCacheVersion(ctx)` so later requests use fresh data. This applies to user, role, and site config changes.
-
 ## Database
 
-The database layer uses native SQL behind `DBAdapter`.
+The database layer uses native SQL behind `DBAdapter` from `@hono-admin/db`.
 
 Current targets:
 
@@ -85,14 +66,16 @@ Migration rules:
 - Never edit an already-applied migration.
 - Store applied migrations in `_migrations`.
 - Make each migration deterministic and idempotent at the application level.
-- Add new migrations to `app/migrations/sqlite`, `app/migrations/mysql`, and `app/migrations/pg` with the same id, name, and order.
+- Add new migrations to `apps/server/src/migrations/sqlite`, `apps/server/src/migrations/mysql`, and `apps/server/src/migrations/pg` with the same id, name, and order.
 - D1 uses the SQLite migration dialect. MySQL and PostgreSQL migrations are Bun runtime only.
 
 ## OpenAPI And Validation
 
 Standalone API validation and documentation use `hono-openapi + zod`.
 
-Do not add an API just because a page submits data. Use HonoX same-route actions first. Add APIs only when the feature needs external clients, generated documentation, or a separated integration boundary.
+For Admin/User work, APIs are the frontend integration boundary. Define the route in `apps/server/src/api`, validate with local Zod schemas, and keep business logic in `apps/server/src/service`.
+
+Small route modules may stay as a single file while they have one obvious responsibility. Once a route grows into multiple concerns, split it by surface and feature directory before adding more behavior.
 
 API route rules:
 
@@ -104,43 +87,49 @@ API route rules:
 
 ## Import Boundaries
 
-Core modules should import from package directories through `index.ts` barrels.
+Core modules should import from package barrels or stable package subpaths.
 
 Allowed:
 
 ```ts
-import { DatabaseError } from '../../utils'
-import type { DBAdapter } from '../database'
+import type { DBAdapter } from '@hono-admin/db'
+import { MemoryCacheAdapter } from '@hono-admin/cache/adapter/memory'
+import { createAppRuntime } from '@hono-admin/runtime/factory'
 ```
 
 Avoid:
 
 ```ts
-import { DatabaseError } from '../../utils/errors'
-import type { DBAdapter } from '../database/types'
-import type { DBAdapter } from '../database/types.ts'
+import type { DBAdapter } from '@hono-admin/db'
+import { MemoryCacheAdapter } from '../../some/infra/cache/adapter/memory'
 ```
 
-Adapter implementations may be imported directly only by runtime factories or adapter composition modules.
+Adapter implementations may be imported directly only by runtime factories or their own package-local factory modules.
 
 ## Extension Methods
 
 ### Add A Database Adapter
 
-1. Add an implementation under `app/infra/database/adapter`.
-2. Export shared types from `app/infra/database/index.ts` only.
-3. Wire the adapter in the relevant runtime factory.
+1. Add an implementation under `packages/db/src/adapter`.
+2. Export shared types from `packages/db/src/index.ts`.
+3. Wire the adapter in `packages/runtime/src/local-sqlite.ts` or the relevant runtime factory.
 4. Add typecheck/build coverage for the target runtime.
 
 ### Add A Cache Adapter
 
-1. Add an implementation under `app/infra/cache/adapter`.
-2. Keep the public contract in `CacheAdapter`.
+1. Add an implementation under `packages/cache/src/adapter`.
+2. Keep the public contract in `packages/cache/src/types.ts`.
 3. Wire the adapter in the relevant runtime factory.
+
+### Add A File Storage Adapter
+
+1. Add an implementation under `packages/file-storage/src/adapter`.
+2. Keep the public contract in `packages/file-storage/src/types.ts`.
+3. Register the adapter in `packages/file-storage/src/factory.ts`.
 
 ### Add A Migration
 
-1. Add the same ordered id and name under `app/migrations/sqlite`, `app/migrations/mysql`, and `app/migrations/pg`.
+1. Add the same ordered id and name under `apps/server/src/migrations/sqlite`, `apps/server/src/migrations/mysql`, and `apps/server/src/migrations/pg`.
 2. Keep D1 compatible with the SQLite migration.
 3. Register each dialect file in its local registry.
 4. Verify repeated startup does not rerun the migration.
@@ -150,7 +139,7 @@ Adapter implementations may be imported directly only by runtime factories or ad
 1. Add Zod schemas for params/query/body and response.
 2. Register validation at the route boundary.
 3. Attach OpenAPI metadata.
-4. Keep business logic in `service` if it is reusable or non-trivial.
+4. Keep business logic in `apps/server/src/service` if it is reusable or non-trivial.
 
 ### Add A Strategy Or Type
 

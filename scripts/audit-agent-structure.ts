@@ -24,53 +24,46 @@ const strict = args.has('--strict')
 
 const rules: FileRule[] = [
   {
-    name: 'route component',
-    pattern: /^app\/routes\/.*\/-components\/.*\.tsx$/,
+    name: 'console page',
+    pattern: /^apps\/console\/src\/pages\/.*\.vue$/,
     warnAt: 320,
     failAt: 560,
-    advice: 'Split panels, forms, tables, selectors, and upload widgets by responsibility.',
+    advice: 'Keep Vue pages focused on data loading and composition; move reusable layout/widgets into apps/console/src/components or layout.',
   },
   {
-    name: 'shared component',
-    pattern: /^app\/routes\/-\/components\/.*\.tsx$/,
-    warnAt: 340,
-    failAt: 580,
-    advice: 'Shared components should stay composable; move variant details into local components.',
+    name: 'console app entry',
+    pattern: /^apps\/console\/src\/(?:App|main)\.(?:ts|vue)$/,
+    warnAt: 260,
+    failAt: 420,
+    advice: 'Keep app shell logic small; move reusable layout and state behavior into apps/console/src/components, layout, theme, or stores.',
   },
   {
-    name: 'route entry',
-    pattern: /^app\/routes\/.*\/(?:index|add|edit|login|status)\.tsx?$/,
-    warnAt: 220,
-    failAt: 360,
-    advice: 'Keep route entries focused on GET/POST wiring and compose local components.',
-  },
-  {
-    name: 'route action',
-    pattern: /^app\/routes\/.*\/-actions\.ts$/,
-    warnAt: 280,
-    failAt: 460,
-    advice: 'Keep request parsing and redirects here; move domain rules and SQL into services.',
-  },
-  {
-    name: 'browser controller',
-    pattern: /^app\/routes\/-\/browser\/controllers\/.*\.ts$/,
+    name: 'server api module',
+    pattern: /^apps\/server\/src\/api\/.*\.ts$/,
     warnAt: 320,
     failAt: 560,
-    advice: 'Stimulus controllers should own one behavior; extract helpers or separate controllers.',
+    advice: 'Split API registration by surface and feature; move business rules into services.',
   },
   {
-    name: 'service public surface',
-    pattern: /^app\/service\/.*\/index\.ts$/,
+    name: 'server service public surface',
+    pattern: /^apps\/server\/src\/service\/.*\/index\.ts$/,
     warnAt: 420,
     failAt: 720,
     advice: 'Keep service index files as public APIs; split query, mapping, and mutation helpers.',
   },
   {
     name: 'migration',
-    pattern: /^app\/migrations\/.*\.ts$/,
+    pattern: /^apps\/server\/src\/migrations\/.*\.ts$/,
     warnAt: 1200,
     failAt: 2000,
     advice: 'Large migrations are acceptable for seed catalogs, but keep schema changes deterministic and append-only.',
+  },
+  {
+    name: 'console shared Vue component',
+    pattern: /^apps\/console\/src\/(?:components|layout|theme)\/.*\.vue$/,
+    warnAt: 340,
+    failAt: 580,
+    advice: 'Keep shared UI components composable; move feature-specific behavior into app pages.',
   },
   {
     name: 'script',
@@ -158,13 +151,17 @@ function getRule(file: string): FileRule | null {
 }
 
 function isSourceFile(file: string): boolean {
-  if (!(file.endsWith('.ts') || file.endsWith('.tsx'))) {
+  if (!(file.endsWith('.ts') || file.endsWith('.tsx') || file.endsWith('.vue'))) {
     return false
   }
   if (file.endsWith('.d.ts')) {
     return false
   }
-  return file.startsWith('app/') || file.startsWith('scripts/')
+  return (
+    file.startsWith('apps/')
+    || file.startsWith('packages/')
+    || file.startsWith('scripts/')
+  )
 }
 
 function gitLines(args: string[]): string[] {

@@ -2,14 +2,14 @@ import { describe, expect, test } from 'bun:test'
 import {
   builtInConfigDefinitions,
   isConfigDefinitionVisible,
-} from '../app/service/admin/system/config/constants'
-import { createRoleSchema } from '../app/service/admin/system/role/dto'
+} from '../apps/server/src/service/admin/system/config/constants'
+import { createRoleSchema } from '../apps/server/src/service/admin/system/role/dto'
 import {
   createUserSchema,
   updateUserSchema,
-} from '../app/service/admin/system/user/dto'
-import { createWebNotificationSchema } from '../app/service/admin/web/notification/dto'
-import { createWebPageSchema } from '../app/service/admin/web/page/dto'
+} from '../apps/server/src/service/admin/system/user/dto'
+import { createWebNotificationSchema } from '../apps/server/src/service/admin/web/notification/dto'
+import { createWebPageSchema } from '../apps/server/src/service/admin/web/page/dto'
 
 describe('service schemas', () => {
   test('config definitions drive storage field visibility', () => {

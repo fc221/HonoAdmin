@@ -1,28 +1,25 @@
+import { MemoryCacheAdapter } from '@hono-admin/cache/adapter/memory'
+import { resolveSecurityRuntimeConfig } from '@hono-admin/runtime/security-config'
 import { describe, expect, test } from 'bun:test'
 import { Hono } from 'hono'
-import { html } from 'hono/html'
-import { jsxRenderer } from 'hono/jsx-renderer'
-import { MemoryCacheAdapter } from '../app/infra/cache/adapter/memory'
-import { resolveSecurityRuntimeConfig } from '../app/infra/runtime/security-config'
-import errorHandler from '../app/routes/_error'
 import {
   needsPasswordRehash,
   verifyUserPassword,
-} from '../app/service/admin/system/user'
-import { csrf, headers, requestBodyLimit } from '../app/service/middleware/security'
+} from '../apps/server/src/service/admin/system/user'
+import { csrf, headers, requestBodyLimit } from '../apps/server/src/service/middleware/security'
 import {
   csrfCookieName,
   csrfFieldName,
   csrfHeaderName,
   getPreparedCsrfToken,
   prepareCsrfToken,
-} from '../app/service/security/csrf'
+} from '../apps/server/src/service/security/csrf'
 import {
   consumeRateLimit,
   createRateLimitKey,
-} from '../app/service/security/rate-limit'
-import { DatabaseError, toErrorShape, TooManyRequestsError } from '../app/utils/errors'
-import { sanitizeRichTextHtml } from '../app/utils/html'
+} from '../apps/server/src/service/security/rate-limit'
+import { DatabaseError, toErrorShape, TooManyRequestsError } from '../apps/server/src/utils/errors'
+import { sanitizeRichTextHtml } from '../apps/server/src/utils/html'
 
 describe('security utilities', () => {
   test('rich text sanitizer blocks scriptable URLs and event handlers', () => {
@@ -286,28 +283,6 @@ describe('security utilities', () => {
     expect(response.headers.get('Cache-Control')).toBe('no-store')
     expect(response.headers.get('X-HonoAdmin-CSRF-Refresh')).toBe('true')
     expect(await response.text()).toContain('页面令牌已过期，正在刷新页面。')
-  })
-
-  test('csrf middleware renders an error page for browser failures without a safe referer', async () => {
-    const app = new Hono()
-    app.use('*', jsxRenderer(({ children }) => html`${children}`))
-    app.use('*', csrf)
-    app.onError(errorHandler)
-    app.post('/submit', (c) => c.text('saved'))
-
-    const response = await app.request('/submit', {
-      headers: {
-        accept: 'text/html',
-      },
-      method: 'POST',
-    })
-    const responseHtml = await response.text()
-
-    expect(response.status).toBe(403)
-    expect(response.headers.get('Cache-Control')).toBe('no-store')
-    expect(response.headers.get('X-HonoAdmin-CSRF-Refresh')).toBe('true')
-    expect(responseHtml).toContain('页面令牌已过期，正在刷新页面。')
-    expect(responseHtml).toContain('没有权限')
   })
 
   test('csrf middleware returns json errors for json requests', async () => {

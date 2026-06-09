@@ -1,13 +1,13 @@
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { describe, expect, test } from 'bun:test'
 import {
   getBunConfigPath,
   getCloudflareWorkersBootstrapConfigStatus,
   saveBunRuntimeConfig,
-} from '../app/infra/runtime/bootstrap'
-import { reloadBunRuntime } from '../app/infra/runtime/factory'
+} from '@hono-admin/runtime/bootstrap'
+import { reloadBunRuntime } from '@hono-admin/runtime/factory'
+import { describe, expect, test } from 'bun:test'
 
 describe('bootstrap runtime config', () => {
   test('resolves Bun env file path from binding, process env, then cwd', () => {

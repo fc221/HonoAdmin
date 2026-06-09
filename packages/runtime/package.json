@@ -1,0 +1,23 @@
+{
+  "name": "@hono-admin/runtime",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./bootstrap": "./src/bootstrap.ts",
+    "./bun": "./src/bun.ts",
+    "./cloudflare-workers": "./src/cloudflare-workers.ts",
+    "./factory": "./src/factory.ts",
+    "./local-sqlite": "./src/local-sqlite.ts",
+    "./security-config": "./src/security-config.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono-admin/cache": "workspace:*",
+    "@hono-admin/db": "workspace:*"
+  },
+  "devDependencies": {}
+}

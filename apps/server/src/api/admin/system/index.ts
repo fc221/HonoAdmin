@@ -1,0 +1,6 @@
+export { default as systemConfigApi } from './config'
+export { default as systemFileApi } from './file'
+export { default as systemOperateLogApi } from './operate-log'
+export { default as systemRoleApi } from './role'
+export { default as systemUpdateApi } from './update'
+export { default as adminUserApi } from './user'

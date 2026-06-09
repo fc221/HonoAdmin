@@ -15,6 +15,13 @@ HonoAdmin 默认把安装、会话、权限和迁移放在服务端流程里处�
 - 会话 cookie 默认 `httpOnly`、`sameSite=Lax`，在 HTTPS 请求下自动启用 `secure`。
 - “记住我”会把会话最长保留 7 天；未勾选时使用浏览器会话生命周期。
 
+## 当前鉴权边界
+
+- Console 浏览器端使用 session cookie。`/api/auth/login` 登录后写入 `hono_admin_session`，Console API client 使用 `credentials: 'include'` 自动携带 cookie。
+- `/api/admin/*` 和 `/api/user/*` 当前通过 session middleware 验证登录态；后台接口还会按菜单和操作权限校验。
+- API token 是外部客户端/开放 API 方案，不给 Console 使用。服务层已有 Bearer JWT 签发、验证、过期和 cache 撤销能力；真正开放时应在 API 层单独挂 token 路由和 Bearer middleware。
+- 不要把 `SESSION_SECRET` 和 `JWT_SECRET` 混用。session cookie 签名只使用 `SESSION_SECRET`，Bearer token 签名只使用 `JWT_SECRET`。
+
 ## 权限与审计
 
 - 非 root 用户通过角色获得菜单权限和操作权限。

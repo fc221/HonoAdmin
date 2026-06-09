@@ -1,0 +1,17 @@
+{
+  "name": "@hono-admin/public",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev --host 127.0.0.1 --port 4321",
+    "typecheck": "astro sync",
+    "build": "astro build"
+  },
+  "dependencies": {
+    "astro": "^5.16.4"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.4",
+    "typescript": "^5.9.3"
+  }
+}

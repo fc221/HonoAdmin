@@ -1,0 +1,66 @@
+@import 'tailwindcss';
+
+@theme inline {
+  --color-base-100: var(--body-color);
+  --color-base-200: var(--card-color);
+  --color-base-300: var(--table-header-color);
+  --color-base-content: var(--text-color-1);
+
+  --color-primary: var(--primary-color);
+  --color-primary-content: var(--base-color);
+  --color-primary-hover: var(--primary-color-hover);
+  --color-primary-pressed: var(--primary-color-pressed);
+
+  --color-secondary: var(--info-color);
+  --color-secondary-content: var(--base-color);
+  --color-accent: var(--success-color);
+  --color-accent-content: var(--base-color);
+  --color-neutral: var(--text-color-1);
+  --color-neutral-content: var(--body-color);
+
+  --color-info: var(--info-color);
+  --color-info-content: var(--base-color);
+  --color-success: var(--success-color);
+  --color-success-content: var(--base-color);
+  --color-warning: var(--warning-color);
+  --color-warning-content: var(--base-color);
+  --color-error: var(--error-color);
+  --color-error-content: var(--base-color);
+
+  --color-base-card: var(--card-color);
+  --color-base-table: var(--table-color);
+  --color-base-table-header: var(--table-header-color);
+  --color-base-modal: var(--modal-color);
+  --color-base-popover: var(--popover-color);
+  --color-base-soft: var(--text-color-2);
+  --color-base-muted: var(--text-color-3);
+  --color-base-border: var(--border-color);
+  --color-base-hover: var(--hover-color);
+
+  --color-text-1: var(--text-color-1);
+  --color-text-2: var(--text-color-2);
+  --color-text-3: var(--text-color-3);
+  --color-text-disabled: var(--text-color-disabled);
+
+  --radius-selector: var(--border-radius);
+  --radius-field: var(--border-radius);
+  --radius-box: var(--border-radius);
+}
+
+html,
+body,
+#app {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+}

@@ -1,11 +1,11 @@
-import type { ServiceContext } from '../../app/service/types'
+import type { ServiceContext } from '../../apps/server/src/service/types'
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { MemoryCacheAdapter } from '../../app/infra/cache/adapter/memory'
-import { runMigrations } from '../../app/infra/database/migrator'
-import { createLocalSqliteAdapter } from '../../app/infra/runtime/local-sqlite'
-import { defaultSecurityRuntimeConfig } from '../../app/infra/runtime/security-config'
+import { MemoryCacheAdapter } from '@hono-admin/cache/adapter/memory'
+import { createLocalSqliteAdapter } from '@hono-admin/runtime/local-sqlite'
+import { defaultSecurityRuntimeConfig } from '@hono-admin/runtime/security-config'
+import { runMigrations } from '../../apps/server/src/migrations/migrator'
 
 export interface TestServiceContext {
   cleanup: () => Promise<void>
