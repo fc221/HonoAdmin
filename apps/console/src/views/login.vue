@@ -89,7 +89,7 @@ function getReturnTo() {
 
 <template>
   <main class="login-page flex min-h-screen items-center justify-center p-4 text-base-content">
-    <div class="login-shell grid min-h-[698px] w-full max-w-[1100px] overflow-hidden rounded-box border border-base-border shadow-2xl backdrop-blur lg:min-h-[690px] lg:grid-cols-2">
+    <div class="login-shell grid min-h-174.5 w-full max-w-275 overflow-hidden rounded-box border border-base-border shadow-2xl backdrop-blur lg:min-h-172.5 lg:grid-cols-2">
       <aside class="login-brand-panel hidden flex-col justify-between p-12 lg:flex">
         <div>
           <a class="mb-12 flex w-fit items-center gap-3" href="/">

@@ -78,10 +78,10 @@ const rootClass = computed(() =>
 const layoutVariantClass = computed(() => `ha-layout--${variant.value}`)
 const sidebarOffsetClass = computed(() => {
   if (sidebarCollapsed.value) {
-    return flushLayout.value ? 'lg:pl-[80px]' : 'lg:pl-[96px]'
+    return flushLayout.value ? 'lg:pl-20' : 'lg:pl-24'
   }
 
-  return flushLayout.value ? 'lg:pl-[256px]' : 'lg:pl-[272px]'
+  return flushLayout.value ? 'lg:pl-64' : 'lg:pl-68'
 })
 const shellOffsetClass = computed(() =>
   !topNavLayout.value && !hybridLayout.value ? sidebarOffsetClass.value : '',

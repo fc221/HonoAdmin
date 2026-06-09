@@ -51,7 +51,7 @@ const logoClass = computed(() =>
   [
     props.sidebarLogoStyle === 'hidden' ? 'hidden' : '',
     props.desktopLogoVisible ? '' : 'lg:hidden',
-    props.collapsed ? 'grid place-items-center !gap-0 !p-0' : '',
+    props.collapsed ? 'grid place-items-center gap-0! p-0!' : '',
   ].filter(Boolean).join(' '),
 )
 const menuShellClass = computed(() =>
@@ -95,7 +95,7 @@ const desktopSiderClass = computed(() =>
       : 'lg:left-4 lg:top-4 lg:h-[calc(100vh-2rem)]',
 )
 const siderClass = computed(() => [
-  'max-lg:!hidden',
+  'max-lg:hidden!',
   desktopSiderClass.value,
   'lg:translate-x-0',
 ].join(' '))

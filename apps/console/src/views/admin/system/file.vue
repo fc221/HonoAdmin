@@ -301,7 +301,7 @@ onMounted(load)
     v-model:show="uploadOpen"
     preset="card"
     title="上传文件"
-    class="max-w-[640px]"
+    class="max-w-160"
     :auto-focus="false"
     :closable="!submitting"
     :mask-closable="!submitting"

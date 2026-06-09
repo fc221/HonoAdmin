@@ -175,7 +175,7 @@ function toNumberValue(value: string | undefined): number | null {
       </NFormItem>
     </div>
 
-    <NDivider class="!my-4" />
+    <NDivider class="my-4!" />
     <div class="flex justify-start gap-2 pb-1">
       <NButton size="small" tertiary :disabled="submitting" @click="emit('reset')">
         还原

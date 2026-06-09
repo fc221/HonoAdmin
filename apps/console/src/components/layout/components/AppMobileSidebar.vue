@@ -98,7 +98,7 @@ const menuShellStyle = computed(() => ({
       zIndex: 50,
     }"
     :width="256"
-    class="min-w-0 overflow-hidden shadow-xl shadow-black/10 transition-transform duration-300 ease-out lg:!hidden"
+    class="min-w-0 overflow-hidden shadow-xl shadow-black/10 transition-transform duration-300 ease-out lg:hidden!"
     :class="mobileSiderClass"
   >
     <div class="flex w-full min-w-0 items-center gap-3 overflow-hidden p-4" :class="logoClass" :style="logoStyle">
