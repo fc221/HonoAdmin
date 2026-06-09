@@ -10,7 +10,6 @@
     "./api/openapi": "./src/api/openapi.ts",
     "./api/schema": "./src/api/schema.ts",
     "./migrations/*": "./src/migrations/*",
-    "./service/admin/system/menu/consts": "./src/service/admin/system/menu/consts.ts",
     "./service/*": "./src/service/*",
     "./utils/*": "./src/utils/*"
   },

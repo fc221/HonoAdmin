@@ -79,8 +79,8 @@ function createBodyStream(chunks: Uint8Array[]): ReadableStream<Uint8Array> {
   })
 }
 
-// `unsafe-inline` is required for the inline layout-bootstrap script in
-// `_renderer.tsx` and for hono's streaming-SSR replacement script.
+// `unsafe-inline` is a conservative baseline for inline styles/scripts emitted
+// by bundled console assets (Naive UI runtime styles, Vite preload).
 const secureHeaderMiddleware = secureHeaders({
   contentSecurityPolicy: {
     defaultSrc: ['\'self\''],

@@ -1,4 +1,4 @@
-import type { MenuItem } from '@hono-admin/server/service/admin/system/menu/consts'
+import type { MenuItem } from '@hono-admin/server/api/schema'
 import type { RouteComponent, RouteRecordRaw } from 'vue-router'
 
 export type ConsoleViewLoader = () => Promise<unknown>

@@ -7,8 +7,12 @@ import type {
   ResourceField,
   ResourceList,
   ResourceMutation,
-} from '../schema'
-import { resourceDetailSchema, resourceListSchema, resourceMutationSchema } from '../schema'
+} from './resource-schema'
+import {
+  resourceDetailSchema,
+  resourceListSchema,
+  resourceMutationSchema,
+} from './resource-schema'
 
 export type ResourceDefinition = {
   actions?: ResourceAction[]
