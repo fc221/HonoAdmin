@@ -14,16 +14,11 @@ import {
 } from '../../../../service/admin/system/role'
 import {
   createAction,
-  createResource,
   deleteAction,
-  deleteResource,
   editAction,
-  getResourceDetail,
   listInput,
-  listResource,
-  resourceId,
-  updateResource,
 } from '../../../shared/resource'
+import { registerResourceRoutes } from '../../../shared/resource-routes'
 
 const roleResource: ResourceDefinition = {
   actions: [createAction],
@@ -47,11 +42,7 @@ const roleResource: ResourceDefinition = {
 
 const systemRoleApi = new Hono<AppEnv>()
 
-systemRoleApi.get('/', async (c) => c.json(await listResource(roleResource, c)))
-systemRoleApi.get('/:id', async (c) => c.json(await getResourceDetail(roleResource, c, resourceId(c))))
-systemRoleApi.post('/', async (c) => c.json(await createResource(roleResource, c, await c.req.json())))
-systemRoleApi.put('/:id', async (c) => c.json(await updateResource(roleResource, c, resourceId(c), await c.req.json())))
-systemRoleApi.delete('/:id', async (c) => c.json(await deleteResource(roleResource, c, resourceId(c))))
+registerResourceRoutes(systemRoleApi, roleResource, { tag: 'admin' })
 
 export default systemRoleApi
 

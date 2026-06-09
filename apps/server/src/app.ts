@@ -2,11 +2,13 @@ import type { AppEnv } from '@hono-admin/runtime'
 import type { MiddlewareHandler } from 'hono'
 import type { ContentfulStatusCode } from 'hono/utils/http-status'
 import { Hono } from 'hono'
+import { openAPIRouteHandler } from 'hono-openapi'
 import { compress } from 'hono/compress'
 import { logger } from 'hono/logger'
 import { requestId } from 'hono/request-id'
 import { timing } from 'hono/timing'
 import api from './api'
+import { openApiDocumentation } from './api/openapi'
 import { getFileAccess } from './service/admin/system/file'
 import { headers, requestBodyLimit } from './service/middleware/security'
 import { toErrorShape } from './utils/errors'
@@ -55,6 +57,7 @@ app.get('/uploads/*', async (c) => {
   })
 })
 
+app.get('/api/openapi.json', openAPIRouteHandler(app, { documentation: openApiDocumentation }))
 app.route('/api', api)
 app.notFound((c) => c.json({ message: 'Not Found' }, 404))
 

@@ -1,7 +1,7 @@
 import type { AppEnv } from '@hono-admin/runtime'
 import type { ResourceDefinition } from '../../shared/resource'
 import { Hono } from 'hono'
-import { listResource } from '../../shared/resource'
+import { registerResourceRoutes } from '../../shared/resource-routes'
 
 const updateResource: ResourceDefinition = {
   columns: [
@@ -21,6 +21,6 @@ const updateResource: ResourceDefinition = {
 
 const systemUpdateApi = new Hono<AppEnv>()
 
-systemUpdateApi.get('/', async (c) => c.json(await listResource(updateResource, c)))
+registerResourceRoutes(systemUpdateApi, updateResource, { tag: 'admin' })
 
 export default systemUpdateApi

@@ -10,12 +10,10 @@ import {
   updateCurrentUserProfile,
 } from '../../../service/user/profile'
 import { profilePasswordInputSchema } from '../../schema'
-import {
-  getResourceDetail,
-  listInput,
-  listResource,
-  updateResource,
-} from '../../shared/resource'
+import { describeRoute, jsonResponse, validate } from '../../shared/openapi'
+import { listInput } from '../../shared/resource'
+import { registerResourceRoutes } from '../../shared/resource-routes'
+import { resourceMutationSchema } from '../../shared/resource-schema'
 import { getOptionalSessionUser } from '../../shared/session'
 
 const profileResource: ResourceDefinition = {
@@ -44,13 +42,21 @@ const profileResource: ResourceDefinition = {
 
 const profileApi = new Hono<AppEnv>()
 
-profileApi.get('/', async (c) => c.json(await listResource(profileResource, c)))
-profileApi.get('/:id', async (c) => c.json(await getResourceDetail(profileResource, c, Number(c.req.param('id')))))
-profileApi.put('/:id', async (c) => c.json(await updateResource(profileResource, c, Number(c.req.param('id')), await c.req.json())))
-profileApi.post('/password', async (c) => {
-  await updateCurrentUserPassword(c, profilePasswordInputSchema.parse(await c.req.json()))
-  return c.json({ message: '密码已更新。', ok: true })
-})
+profileApi.post(
+  '/password',
+  describeRoute({
+    tags: ['profile'],
+    summary: '修改当前用户密码',
+    responses: { 200: jsonResponse(resourceMutationSchema, '密码已更新') },
+  }),
+  validate('json', profilePasswordInputSchema),
+  async (c) => {
+    await updateCurrentUserPassword(c, c.req.valid('json'))
+    return c.json({ message: '密码已更新。', ok: true })
+  },
+)
+
+registerResourceRoutes(profileApi, profileResource, { tag: 'profile' })
 
 export default profileApi
 

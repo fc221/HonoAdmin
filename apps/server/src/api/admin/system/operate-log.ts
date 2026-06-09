@@ -6,14 +6,14 @@ import {
   deleteOperateLog,
   listOperateLogs,
 } from '../../../service/admin/system/operate-log'
+import { describeRoute, jsonResponse } from '../../shared/openapi'
 import {
   deleteAction,
-  deleteResource,
   listInput,
-  listResource,
   mutationResult,
-  resourceId,
 } from '../../shared/resource'
+import { registerResourceRoutes } from '../../shared/resource-routes'
+import { resourceMutationSchema } from '../../shared/resource-schema'
 
 const operateLogResource: ResourceDefinition = {
   actions: [{ danger: true, key: 'clear', label: '清空日志' }],
@@ -32,11 +32,19 @@ const operateLogResource: ResourceDefinition = {
 
 const systemOperateLogApi = new Hono<AppEnv>()
 
-systemOperateLogApi.get('/', async (c) => c.json(await listResource(operateLogResource, c)))
-systemOperateLogApi.post('/clear', async (c) => {
-  const count = await clearOperateLogs(c)
-  return c.json(mutationResult(`已清空 ${count} 条日志。`, null))
-})
-systemOperateLogApi.delete('/:id', async (c) => c.json(await deleteResource(operateLogResource, c, resourceId(c))))
+systemOperateLogApi.post(
+  '/clear',
+  describeRoute({
+    tags: ['admin'],
+    summary: '清空操作日志',
+    responses: { 200: jsonResponse(resourceMutationSchema, '日志已清空') },
+  }),
+  async (c) => {
+    const count = await clearOperateLogs(c)
+    return c.json(mutationResult(`已清空 ${count} 条日志。`, null))
+  },
+)
+
+registerResourceRoutes(systemOperateLogApi, operateLogResource, { tag: 'admin' })
 
 export default systemOperateLogApi

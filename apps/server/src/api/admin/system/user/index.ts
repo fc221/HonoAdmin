@@ -15,16 +15,11 @@ import { createUserSchema, updateUserSchema } from '../../../../service/admin/sy
 import { userGenderOptions, userStatusOptions } from '../../../../service/admin/system/user/enum'
 import {
   createAction,
-  createResource,
   deleteAction,
-  deleteResource,
   editAction,
-  getResourceDetail,
   listInput,
-  listResource,
-  resourceId,
-  updateResource,
 } from '../../../shared/resource'
+import { registerResourceRoutes } from '../../../shared/resource-routes'
 
 const userResource: ResourceDefinition = {
   actions: [createAction],
@@ -70,11 +65,7 @@ async function userBaseFields(c: Context<AppEnv>): Promise<ResourceField[]> {
 
 const adminUserApi = new Hono<AppEnv>()
 
-adminUserApi.get('/', async (c) => c.json(await listResource(userResource, c)))
-adminUserApi.get('/:id', async (c) => c.json(await getResourceDetail(userResource, c, resourceId(c))))
-adminUserApi.post('/', async (c) => c.json(await createResource(userResource, c, await c.req.json())))
-adminUserApi.put('/:id', async (c) => c.json(await updateResource(userResource, c, resourceId(c), await c.req.json())))
-adminUserApi.delete('/:id', async (c) => c.json(await deleteResource(userResource, c, resourceId(c))))
+registerResourceRoutes(adminUserApi, userResource, { tag: 'admin' })
 
 export default adminUserApi
 

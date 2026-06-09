@@ -11,14 +11,10 @@ import {
 import { webFeedbackStatusOptions } from '../../../service/admin/web/feedback/enum'
 import {
   deleteAction,
-  deleteResource,
   editAction,
-  getResourceDetail,
   listInput,
-  listResource,
-  resourceId,
-  updateResource,
 } from '../../shared/resource'
+import { registerResourceRoutes } from '../../shared/resource-routes'
 
 const feedbackResource: ResourceDefinition = {
   columns: [
@@ -39,10 +35,7 @@ const feedbackResource: ResourceDefinition = {
 
 const webFeedbackApi = new Hono<AppEnv>()
 
-webFeedbackApi.get('/', async (c) => c.json(await listResource(feedbackResource, c)))
-webFeedbackApi.get('/:id', async (c) => c.json(await getResourceDetail(feedbackResource, c, resourceId(c))))
-webFeedbackApi.put('/:id', async (c) => c.json(await updateResource(feedbackResource, c, resourceId(c), await c.req.json())))
-webFeedbackApi.delete('/:id', async (c) => c.json(await deleteResource(feedbackResource, c, resourceId(c))))
+registerResourceRoutes(webFeedbackApi, feedbackResource, { tag: 'admin' })
 
 export default webFeedbackApi
 

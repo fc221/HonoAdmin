@@ -9,6 +9,19 @@ export const paginationSchema = z.object({
 
 export const resourceRowSchema = z.record(z.string(), z.unknown())
 
+export const resourceQuerySchema = z.object({
+  keyword: z.string().optional(),
+  page: z.coerce.number().optional(),
+  pageSize: z.coerce.number().optional(),
+  uploadType: z.string().optional(),
+})
+
+export const resourceIdParamSchema = z.object({
+  id: z.coerce.number().int().positive(),
+})
+
+export const resourceBodySchema = z.record(z.string(), z.unknown())
+
 export const resourceColumnSchema = z.object({
   key: z.string(),
   title: z.string(),

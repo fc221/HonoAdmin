@@ -11,16 +11,11 @@ import {
 } from '../../../service/admin/web/page'
 import {
   createAction,
-  createResource,
   deleteAction,
-  deleteResource,
   editAction,
-  getResourceDetail,
   listInput,
-  listResource,
-  resourceId,
-  updateResource,
 } from '../../shared/resource'
+import { registerResourceRoutes } from '../../shared/resource-routes'
 
 const pageResource: ResourceDefinition = {
   actions: [createAction],
@@ -44,11 +39,7 @@ const pageResource: ResourceDefinition = {
 
 const webPageApi = new Hono<AppEnv>()
 
-webPageApi.get('/', async (c) => c.json(await listResource(pageResource, c)))
-webPageApi.get('/:id', async (c) => c.json(await getResourceDetail(pageResource, c, resourceId(c))))
-webPageApi.post('/', async (c) => c.json(await createResource(pageResource, c, await c.req.json())))
-webPageApi.put('/:id', async (c) => c.json(await updateResource(pageResource, c, resourceId(c), await c.req.json())))
-webPageApi.delete('/:id', async (c) => c.json(await deleteResource(pageResource, c, resourceId(c))))
+registerResourceRoutes(webPageApi, pageResource, { tag: 'admin' })
 
 export default webPageApi
 

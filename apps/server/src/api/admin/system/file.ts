@@ -15,14 +15,13 @@ import { fileUploadTypeOptions } from '../../../service/admin/system/file/enum'
 import { createRequestOperateLog } from '../../../service/admin/system/operate-log'
 import { ValidationError } from '../../../utils/errors'
 import { resourceMutationSchema } from '../../schema'
+import { describeRoute, jsonResponse } from '../../shared/openapi'
 import {
   deleteAction,
-  deleteResource,
   listInput,
-  listResource,
-  resourceId,
   uploadAction,
 } from '../../shared/resource'
+import { registerResourceRoutes } from '../../shared/resource-routes'
 import { getOptionalSessionUser } from '../../shared/session'
 
 const fileResource: ResourceDefinition = {
@@ -51,9 +50,31 @@ const fileResource: ResourceDefinition = {
 
 const systemFileApi = new Hono<AppEnv>()
 
-systemFileApi.get('/', async (c) => c.json(await listResource(fileResource, c)))
-systemFileApi.post('/upload', async (c) => c.json(await uploadSystemFiles(c)))
-systemFileApi.delete('/:id', async (c) => c.json(await deleteResource(fileResource, c, resourceId(c))))
+systemFileApi.post(
+  '/upload',
+  describeRoute({
+    tags: ['admin'],
+    summary: '上传系统文件',
+    requestBody: {
+      content: {
+        'multipart/form-data': {
+          schema: {
+            type: 'object',
+            properties: {
+              file: { type: 'array', items: { type: 'string', format: 'binary' } },
+              uploadType: { type: 'string' },
+            },
+            required: ['uploadType', 'file'],
+          },
+        },
+      },
+    },
+    responses: { 200: jsonResponse(resourceMutationSchema, '文件已上传') },
+  }),
+  async (c) => c.json(await uploadSystemFiles(c)),
+)
+
+registerResourceRoutes(systemFileApi, fileResource, { tag: 'admin' })
 
 export default systemFileApi
 

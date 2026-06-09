@@ -19,17 +19,13 @@ import {
   configValuesInputSchema,
   resourceMutationSchema,
 } from '../../../schema'
+import { describeRoute, jsonResponse, validate } from '../../../shared/openapi'
 import {
   createAction,
-  createResource,
   deleteAction,
-  deleteResource,
   editAction,
-  getResourceDetail,
-  listResource,
-  resourceId,
-  updateResource,
 } from '../../../shared/resource'
+import { registerResourceRoutes } from '../../../shared/resource-routes'
 
 const configResource: ResourceDefinition = {
   actions: [createAction],
@@ -53,35 +49,48 @@ const configResource: ResourceDefinition = {
 
 const systemConfigApi = new Hono<AppEnv>()
 
-systemConfigApi.get('/panel', async (c) =>
-  c.json(configPanelPayloadSchema.parse({
-    configs: await listConfigs(c),
-    definitions: builtInConfigDefinitions,
-    types: configTypeOptions,
-  })))
+systemConfigApi.get(
+  '/panel',
+  describeRoute({
+    tags: ['admin'],
+    summary: '配置面板',
+    responses: { 200: jsonResponse(configPanelPayloadSchema, '配置面板数据') },
+  }),
+  async (c) =>
+    c.json(configPanelPayloadSchema.parse({
+      configs: await listConfigs(c),
+      definitions: builtInConfigDefinitions,
+      types: configTypeOptions,
+    })),
+)
 
-systemConfigApi.post('/values', async (c) => {
-  const input = configValuesInputSchema.parse(await c.req.json())
-  const updateCount = await updateConfigValues(c, input)
+systemConfigApi.post(
+  '/values',
+  describeRoute({
+    tags: ['admin'],
+    summary: '批量更新配置值',
+    responses: { 200: jsonResponse(resourceMutationSchema, '配置已更新') },
+  }),
+  validate('json', configValuesInputSchema),
+  async (c) => {
+    const input = c.req.valid('json')
+    const updateCount = await updateConfigValues(c, input)
 
-  await createRequestOperateLog(c, {
-    logMsg: `更新${getConfigTypeLabel(input.configType)}配置 ${updateCount} 项`,
-    logType: 'updateOne',
-    method: 'updateConfigValues',
-  })
+    await createRequestOperateLog(c, {
+      logMsg: `更新${getConfigTypeLabel(input.configType)}配置 ${updateCount} 项`,
+      logType: 'updateOne',
+      method: 'updateConfigValues',
+    })
 
-  return c.json(resourceMutationSchema.parse({
-    data: { count: updateCount },
-    message: '配置已更新。',
-    ok: true,
-  }))
-})
+    return c.json(resourceMutationSchema.parse({
+      data: { count: updateCount },
+      message: '配置已更新。',
+      ok: true,
+    }))
+  },
+)
 
-systemConfigApi.get('/', async (c) => c.json(await listResource(configResource, c)))
-systemConfigApi.get('/:id', async (c) => c.json(await getResourceDetail(configResource, c, resourceId(c))))
-systemConfigApi.post('/', async (c) => c.json(await createResource(configResource, c, await c.req.json())))
-systemConfigApi.put('/:id', async (c) => c.json(await updateResource(configResource, c, resourceId(c), await c.req.json())))
-systemConfigApi.delete('/:id', async (c) => c.json(await deleteResource(configResource, c, resourceId(c))))
+registerResourceRoutes(systemConfigApi, configResource, { tag: 'admin' })
 
 export default systemConfigApi
 

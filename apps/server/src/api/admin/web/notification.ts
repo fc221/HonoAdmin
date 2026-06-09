@@ -11,16 +11,11 @@ import {
 } from '../../../service/admin/web/notification'
 import {
   createAction,
-  createResource,
   deleteAction,
-  deleteResource,
   editAction,
-  getResourceDetail,
   listInput,
-  listResource,
-  resourceId,
-  updateResource,
 } from '../../shared/resource'
+import { registerResourceRoutes } from '../../shared/resource-routes'
 
 const notificationResource: ResourceDefinition = {
   actions: [createAction],
@@ -44,11 +39,7 @@ const notificationResource: ResourceDefinition = {
 
 const webNotificationApi = new Hono<AppEnv>()
 
-webNotificationApi.get('/', async (c) => c.json(await listResource(notificationResource, c)))
-webNotificationApi.get('/:id', async (c) => c.json(await getResourceDetail(notificationResource, c, resourceId(c))))
-webNotificationApi.post('/', async (c) => c.json(await createResource(notificationResource, c, await c.req.json())))
-webNotificationApi.put('/:id', async (c) => c.json(await updateResource(notificationResource, c, resourceId(c), await c.req.json())))
-webNotificationApi.delete('/:id', async (c) => c.json(await deleteResource(notificationResource, c, resourceId(c))))
+registerResourceRoutes(webNotificationApi, notificationResource, { tag: 'admin' })
 
 export default webNotificationApi
 
