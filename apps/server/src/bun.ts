@@ -1,6 +1,7 @@
 import type { CachePolicy } from './static'
+import { createBunRuntime } from '@hono-admin/runtime/bun'
 import app, { setApiRuntimeContextMiddleware } from './app'
-import { middleware } from './service/middleware'
+import { createAttachRuntime } from './service/middleware/context'
 import {
   buildCacheControl,
   buildEtag,
@@ -23,7 +24,7 @@ const distRoots = {
   public: new URL('./static/public/', staticBase),
 }
 
-setApiRuntimeContextMiddleware(middleware.context.attach)
+setApiRuntimeContextMiddleware(createAttachRuntime(createBunRuntime))
 
 Bun.serve({
   async fetch(request, server) {

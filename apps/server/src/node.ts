@@ -1,10 +1,11 @@
 import type { Stats } from 'node:fs'
 import type { CachePolicy } from './static'
 import { readFile, stat } from 'node:fs/promises'
+import { createNodeRuntime } from '@hono-admin/runtime/node'
 import { serve } from '@hono/node-server'
 import { getMimeType } from 'hono/utils/mime'
 import app, { setApiRuntimeContextMiddleware } from './app'
-import { middleware } from './service/middleware'
+import { createAttachRuntime } from './service/middleware/context'
 import {
   buildCacheControl,
   buildEtag,
@@ -20,7 +21,7 @@ const distRoots = {
   public: new URL('./public/', staticBase),
 }
 
-setApiRuntimeContextMiddleware(middleware.context.attach)
+setApiRuntimeContextMiddleware(createAttachRuntime(createNodeRuntime))
 
 // Node 入口:Hono app 在 `app.route('/api', api)` 之后再补一段静态资源中间件;
 // `*` 通配在最末,/api/* 仍走子应用,不会被吞。
