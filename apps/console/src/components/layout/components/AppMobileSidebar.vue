@@ -137,13 +137,13 @@ const menuShellStyle = computed(() => ({
       <NDropdown :options="themeDropdownOptions" trigger="click" :width="176" @select="key => emit('selectTheme', key)">
         <NButton quaternary circle :title="`当前主题：${selectedTheme}`">
           <template #icon>
-            <AppIcon name="palette" />
+            <AppIcon name="ri:palette-line" />
           </template>
         </NButton>
       </NDropdown>
       <NButton quaternary @click="emit('closeMobile')">
         <template #icon>
-          <AppIcon name="close" />
+          <AppIcon name="ri:close-line" />
         </template>
         <span>关闭导航</span>
       </NButton>

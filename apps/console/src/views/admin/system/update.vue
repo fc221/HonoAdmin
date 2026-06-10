@@ -169,7 +169,7 @@ onMounted(load)
             @click="handleTopAction(action)"
           >
             <template v-if="action.key === 'create'" #icon>
-              <AppIcon name="add" />
+              <AppIcon name="ri:add-line" />
             </template>
             {{ action.label }}
           </NButton>
@@ -185,7 +185,7 @@ onMounted(load)
             @keyup.enter="resetAndLoad"
           >
             <template #prefix>
-              <AppIcon name="search" />
+              <AppIcon name="ri:search-line" />
             </template>
           </NInput>
           <NButton size="small" type="primary" @click="resetAndLoad">

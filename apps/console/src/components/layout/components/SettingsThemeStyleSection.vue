@@ -123,7 +123,7 @@ function updateCommonSize(key: CommonSizeKey, value: NaiveThemeSize): void {
       </h3>
       <NButton quaternary size="tiny" @click="resetThemeDraft">
         <template #icon>
-          <AppIcon name="refresh" />
+          <AppIcon name="ri:refresh-line" />
         </template>
         重置
       </NButton>

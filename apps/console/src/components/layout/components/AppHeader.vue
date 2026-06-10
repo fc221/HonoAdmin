@@ -63,14 +63,14 @@ function handleBreadcrumbClick(event: MouseEvent, href: string | undefined, isCu
       <span class="lg:hidden">
         <NButton quaternary circle aria-label="打开菜单" @click="emit('update:mobileOpen', true)">
           <template #icon>
-            <AppIcon name="menu-fold" />
+            <AppIcon name="ri:menu-fold-line" />
           </template>
         </NButton>
       </span>
       <span class="hidden lg:inline-flex">
         <NButton quaternary circle aria-label="折叠侧边栏" @click="emit('update:collapsed', !collapsed)">
           <template #icon>
-            <AppIcon :name="collapsed ? 'menu-unfold' : 'menu-fold'" />
+            <AppIcon :name="collapsed ? 'ri:menu-unfold-line' : 'ri:menu-fold-line'" />
           </template>
         </NButton>
       </span>
@@ -89,9 +89,9 @@ function handleBreadcrumbClick(event: MouseEvent, href: string | undefined, isCu
     </div>
 
     <div class="flex shrink-0 items-center gap-3 text-lg text-base-muted">
-      <AppIcon name="refresh" @click="emit('refresh')" />
+      <AppIcon name="ri:refresh-line" @click="emit('refresh')" />
       <NDropdown v-if="showThemeSwitch" :options="themeDropdownOptions" trigger="hover" :width="176" @select="key => emit('selectTheme', key)">
-        <AppIcon name="palette" />
+        <AppIcon name="ri:palette-line" />
       </NDropdown>
       <NDropdown
         v-if="roleDropdownOptions.length > 1"
@@ -99,7 +99,7 @@ function handleBreadcrumbClick(event: MouseEvent, href: string | undefined, isCu
         :options="roleDropdownOptions"
         @select="key => emit('roleSwitch', key)"
       >
-        <AppIcon name="role" />
+        <AppIcon name="ri:shield-check-line" />
       </NDropdown>
       <component :is="SettingsDrawer" v-if="canEditInterface && SettingsDrawer" />
       <NDropdown
@@ -112,7 +112,7 @@ function handleBreadcrumbClick(event: MouseEvent, href: string | undefined, isCu
             {{ getLogoText(userLabel) }}
           </NAvatar>
           <span class="ml-2 hidden max-w-28 truncate text-sm lg:inline">{{ userLabel }}</span>
-          <AppIcon class="hidden lg:inline-block" name="chevron-down" />
+          <AppIcon class="hidden lg:inline-block" name="ri:arrow-down-s-line" />
         </NButton>
       </NDropdown>
     </div>

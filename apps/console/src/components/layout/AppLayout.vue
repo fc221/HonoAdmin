@@ -121,12 +121,12 @@ const desktopSidebarLogoVisible = computed(() => !hybridLayout.value)
 const userLabel = computed(() => props.user?.nickname || props.user?.username || '用户')
 const themeDropdownOptions = computed<DropdownOption[]>(() =>
   themeStore.themeOptions.map(option => ({
-    icon: renderThemeIcon(option.value),
+    icon: renderThemeIcon(option.icon),
     key: option.value,
     label: () => h('span', { class: 'flex min-w-0 items-center justify-between gap-3' }, [
       h('span', { class: 'truncate' }, option.label),
       selectedTheme.value === option.value
-        ? h(AppIcon, { color: themeVars.value.primaryColor, name: 'check' })
+        ? h(AppIcon, { color: themeVars.value.primaryColor, name: 'ri:check-line' })
         : null,
     ]),
   })),

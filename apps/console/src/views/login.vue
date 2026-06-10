@@ -35,7 +35,7 @@ const themeDropdownOptions = computed<DropdownOption[]>(() =>
     label: () => h('span', { class: 'flex min-w-0 items-center justify-between gap-3' }, [
       h('span', { class: 'truncate' }, option.label),
       selectedTheme.value === option.value
-        ? h(AppIcon, { color: themeVars.value.primaryColor, name: 'check' })
+        ? h(AppIcon, { color: themeVars.value.primaryColor, name: 'ri:check-line' })
         : null,
     ]),
   })),
@@ -94,7 +94,7 @@ function getReturnTo() {
         <div>
           <a class="mb-12 flex w-fit items-center gap-3" href="/">
             <span class="login-mark grid size-10 place-items-center rounded-box text-xl text-primary-content shadow-lg">
-              <AppIcon name="brand" />
+              <AppIcon name="ri:flashlight-line" />
             </span>
             <span class="text-2xl font-semibold text-base-content">HonoAdmin</span>
           </a>
@@ -106,15 +106,15 @@ function getReturnTo() {
 
           <ul class="space-y-4 text-base-soft">
             <li class="flex items-center gap-3">
-              <AppIcon class="text-xl text-primary" name="check-circle" />
+              <AppIcon class="text-xl text-primary" name="ri:checkbox-circle-line" />
               <span>兼容 Node.js, Bun, Cloudflare Workers</span>
             </li>
             <li class="flex items-center gap-3">
-              <AppIcon class="text-xl text-primary" name="check-circle" />
+              <AppIcon class="text-xl text-primary" name="ri:checkbox-circle-line" />
               <span>原生 SQL 支持，极简的数据访问层</span>
             </li>
             <li class="flex items-center gap-3">
-              <AppIcon class="text-xl text-primary" name="check-circle" />
+              <AppIcon class="text-xl text-primary" name="ri:checkbox-circle-line" />
               <span>内置 RBAC 权限体系与角色管理</span>
             </li>
           </ul>
@@ -142,7 +142,7 @@ function getReturnTo() {
             <div class="min-w-0">
               <div class="mb-6 flex items-center gap-3 lg:hidden">
                 <span class="login-mark grid size-10 place-items-center rounded-box text-xl text-primary-content shadow-lg">
-                  <AppIcon name="brand" />
+                  <AppIcon name="ri:flashlight-line" />
                 </span>
                 <span class="text-2xl font-semibold text-base-content">HonoAdmin</span>
               </div>
@@ -157,7 +157,7 @@ function getReturnTo() {
             <NDropdown :options="themeDropdownOptions" trigger="hover" :width="176" @select="key => themeStore.setTheme(key)">
               <NButton quaternary circle aria-label="切换主题">
                 <template #icon>
-                  <AppIcon name="palette" />
+                  <AppIcon name="ri:palette-line" />
                 </template>
               </NButton>
             </NDropdown>
@@ -184,7 +184,7 @@ function getReturnTo() {
                   :theme-overrides="loginInputThemeOverrides"
                 >
                   <template #prefix>
-                    <AppIcon name="mail" />
+                    <AppIcon name="ri:mail-line" />
                   </template>
                 </NInput>
               </NFormItem>
@@ -208,7 +208,7 @@ function getReturnTo() {
                   type="password"
                 >
                   <template #prefix>
-                    <AppIcon name="lock" />
+                    <AppIcon name="ri:lock-line" />
                   </template>
                 </NInput>
               </NFormItem>
@@ -220,7 +220,7 @@ function getReturnTo() {
 
             <NButton attr-type="submit" block class="login-submit" :loading="loading" type="primary">
               <template #icon>
-                <AppIcon name="arrow-forward" />
+                <AppIcon name="ri:arrow-right-line" />
               </template>
               立即登录
             </NButton>
@@ -237,13 +237,13 @@ function getReturnTo() {
             <div class="grid grid-cols-2 gap-3">
               <NButton attr-type="button" class="login-social-button" secondary>
                 <template #icon>
-                  <AppIcon name="github" />
+                  <AppIcon name="ri:github-line" />
                 </template>
                 GitHub
               </NButton>
               <NButton attr-type="button" class="login-social-button" secondary>
                 <template #icon>
-                  <AppIcon class="text-primary" name="google" />
+                  <AppIcon class="text-primary" name="ri:google-fill" />
                 </template>
                 Google
               </NButton>

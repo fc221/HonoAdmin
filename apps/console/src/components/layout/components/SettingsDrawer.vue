@@ -92,7 +92,7 @@ async function writeClipboardText(text: string): Promise<void> {
 
 <template>
   <template v-if="isDev">
-    <AppIcon class="cursor-pointer" name="settings" title="设置" aria-label="打开设置面板" @click="openDrawer" />
+    <AppIcon class="cursor-pointer" name="ri:settings-3-line" title="设置" aria-label="打开设置面板" @click="openDrawer" />
 
     <NDrawer v-model:show="show" width="min(384px, calc(100vw - 36px))" placement="right">
       <NDrawerContent closable title="界面设置" :native-scrollbar="false">
@@ -110,13 +110,13 @@ async function writeClipboardText(text: string): Promise<void> {
           >
             <NButton quaternary class="rounded-none!" @click="copyLayoutConfig">
               <template #icon>
-                <AppIcon name="layout" />
+                <AppIcon name="ri:layout-grid-line" />
               </template>
               {{ layoutCopyLabel }}
             </NButton>
             <NButton quaternary class="rounded-none!" @click="copyUiStyle">
               <template #icon>
-                <AppIcon name="palette" />
+                <AppIcon name="ri:palette-line" />
               </template>
               {{ styleCopyLabel }}
             </NButton>

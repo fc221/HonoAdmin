@@ -8,10 +8,10 @@ import {
 } from '../components/theme/naive-theme'
 
 export const themeOptions = [
-  { icon: 'system', label: '系统', value: 'system' },
-  { icon: 'light', label: '亮色', value: 'light' },
-  { icon: 'dark', label: '暗色', value: 'dark' },
-  { icon: 'black', label: '纯黑', value: 'black' },
+  { icon: 'ri:computer-line', label: '系统', value: 'system' },
+  { icon: 'ri:sun-line', label: '亮色', value: 'light' },
+  { icon: 'ri:moon-line', label: '暗色', value: 'dark' },
+  { icon: 'ri:contrast-2-line', label: '纯黑', value: 'black' },
 ] as const
 
 export type ThemeName = (typeof themeOptions)[number]['value']

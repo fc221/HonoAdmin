@@ -35,7 +35,7 @@ const themeVars = useThemeVars()
           <AppIcon
             v-if="layoutStore.variant === option.value"
             class="shrink-0"
-            name="check"
+            name="ri:check-line"
             :style="{ color: themeVars.primaryColor }"
           />
         </span>

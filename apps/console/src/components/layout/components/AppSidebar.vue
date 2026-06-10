@@ -158,14 +158,14 @@ const siderClass = computed(() => [
       <NDropdown :options="themeDropdownOptions" trigger="click" :width="176" @select="key => emit('selectTheme', key)">
         <NButton quaternary circle :title="`当前主题：${selectedTheme}`">
           <template #icon>
-            <AppIcon name="palette" />
+            <AppIcon name="ri:palette-line" />
           </template>
         </NButton>
       </NDropdown>
       <span class="inline-flex">
         <NButton :circle="collapsed" quaternary @click="emit('update:collapsed', !collapsed)">
           <template #icon>
-            <AppIcon :name="collapsed ? 'chevron-forward' : 'chevron-back'" />
+            <AppIcon :name="collapsed ? 'ri:arrow-right-s-line' : 'ri:arrow-left-s-line'" />
           </template>
           <span v-if="!collapsed">折叠导航</span>
         </NButton>

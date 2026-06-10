@@ -111,9 +111,9 @@ function findFirstMenuHref(options: MenuOption[]): string {
       </nav>
 
       <div class="ml-auto flex shrink-0 items-center gap-3 text-lg text-base-muted">
-        <AppIcon name="refresh" @click="emit('refresh')" />
+        <AppIcon name="ri:refresh-line" @click="emit('refresh')" />
         <NDropdown :options="themeDropdownOptions" trigger="hover" :width="176" @select="key => emit('selectTheme', key)">
-          <AppIcon name="palette" />
+          <AppIcon name="ri:palette-line" />
         </NDropdown>
         <NDropdown
           v-if="roleDropdownOptions.length > 1"
@@ -121,7 +121,7 @@ function findFirstMenuHref(options: MenuOption[]): string {
           :options="roleDropdownOptions"
           @select="key => emit('roleSwitch', key)"
         >
-          <AppIcon name="role" />
+          <AppIcon name="ri:shield-check-line" />
         </NDropdown>
         <component :is="SettingsDrawer" v-if="canEditInterface && SettingsDrawer" />
         <NDropdown
@@ -134,7 +134,7 @@ function findFirstMenuHref(options: MenuOption[]): string {
               {{ getLogoText(userLabel) }}
             </NAvatar>
             <span class="ml-2 hidden max-w-28 truncate text-sm xl:inline">{{ userLabel }}</span>
-            <AppIcon class="hidden xl:inline-block" name="chevron-down" />
+            <AppIcon class="hidden xl:inline-block" name="ri:arrow-down-s-line" />
           </NButton>
         </NDropdown>
       </div>

@@ -73,7 +73,7 @@ function avatarText() {
 
     <dl class="space-y-3">
       <div class="flex items-start gap-3 text-sm">
-        <AppIcon class="mt-0.5 shrink-0" name="user-heart" />
+        <AppIcon class="mt-0.5 shrink-0" name="ri:heart-line" />
         <div class="min-w-0 flex-1">
           <NText tag="dt" depth="3" class="text-xs">
             性别
@@ -84,7 +84,7 @@ function avatarText() {
         </div>
       </div>
       <div class="flex items-start gap-3 text-sm">
-        <AppIcon class="mt-0.5 shrink-0" name="mail" />
+        <AppIcon class="mt-0.5 shrink-0" name="ri:mail-line" />
         <div class="min-w-0 flex-1">
           <NText tag="dt" depth="3" class="text-xs">
             邮箱
@@ -95,7 +95,7 @@ function avatarText() {
         </div>
       </div>
       <div class="flex items-start gap-3 text-sm">
-        <AppIcon class="mt-0.5 shrink-0" name="phone" />
+        <AppIcon class="mt-0.5 shrink-0" name="ri:phone-line" />
         <div class="min-w-0 flex-1">
           <NText tag="dt" depth="3" class="text-xs">
             手机
@@ -106,7 +106,7 @@ function avatarText() {
         </div>
       </div>
       <div class="flex items-start gap-3 text-sm">
-        <AppIcon class="mt-0.5 shrink-0" name="role" />
+        <AppIcon class="mt-0.5 shrink-0" name="ri:shield-check-line" />
         <div class="min-w-0 flex-1">
           <NText tag="dt" depth="3" class="text-xs">
             角色
@@ -117,7 +117,7 @@ function avatarText() {
         </div>
       </div>
       <div class="flex items-start gap-3 text-sm">
-        <AppIcon class="mt-0.5 shrink-0" name="time" />
+        <AppIcon class="mt-0.5 shrink-0" name="ri:time-line" />
         <div class="min-w-0 flex-1">
           <NText tag="dt" depth="3" class="text-xs">
             创建时间
@@ -128,7 +128,7 @@ function avatarText() {
         </div>
       </div>
       <div class="flex items-start gap-3 text-sm">
-        <AppIcon class="mt-0.5 shrink-0" name="refresh" />
+        <AppIcon class="mt-0.5 shrink-0" name="ri:refresh-line" />
         <div class="min-w-0 flex-1">
           <NText tag="dt" depth="3" class="text-xs">
             更新时间

@@ -244,7 +244,7 @@ onMounted(load)
             @click="handleTopAction(action)"
           >
             <template #icon>
-              <AppIcon name="upload" />
+              <AppIcon name="ri:upload-cloud-2-line" />
             </template>
             {{ action.label }}
           </NButton>
@@ -268,7 +268,7 @@ onMounted(load)
           />
           <NButton size="small" type="primary" @click="resetAndLoad">
             <template #icon>
-              <AppIcon name="search" />
+              <AppIcon name="ri:search-line" />
             </template>
             搜索
           </NButton>

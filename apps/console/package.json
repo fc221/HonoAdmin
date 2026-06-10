@@ -9,6 +9,8 @@
   },
   "dependencies": {
     "@hono-admin/server": "workspace:*",
+    "@iconify-json/ri": "^1.2.10",
+    "@iconify/vue": "^5.0.1",
     "@tailwindcss/vite": "^4.0.9",
     "@vicons/ionicons5": "^0.13.0",
     "@vitejs/plugin-vue": "^6.0.3",
