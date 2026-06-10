@@ -26,7 +26,6 @@
   "dependencies": {
     "@hono-admin/cache": "workspace:*",
     "@hono-admin/db": "workspace:*",
-    "@hono-admin/domain": "workspace:*",
     "@hono-admin/file-storage": "workspace:*",
     "@hono-admin/runtime": "workspace:*",
     "@hono/standard-validator": "^0.2.2",
