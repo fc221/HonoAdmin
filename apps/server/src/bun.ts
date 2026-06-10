@@ -24,35 +24,40 @@ Bun.serve({
     }
 
     if (url.pathname === '/install' || url.pathname === '/admin' || url.pathname.startsWith('/admin/')) {
-      return serveSpa(consoleDist, url.pathname)
+      return serveSpa(consoleDist, url.pathname, request)
     }
 
     if (url.pathname === '/user' || url.pathname.startsWith('/user/')) {
-      return serveSpa(consoleDist, url.pathname)
+      return serveSpa(consoleDist, url.pathname, request)
     }
 
     // SPA 把 JS/CSS/图片以 /assets/* 引用,直接走 console 的资源目录,落空 404 不要兜底 SPA index。
     if (url.pathname.startsWith('/assets/')) {
-      return serveStatic(consoleDist, url.pathname, false)
+      return serveStatic(consoleDist, url.pathname, request, false)
     }
 
-    return serveStatic(publicDist, url.pathname, true)
+    return serveStatic(publicDist, url.pathname, request, true)
   },
   port,
 })
 
 console.log(`HonoAdmin API listening on http://127.0.0.1:${port}`)
 
-async function serveSpa(root: URL, pathname: string): Promise<Response> {
-  const response = await serveStatic(root, pathname, false)
+async function serveSpa(root: URL, pathname: string, request: Request): Promise<Response> {
+  const response = await serveStatic(root, pathname, request, false)
   if (response.status !== 404) {
     return response
   }
 
-  return serveIndex(root)
+  return serveIndex(root, request)
 }
 
-async function serveStatic(root: URL, pathname: string, fallbackToIndex: boolean): Promise<Response> {
+async function serveStatic(
+  root: URL,
+  pathname: string,
+  request: Request,
+  fallbackToIndex: boolean,
+): Promise<Response> {
   const relativePath = decodeURIComponent(pathname.replace(/^\/+/, '')) || 'index.html'
 
   if (relativePath.includes('..')) {
@@ -61,12 +66,34 @@ async function serveStatic(root: URL, pathname: string, fallbackToIndex: boolean
 
   const file = Bun.file(new URL(relativePath, root))
   if (await file.exists()) {
-    return new Response(file)
+    // vite 把入口资源放在 /assets/* 且文件名带 hash → 可永久缓存;其他(主要是 index.html)
+    // 走 no-cache,浏览器每次回源 + 用 ETag 304 省带宽。
+    const policy: CachePolicy = pathname.startsWith('/assets/') ? 'immutable' : 'revalidate'
+    return serveFile(file, request, policy)
   }
 
-  return fallbackToIndex ? serveIndex(root) : new Response('Not Found', { status: 404 })
+  return fallbackToIndex ? serveIndex(root, request) : new Response('Not Found', { status: 404 })
 }
 
-function serveIndex(root: URL): Response {
-  return new Response(Bun.file(new URL('index.html', root)))
+function serveIndex(root: URL, request: Request): Promise<Response> {
+  return serveFile(Bun.file(new URL('index.html', root)), request, 'revalidate')
+}
+
+type CachePolicy = 'immutable' | 'revalidate'
+
+async function serveFile(file: Bun.BunFile, request: Request, policy: CachePolicy): Promise<Response> {
+  // 弱 ETag: size + lastModified 的十六进制,够区分内容变化,且没有读文件计算 hash 的开销。
+  const etag = `W/"${file.size.toString(16)}-${Math.floor(file.lastModified).toString(16)}"`
+
+  if (request.headers.get('if-none-match') === etag) {
+    return new Response(null, { status: 304, headers: { ETag: etag } })
+  }
+
+  const cacheControl = policy === 'immutable'
+    ? 'public, max-age=31536000, immutable'
+    : 'no-cache'
+
+  return new Response(file, {
+    headers: { 'Cache-Control': cacheControl, 'ETag': etag },
+  })
 }
