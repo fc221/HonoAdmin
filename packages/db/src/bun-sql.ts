@@ -4,8 +4,8 @@ import type {
   QueryResult,
   QueryRow,
   SQLParameter,
-} from '../types'
-import { DatabaseError } from '../errors'
+} from './types'
+import { DatabaseError } from './errors'
 import {
   appendReturningId,
   normalizeDateRow,

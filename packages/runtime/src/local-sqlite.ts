@@ -6,21 +6,13 @@ export async function createLocalDatabaseAdapter(
   const dialect = getDatabaseDialect(databaseUrl)
 
   if (dialect === 'mysql') {
-    if (isBunRuntime()) {
-      const { createBunSqlAdapter } = await import('@hono-admin/db/adapter/bun-sql')
-      return createBunSqlAdapter(databaseUrl, 'mysql')
-    }
-    const { createNodeMysqlAdapter } = await import('@hono-admin/db/adapter/node-mysql')
-    return createNodeMysqlAdapter(databaseUrl)
+    const { createMysqlAdapter } = await import('@hono-admin/db/adapter/mysql')
+    return createMysqlAdapter(databaseUrl)
   }
 
   if (dialect === 'pg') {
-    if (isBunRuntime()) {
-      const { createBunSqlAdapter } = await import('@hono-admin/db/adapter/bun-sql')
-      return createBunSqlAdapter(databaseUrl, 'pg')
-    }
-    const { createNodePgAdapter } = await import('@hono-admin/db/adapter/node-pg')
-    return createNodePgAdapter(databaseUrl)
+    const { createPostgresqlAdapter } = await import('@hono-admin/db/adapter/postgresql')
+    return createPostgresqlAdapter(databaseUrl)
   }
 
   return createLocalSqliteAdapter(databaseUrl)
@@ -41,11 +33,4 @@ export function getDatabaseDialect(databaseUrl: string): DatabaseDialect {
   }
 
   return 'sqlite'
-}
-
-function isBunRuntime(): boolean {
-  return (
-    typeof process !== 'undefined'
-    && typeof (process.versions as Record<string, string | undefined>).bun === 'string'
-  )
 }

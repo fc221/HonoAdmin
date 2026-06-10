@@ -7,7 +7,7 @@ import type {
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { normalizeSqlForDialect } from '@hono-admin/db/adapter/sql-normalize'
+import { normalizeSqlForDialect } from '@hono-admin/db'
 import {
   createLocalDatabaseAdapter,
   createLocalSqliteAdapter,

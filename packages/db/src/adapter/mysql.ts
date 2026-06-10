@@ -4,11 +4,34 @@ import type {
   QueryRow,
   SQLParameter,
 } from '../types'
+import { createBunSqlAdapter } from '../bun-sql'
 import { DatabaseError } from '../errors'
 import {
   normalizeDateRow,
   normalizeSqlForDialect,
-} from './sql-normalize'
+} from '../sql-normalize'
+
+/**
+ * MySQL adapter:
+ *  - Bun runtime → 走内置 `bun:sql`(`createBunSqlAdapter`)
+ *  - Node runtime → 走 `mysql2/promise`(下面 NodeMysqlAdapter)
+ * 调用方按 dialect 拿这个 adapter,无需关心运行时。
+ */
+export async function createMysqlAdapter(databaseUrl: string): Promise<DBAdapter> {
+  if (isBunRuntime()) {
+    return createBunSqlAdapter(databaseUrl, 'mysql')
+  }
+  const mysql = await importMysql2()
+  const pool = mysql.createPool({ uri: databaseUrl })
+  return new NodeMysqlAdapter(pool)
+}
+
+function isBunRuntime(): boolean {
+  return (
+    typeof process !== 'undefined'
+    && typeof (process.versions as Record<string, string | undefined>).bun === 'string'
+  )
+}
 
 interface NodeMysqlResultSetHeader {
   affectedRows?: number
@@ -19,10 +42,7 @@ interface NodeMysqlConnection {
   beginTransaction: () => Promise<void>
   commit: () => Promise<void>
   end: () => Promise<void>
-  execute: <T>(
-    sql: string,
-    params?: SQLParameter[],
-  ) => Promise<[T, unknown]>
+  execute: <T>(sql: string, params?: SQLParameter[]) => Promise<[T, unknown]>
   query: <T>(sql: string) => Promise<[T, unknown]>
   release?: () => void
   rollback: () => Promise<void>
@@ -30,10 +50,7 @@ interface NodeMysqlConnection {
 
 interface NodeMysqlPool {
   end: () => Promise<void>
-  execute: <T>(
-    sql: string,
-    params?: SQLParameter[],
-  ) => Promise<[T, unknown]>
+  execute: <T>(sql: string, params?: SQLParameter[]) => Promise<[T, unknown]>
   getConnection: () => Promise<NodeMysqlConnection>
   query: <T>(sql: string) => Promise<[T, unknown]>
 }
@@ -42,16 +59,7 @@ interface NodeMysqlModule {
   createPool: (config: { uri: string }) => NodeMysqlPool
 }
 
-export async function createNodeMysqlAdapter(
-  databaseUrl: string,
-): Promise<DBAdapter> {
-  const mysql = await importNodeMysql()
-  const pool = mysql.createPool({ uri: databaseUrl })
-
-  return new NodeMysqlAdapter(pool)
-}
-
-async function importNodeMysql(): Promise<NodeMysqlModule> {
+async function importMysql2(): Promise<NodeMysqlModule> {
   try {
     const module = await import('mysql2/promise') as unknown as {
       createPool: NodeMysqlModule['createPool']
@@ -60,7 +68,7 @@ async function importNodeMysql(): Promise<NodeMysqlModule> {
     return module.default ?? { createPool: module.createPool }
   } catch (error) {
     const causeMessage = error instanceof Error ? error.message : String(error)
-    throw new DatabaseError('未找到 mysql2 依赖，请安装后重试。', {
+    throw new DatabaseError('未找到 mysql2 依赖,请安装后重试。', {
       cause: error,
       causeMessage,
     })
@@ -71,9 +79,7 @@ abstract class BaseNodeMysqlAdapter implements DBAdapter {
   readonly dialect = 'mysql' as const
   readonly kind = 'mysql' as const
 
-  protected abstract executor():
-    | NodeMysqlPool
-    | NodeMysqlConnection
+  protected abstract executor(): NodeMysqlPool | NodeMysqlConnection
 
   async query<T extends QueryRow = QueryRow>(
     sql: string,
@@ -81,10 +87,7 @@ abstract class BaseNodeMysqlAdapter implements DBAdapter {
   ): Promise<T[]> {
     try {
       const normalizedSql = normalizeSqlForDialect(sql, 'mysql')
-      const [rows] = await this.executor().execute<T[]>(
-        normalizedSql,
-        params,
-      )
+      const [rows] = await this.executor().execute<T[]>(normalizedSql, params)
       return Array.from(rows).map(normalizeDateRow)
     } catch (error) {
       throw createDatabaseError(error, 'failed to execute MySQL query', sql)
@@ -209,10 +212,5 @@ function createDatabaseError(
   sql: string,
 ): DatabaseError {
   const causeMessage = error instanceof Error ? error.message : String(error)
-
-  return new DatabaseError(message, {
-    cause: error,
-    causeMessage,
-    sql,
-  })
+  return new DatabaseError(message, { cause: error, causeMessage, sql })
 }

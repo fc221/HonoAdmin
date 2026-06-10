@@ -4,12 +4,34 @@ import type {
   QueryRow,
   SQLParameter,
 } from '../types'
+import { createBunSqlAdapter } from '../bun-sql'
 import { DatabaseError } from '../errors'
 import {
   appendReturningId,
   normalizeDateRow,
   normalizeSqlForDialect,
-} from './sql-normalize'
+} from '../sql-normalize'
+
+/**
+ * PostgreSQL adapter:
+ *  - Bun runtime → 走内置 `bun:sql`(`createBunSqlAdapter`)
+ *  - Node runtime → 走 `postgres` npm 包(下面 NodePgAdapter)
+ * 调用方按 dialect 拿这个 adapter,无需关心运行时。
+ */
+export async function createPostgresqlAdapter(databaseUrl: string): Promise<DBAdapter> {
+  if (isBunRuntime()) {
+    return createBunSqlAdapter(databaseUrl, 'pg')
+  }
+  const postgres = await importPostgresJs()
+  return new NodePgAdapter(postgres(databaseUrl))
+}
+
+function isBunRuntime(): boolean {
+  return (
+    typeof process !== 'undefined'
+    && typeof (process.versions as Record<string, string | undefined>).bun === 'string'
+  )
+}
 
 interface PostgresJsClient {
   begin: <T>(callback: (tx: PostgresJsClient) => Promise<T>) => Promise<T>
@@ -21,26 +43,15 @@ interface PostgresJsClient {
 }
 
 type PostgresJsConstructor = (url: string) => PostgresJsClient
-type PostgresJsResult<T extends QueryRow = QueryRow> = T[] & {
-  count?: number
-}
-
-export async function createNodePgAdapter(
-  databaseUrl: string,
-): Promise<DBAdapter> {
-  const postgres = await importPostgresJs()
-  return new NodePgAdapter(postgres(databaseUrl))
-}
+type PostgresJsResult<T extends QueryRow = QueryRow> = T[] & { count?: number }
 
 async function importPostgresJs(): Promise<PostgresJsConstructor> {
   try {
-    const module = await import('postgres') as unknown as {
-      default: PostgresJsConstructor
-    }
+    const module = await import('postgres') as unknown as { default: PostgresJsConstructor }
     return module.default
   } catch (error) {
     const causeMessage = error instanceof Error ? error.message : String(error)
-    throw new DatabaseError('未找到 postgres 依赖，请安装后重试。', {
+    throw new DatabaseError('未找到 postgres 依赖,请安装后重试。', {
       cause: error,
       causeMessage,
     })
@@ -86,11 +97,7 @@ class NodePgAdapter implements DBAdapter {
         rowsAffected: Number(result.count ?? 0),
       }
     } catch (error) {
-      throw createDatabaseError(
-        error,
-        'failed to execute PostgreSQL statement',
-        sql,
-      )
+      throw createDatabaseError(error, 'failed to execute PostgreSQL statement', sql)
     }
   }
 
@@ -130,10 +137,5 @@ function createDatabaseError(
   sql: string,
 ): DatabaseError {
   const causeMessage = error instanceof Error ? error.message : String(error)
-
-  return new DatabaseError(message, {
-    cause: error,
-    causeMessage,
-    sql,
-  })
+  return new DatabaseError(message, { cause: error, causeMessage, sql })
 }

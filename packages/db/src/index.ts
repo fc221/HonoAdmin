@@ -1,4 +1,4 @@
-export { normalizeSqlForDialect } from './adapter/sql-normalize'
+export { normalizeSqlForDialect } from './sql-normalize'
 
 export type {
   BaseEntity,

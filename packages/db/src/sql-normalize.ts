@@ -1,4 +1,4 @@
-import type { DatabaseDialect } from '../types'
+import type { DatabaseDialect } from './types'
 
 export function normalizeSqlForDialect(
   sql: string,
