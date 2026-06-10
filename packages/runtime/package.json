@@ -8,6 +8,7 @@
     "./bun": "./src/bun.ts",
     "./cloudflare-workers": "./src/cloudflare-workers.ts",
     "./factory": "./src/factory.ts",
+    "./node": "./src/node.ts",
     "./local-sqlite": "./src/local-sqlite.ts",
     "./security-config": "./src/security-config.ts"
   },

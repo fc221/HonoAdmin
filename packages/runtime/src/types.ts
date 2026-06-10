@@ -23,7 +23,7 @@ export type RuntimeBindings = {
   DEMO_MODE?: string
 }
 
-export type RuntimeTarget = 'bun' | 'cloudflare-workers'
+export type RuntimeTarget = 'bun' | 'cloudflare-workers' | 'node'
 
 export type AppRuntimeConfig = {
   appName: string

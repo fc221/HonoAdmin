@@ -47,6 +47,23 @@ const nodeFsPromisesSpecifier = 'node:fs/promises'
 export async function getBunBootstrapConfigStatus(
   bindings: RuntimeBindings = {},
 ): Promise<BootstrapConfigStatus> {
+  return getLocalBootstrapConfigStatus(bindings, 'bun')
+}
+
+export async function getNodeBootstrapConfigStatus(
+  bindings: RuntimeBindings = {},
+): Promise<BootstrapConfigStatus> {
+  return getLocalBootstrapConfigStatus(bindings, 'node')
+}
+
+/**
+ * Bun 与 Node 共享同一份 .env 驱动的 bootstrap 配置;target 仅决定 `runtimeTarget` 字段
+ * 与日志/提示中的运行时标签,实际读写逻辑完全一致。
+ */
+async function getLocalBootstrapConfigStatus(
+  bindings: RuntimeBindings = {},
+  target: 'bun' | 'node',
+): Promise<BootstrapConfigStatus> {
   const bunConfigPath = getBunConfigPath(bindings)
   const envFile = await readEnvFile(bunConfigPath)
   const values = envFile.values
@@ -94,7 +111,7 @@ export async function getBunBootstrapConfigStatus(
     canWriteConfig: true,
     configPath: bunConfigPath,
     requirements,
-    runtimeTarget: 'bun',
+    runtimeTarget: target,
   })
 }
 
