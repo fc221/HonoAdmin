@@ -45,6 +45,44 @@
   --radius-selector: var(--border-radius);
   --radius-field: var(--border-radius);
   --radius-box: var(--border-radius);
+
+  /* 圆角(naive 直名,与 daisyUI 的 selector/field/box 等价、语义更直观) */
+  --radius-naive: var(--border-radius);
+  --radius-naive-sm: var(--border-radius-small);
+
+  /* 字号(naive 6 档挂到 Tailwind --text-* 命名空间,生成 text-mini..text-huge 工具类;
+     不覆盖 Tailwind 默认的 text-xs/sm/base/lg/xl,可共存) */
+  --text-mini: var(--font-size-mini);
+  --text-tiny: var(--font-size-tiny);
+  --text-small: var(--font-size-small);
+  --text-medium: var(--font-size-medium);
+  --text-large: var(--font-size-large);
+  --text-huge: var(--font-size-huge);
+  --text-medium--line-height: var(--line-height);
+
+  /* 行高 */
+  --leading-naive: var(--line-height);
+}
+
+/* 组件高度(naive 6 档)。Tailwind v4 没有 --height-* 命名空间,显式登记只生成 h-*,
+   不污染 w-/p-/m- 等;min-h / max-h 可用 `h-[var(--height-medium)]` 这种方括号写法。 */
+@utility h-mini {
+  height: var(--height-mini);
+}
+@utility h-tiny {
+  height: var(--height-tiny);
+}
+@utility h-small {
+  height: var(--height-small);
+}
+@utility h-medium {
+  height: var(--height-medium);
+}
+@utility h-large {
+  height: var(--height-large);
+}
+@utility h-huge {
+  height: var(--height-huge);
 }
 
 html,

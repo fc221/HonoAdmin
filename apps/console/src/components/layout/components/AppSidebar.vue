@@ -59,19 +59,10 @@ const menuShellClass = computed(() =>
     ? 'bg-transparent px-0'
     : 'p-2',
 )
+
 const logoStyle = computed(() => ({
-  background: props.sidebarLogoStyle === 'brand'
-    ? `linear-gradient(135deg, ${themeVars.value.primaryColor}, ${themeVars.value.primaryColorHover})`
-    : 'transparent',
   borderRadius: props.sidebarLogoStyle === 'plain' ? '0' : themeVars.value.borderRadius,
   color: props.sidebarLogoStyle === 'brand' ? '#ffffff' : themeVars.value.textColor1,
-}))
-const logoMarkStyle = computed(() => ({
-  background: props.sidebarLogoStyle === 'brand' && !props.collapsed
-    ? 'rgba(255, 255, 255, 0.2)'
-    : themeVars.value.primaryColor,
-  borderRadius: themeVars.value.borderRadius,
-  color: '#ffffff',
 }))
 const menuShellStyle = computed(() => ({
   background: props.collapsed || props.sidebarMenuStyle === 'plain'
@@ -120,8 +111,8 @@ const siderClass = computed(() => [
     :class="siderClass"
     @update:collapsed="value => emit('update:collapsed', value)"
   >
-    <div class="flex w-full min-w-0 items-center gap-3 overflow-hidden p-4" :class="logoClass" :style="logoStyle">
-      <div class="grid size-12 shrink-0 place-items-center text-lg font-bold" :style="logoMarkStyle">
+    <div class="flex w-full min-w-0 items-center gap-3 overflow-hidden p-4 bg-linear-to-br from-primary to-primary/30" :class="logoClass" :style="logoStyle">
+      <div class="grid size-12 shrink-0 place-items-center text-lg font-bold bg-white/20" :style="{ borderRadius: themeVars.borderRadius }">
         {{ logoText }}
       </div>
       <div v-if="!collapsed" class="min-w-0">
