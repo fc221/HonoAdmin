@@ -10,6 +10,7 @@ export type RuntimeBindings = {
   CACHE?: KVNamespace
   HONO_ADMIN_ENV_FILE?: string
   JWT_SECRET?: string
+  REDIS_URL?: string
   SESSION_SECRET?: string
   APP_TIMEZONE?: string
   API_RATE_LIMIT_MAX?: string

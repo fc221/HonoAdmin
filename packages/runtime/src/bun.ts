@@ -1,7 +1,7 @@
 import type { AppRuntime, RuntimeBindings } from './types'
-import { MemoryCacheAdapter } from '@hono-admin/cache/adapter/memory'
 import { UnavailableDBAdapter } from '@hono-admin/db/adapter/unavailable'
 import { getBunBootstrapConfigStatus } from './bootstrap'
+import { createServerCacheAdapter } from './cache'
 
 import { createLocalDatabaseAdapter } from './local-sqlite'
 import { resolveSecurityRuntimeConfig } from './security-config'
@@ -15,6 +15,7 @@ export async function createBunRuntime(
     || getBootstrapValue(bootstrap, 'DATABASE_URL')
   const cacheNamespace = readLocalBinding(bindings, 'CACHE_NAMESPACE')
     || getBootstrapValue(bootstrap, 'CACHE_NAMESPACE')
+  const redisUrl = readLocalBinding(bindings, 'REDIS_URL')
   const jwtSecret = readLocalBinding(bindings, 'JWT_SECRET')
     || getBootstrapValue(bootstrap, 'JWT_SECRET')
     || undefined
@@ -30,7 +31,7 @@ export async function createBunRuntime(
     : new UnavailableDBAdapter('Bun 运行时配置尚未完成。')
 
   return {
-    cache: new MemoryCacheAdapter(cacheNamespace || 'hono-admin', 300),
+    cache: await createServerCacheAdapter({ cacheNamespace, redisUrl }),
     config: {
       appName: getAppName(),
       appVersion: getAppVersion(),
