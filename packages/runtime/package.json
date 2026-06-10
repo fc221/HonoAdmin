@@ -12,8 +12,7 @@
     "./security-config": "./src/security-config.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit",
-    "build": "tsc --noEmit"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@hono-admin/cache": "workspace:*",

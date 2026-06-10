@@ -8,8 +8,7 @@
     "./factory": "./src/factory.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit",
-    "build": "tsc --noEmit"
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {}
 }

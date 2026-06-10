@@ -7,8 +7,7 @@
     "./adapter/*": "./src/adapter/*.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit",
-    "build": "tsc --noEmit"
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {}
 }

@@ -6,7 +6,6 @@
     ".": "./src/app.ts",
     "./app": "./src/app.ts",
     "./api/routes": "./src/api/index.ts",
-    "./api/client": "./src/api/client.ts",
     "./api/openapi": "./src/api/openapi.ts",
     "./api/schema": "./src/api/schema.ts",
     "./migrations/*": "./src/migrations/*",
@@ -16,10 +15,9 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 3000",
     "typecheck": "tsc --noEmit",
-    "build": "bun build src/bun.ts --target=bun --outdir=dist",
     "build:bun": "bun build src/bun.ts --target=bun --outdir=dist",
     "build:workers": "bun build src/worker.ts --target=browser --outdir=dist/workers",
-    "compile:bun": "bun run build:bun && bun build --compile --minify --sourcemap --bytecode dist/bun.js --outfile dist/hono-admin"
+    "compile:bun": "bun run build:bun && bun build --compile --minify --sourcemap dist/bun.js --outfile dist/hono-admin"
   },
   "dependencies": {
     "@hono-admin/cache": "workspace:*",

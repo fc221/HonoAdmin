@@ -2,8 +2,16 @@ import app, { setApiRuntimeContextMiddleware } from './app'
 import { middleware } from './service/middleware'
 
 const port = Number(process.env.PORT ?? 3000)
-const consoleDist = new URL('../../console/dist/', import.meta.url)
-const publicDist = new URL('../../public/dist/', import.meta.url)
+// 静态资源锚点:
+//  - `bun apps/server/dist/bun.js`:`import.meta.url` 指向 bun.js,static 在它的兄弟目录;
+//  - `bun build --compile` 出的单文件:`import.meta.url` 是虚拟路径 `/$bunfs/root/bun.js`,
+//    实际 static 跟在二进制旁,改用 `process.execPath` 做锚点。
+// 都要求 `static/{console,public}` 与 bun.js 或编译二进制同级,由 scripts/build.ts 写入。
+const staticBase = import.meta.url.includes('/$bunfs/')
+  ? new URL(`file://${process.execPath}`)
+  : new URL(import.meta.url)
+const consoleDist = new URL('./static/console/', staticBase)
+const publicDist = new URL('./static/public/', staticBase)
 
 setApiRuntimeContextMiddleware(middleware.context.attach)
 
@@ -21,6 +29,11 @@ Bun.serve({
 
     if (url.pathname === '/user' || url.pathname.startsWith('/user/')) {
       return serveSpa(consoleDist, url.pathname)
+    }
+
+    // SPA 把 JS/CSS/图片以 /assets/* 引用,直接走 console 的资源目录,落空 404 不要兜底 SPA index。
+    if (url.pathname.startsWith('/assets/')) {
+      return serveStatic(consoleDist, url.pathname, false)
     }
 
     return serveStatic(publicDist, url.pathname, true)
