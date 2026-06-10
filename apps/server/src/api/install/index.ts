@@ -23,128 +23,124 @@ import {
 import { describeRoute, emptyResponse, jsonResponse, validate } from '../shared/openapi'
 
 const installApi = new Hono<AppEnv>()
+  .get(
+    '/status',
+    describeRoute({
+      tags: ['install'],
+      summary: '读取安装状态',
+      responses: { 200: jsonResponse(installStatusSchema, '安装状态') },
+    }),
+    async (c) => {
+      const migration = c.config.bootstrap.isConfigured
+        ? await getDatabaseMigrationStatus(c).catch(() => null)
+        : null
+      const installed = migration?.isComplete
+        ? await isAdminInstalled(c).catch(() => false)
+        : false
 
-installApi.get(
-  '/status',
-  describeRoute({
-    tags: ['install'],
-    summary: '读取安装状态',
-    responses: { 200: jsonResponse(installStatusSchema, '安装状态') },
-  }),
-  async (c) => {
-    const migration = c.config.bootstrap.isConfigured
-      ? await getDatabaseMigrationStatus(c).catch(() => null)
-      : null
-    const installed = migration?.isComplete
-      ? await isAdminInstalled(c).catch(() => false)
-      : false
-
-    return c.json({
-      bootstrap: c.config.bootstrap,
-      installed,
-      migration,
-    })
-  },
-)
-
-installApi.post(
-  '/runtime-config',
-  describeRoute({
-    tags: ['install'],
-    summary: '保存 Bun 运行时配置',
-    responses: {
-      200: jsonResponse(resourceMutationSchema, '配置已保存'),
-      400: emptyResponse('当前运行时不支持'),
+      return c.json({
+        bootstrap: c.config.bootstrap,
+        installed,
+        migration,
+      })
     },
-  }),
-  validate('json', runtimeConfigInputSchema),
-  async (c) => {
-    if (c.config.runtimeTarget !== 'bun') {
-      return c.json({ message: 'Cloudflare Workers 不支持在安装页写入部署配置。' }, 400)
-    }
+  )
+  .post(
+    '/runtime-config',
+    describeRoute({
+      tags: ['install'],
+      summary: '保存 Bun 运行时配置',
+      responses: {
+        200: jsonResponse(resourceMutationSchema, '配置已保存'),
+        400: emptyResponse('当前运行时不支持'),
+      },
+    }),
+    validate('json', runtimeConfigInputSchema),
+    async (c) => {
+      if (c.config.runtimeTarget !== 'bun') {
+        return c.json({ message: 'Cloudflare Workers 不支持在安装页写入部署配置。' }, 400)
+      }
 
-    const input = c.req.valid('json')
-    const configPath = c.config.bootstrap.configPath
-    const runtimeBootstrapModule = '@hono-admin/runtime/bootstrap'
-    const runtimeFactoryModule = '@hono-admin/runtime/factory'
-    const { saveBunRuntimeConfig } = await import(/* @vite-ignore */ runtimeBootstrapModule)
-    const { reloadBunRuntime } = await import(/* @vite-ignore */ runtimeFactoryModule)
+      const input = c.req.valid('json')
+      const configPath = c.config.bootstrap.configPath
+      const runtimeBootstrapModule = '@hono-admin/runtime/bootstrap'
+      const runtimeFactoryModule = '@hono-admin/runtime/factory'
+      const { saveBunRuntimeConfig } = await import(/* @vite-ignore */ runtimeBootstrapModule)
+      const { reloadBunRuntime } = await import(/* @vite-ignore */ runtimeFactoryModule)
 
-    await saveBunRuntimeConfig(input, configPath)
-    await reloadBunRuntime({
-      APP_TIMEZONE: input.appTimezone,
-      CACHE_NAMESPACE: input.cacheNamespace,
-      DATABASE_URL: input.databaseUrl,
-      HONO_ADMIN_ENV_FILE: configPath,
-      JWT_SECRET: input.jwtSecret,
-      SESSION_SECRET: input.sessionSecret,
-    })
+      await saveBunRuntimeConfig(input, configPath)
+      await reloadBunRuntime({
+        APP_TIMEZONE: input.appTimezone,
+        CACHE_NAMESPACE: input.cacheNamespace,
+        DATABASE_URL: input.databaseUrl,
+        HONO_ADMIN_ENV_FILE: configPath,
+        JWT_SECRET: input.jwtSecret,
+        SESSION_SECRET: input.sessionSecret,
+      })
 
-    return c.json(resourceMutationSchema.parse({
-      data: null,
-      message: '配置已保存并生效，请继续初始化数据库。',
-      ok: true,
-    }))
-  },
-)
-
-installApi.post(
-  '/migrate',
-  describeRoute({
-    tags: ['install'],
-    summary: '执行数据库迁移',
-    responses: { 200: jsonResponse(resourceMutationSchema, '迁移已完成') },
-  }),
-  async (c) => {
-    await runDatabaseMigrations(c)
-    return c.json(resourceMutationSchema.parse({
-      data: null,
-      message: '数据库迁移已完成。',
-      ok: true,
-    }))
-  },
-)
-
-installApi.post(
-  '/admin',
-  describeRoute({
-    tags: ['install'],
-    summary: '创建首个管理员账号',
-    responses: {
-      200: jsonResponse(resourceMutationSchema, '安装完成'),
-      400: emptyResponse('两次输入的密码不一致'),
+      return c.json(resourceMutationSchema.parse({
+        data: null,
+        message: '配置已保存并生效,请继续初始化数据库。',
+        ok: true,
+      }))
     },
-  }),
-  validate('json', installAdminInputSchema),
-  async (c) => {
-    const input = c.req.valid('json')
+  )
+  .post(
+    '/migrate',
+    describeRoute({
+      tags: ['install'],
+      summary: '执行数据库迁移',
+      responses: { 200: jsonResponse(resourceMutationSchema, '迁移已完成') },
+    }),
+    async (c) => {
+      await runDatabaseMigrations(c)
+      return c.json(resourceMutationSchema.parse({
+        data: null,
+        message: '数据库迁移已完成。',
+        ok: true,
+      }))
+    },
+  )
+  .post(
+    '/admin',
+    describeRoute({
+      tags: ['install'],
+      summary: '创建首个管理员账号',
+      responses: {
+        200: jsonResponse(resourceMutationSchema, '安装完成'),
+        400: emptyResponse('两次输入的密码不一致'),
+      },
+    }),
+    validate('json', installAdminInputSchema),
+    async (c) => {
+      const input = c.req.valid('json')
 
-    if (input.password !== input.confirmPassword) {
-      return c.json({ message: '两次输入的密码不一致。' }, 400)
-    }
+      if (input.password !== input.confirmPassword) {
+        return c.json({ message: '两次输入的密码不一致。' }, 400)
+      }
 
-    await upsertConfig(c, createConfigSchema.parse({
-      configKey: siteNameConfig.configKey,
-      configType: siteNameConfig.configType,
-      configValue: input.siteName,
-    }))
-    await createUser(c, createUserSchema.parse({
-      isRoot: true,
-      password: input.password,
-      username: input.username,
-    }))
+      await upsertConfig(c, createConfigSchema.parse({
+        configKey: siteNameConfig.configKey,
+        configType: siteNameConfig.configType,
+        configValue: input.siteName,
+      }))
+      await createUser(c, createUserSchema.parse({
+        isRoot: true,
+        password: input.password,
+        username: input.username,
+      }))
 
-    const user = await getUserCredentialByUsername(c, input.username)
-    if (user) {
-      await setAdminSession(c, user, true)
-    }
+      const user = await getUserCredentialByUsername(c, input.username)
+      if (user) {
+        await setAdminSession(c, user, true)
+      }
 
-    return c.json(resourceMutationSchema.parse({
-      data: null,
-      message: '安装完成。',
-      ok: true,
-    }))
-  },
-)
+      return c.json(resourceMutationSchema.parse({
+        data: null,
+        message: '安装完成。',
+        ok: true,
+      }))
+    },
+  )
 
 export default installApi

@@ -2,7 +2,6 @@ import type { AppEnv } from '@hono-admin/runtime'
 import type { Context } from 'hono'
 import type { ResourceField } from '../../../schema'
 import type { ResourceDefinition } from '../../../shared/resource'
-import { Hono } from 'hono'
 import { adminMenus } from '../../../../service/admin/system/menu/consts'
 import { listPermissions } from '../../../../service/admin/system/permission'
 import {
@@ -18,7 +17,7 @@ import {
   editAction,
   listInput,
 } from '../../../shared/resource'
-import { registerResourceRoutes } from '../../../shared/resource-routes'
+import { buildResourceApp } from '../../../shared/resource-routes'
 
 const roleResource: ResourceDefinition = {
   actions: [createAction],
@@ -40,9 +39,7 @@ const roleResource: ResourceDefinition = {
   update: (c, id, input) => updateRole(c, id, input as never),
 }
 
-const systemRoleApi = new Hono<AppEnv>()
-
-registerResourceRoutes(systemRoleApi, roleResource, { tag: 'admin' })
+const systemRoleApi = buildResourceApp(roleResource, { tag: 'admin' })
 
 export default systemRoleApi
 

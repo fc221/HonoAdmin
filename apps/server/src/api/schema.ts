@@ -25,7 +25,6 @@ export const menuItemSchema: z.ZodType<MenuItem> = z.lazy(() =>
 )
 
 export const layoutPayloadSchema = z.object({
-  activeMenuName: z.string(),
   menus: z.array(menuItemSchema),
   siteTitle: z.string(),
   user: userProfileSchema.nullable(),

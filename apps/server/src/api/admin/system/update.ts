@@ -1,7 +1,5 @@
-import type { AppEnv } from '@hono-admin/runtime'
 import type { ResourceDefinition } from '../../shared/resource'
-import { Hono } from 'hono'
-import { registerResourceRoutes } from '../../shared/resource-routes'
+import { buildResourceApp } from '../../shared/resource-routes'
 
 const updateResource: ResourceDefinition = {
   columns: [
@@ -19,8 +17,6 @@ const updateResource: ResourceDefinition = {
   title: '更新管理',
 }
 
-const systemUpdateApi = new Hono<AppEnv>()
-
-registerResourceRoutes(systemUpdateApi, updateResource, { tag: 'admin' })
+const systemUpdateApi = buildResourceApp(updateResource, { tag: 'admin' })
 
 export default systemUpdateApi

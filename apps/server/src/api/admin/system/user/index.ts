@@ -2,7 +2,6 @@ import type { AppEnv } from '@hono-admin/runtime'
 import type { Context } from 'hono'
 import type { ResourceField } from '../../../schema'
 import type { ResourceDefinition } from '../../../shared/resource'
-import { Hono } from 'hono'
 import { listRoleOptions } from '../../../../service/admin/system/role'
 import {
   createUser,
@@ -19,7 +18,7 @@ import {
   editAction,
   listInput,
 } from '../../../shared/resource'
-import { registerResourceRoutes } from '../../../shared/resource-routes'
+import { buildResourceApp } from '../../../shared/resource-routes'
 
 const userResource: ResourceDefinition = {
   actions: [createAction],
@@ -63,9 +62,7 @@ async function userBaseFields(c: Context<AppEnv>): Promise<ResourceField[]> {
   ]
 }
 
-const adminUserApi = new Hono<AppEnv>()
-
-registerResourceRoutes(adminUserApi, userResource, { tag: 'admin' })
+const adminUserApi = buildResourceApp(userResource, { tag: 'admin' })
 
 export default adminUserApi
 

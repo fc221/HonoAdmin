@@ -1,7 +1,5 @@
-import type { AppEnv } from '@hono-admin/runtime'
 import type { ResourceField } from '../../schema'
 import type { ResourceDefinition } from '../../shared/resource'
-import { Hono } from 'hono'
 import {
   deleteWebFeedback,
   getWebFeedbackById,
@@ -14,7 +12,7 @@ import {
   editAction,
   listInput,
 } from '../../shared/resource'
-import { registerResourceRoutes } from '../../shared/resource-routes'
+import { buildResourceApp } from '../../shared/resource-routes'
 
 const feedbackResource: ResourceDefinition = {
   columns: [
@@ -33,9 +31,7 @@ const feedbackResource: ResourceDefinition = {
   update: (c, id, input) => updateWebFeedback(c, id, input as never),
 }
 
-const webFeedbackApi = new Hono<AppEnv>()
-
-registerResourceRoutes(webFeedbackApi, feedbackResource, { tag: 'admin' })
+const webFeedbackApi = buildResourceApp(feedbackResource, { tag: 'admin' })
 
 export default webFeedbackApi
 

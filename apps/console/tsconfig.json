@@ -3,7 +3,16 @@
   "compilerOptions": {
     "composite": true,
     "jsx": "preserve",
-    "types": ["vite/client"]
+    "types": [
+      "vite/client",
+      "bun-types",
+      "@cloudflare/workers-types"
+    ]
   },
-  "include": ["src/**/*.ts", "src/**/*.vue", "vite.config.ts"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.vue",
+    "vite.config.ts",
+    "../server/src/hono-context.d.ts"
+  ]
 }

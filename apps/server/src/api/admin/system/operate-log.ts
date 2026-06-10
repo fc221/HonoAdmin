@@ -12,7 +12,7 @@ import {
   listInput,
   mutationResult,
 } from '../../shared/resource'
-import { registerResourceRoutes } from '../../shared/resource-routes'
+import { buildResourceApp } from '../../shared/resource-routes'
 import { resourceMutationSchema } from '../../shared/resource-schema'
 
 const operateLogResource: ResourceDefinition = {
@@ -31,20 +31,18 @@ const operateLogResource: ResourceDefinition = {
 }
 
 const systemOperateLogApi = new Hono<AppEnv>()
-
-systemOperateLogApi.post(
-  '/clear',
-  describeRoute({
-    tags: ['admin'],
-    summary: '清空操作日志',
-    responses: { 200: jsonResponse(resourceMutationSchema, '日志已清空') },
-  }),
-  async (c) => {
-    const count = await clearOperateLogs(c)
-    return c.json(mutationResult(`已清空 ${count} 条日志。`, null))
-  },
-)
-
-registerResourceRoutes(systemOperateLogApi, operateLogResource, { tag: 'admin' })
+  .post(
+    '/clear',
+    describeRoute({
+      tags: ['admin'],
+      summary: '清空操作日志',
+      responses: { 200: jsonResponse(resourceMutationSchema, '日志已清空') },
+    }),
+    async (c) => {
+      const count = await clearOperateLogs(c)
+      return c.json(mutationResult(`已清空 ${count} 条日志。`, null))
+    },
+  )
+  .route('/', buildResourceApp(operateLogResource, { tag: 'admin' }))
 
 export default systemOperateLogApi

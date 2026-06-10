@@ -1,7 +1,5 @@
-import type { AppEnv } from '@hono-admin/runtime'
 import type { ResourceField } from '../../schema'
 import type { ResourceDefinition } from '../../shared/resource'
-import { Hono } from 'hono'
 import {
   createWebNotification,
   deleteWebNotification,
@@ -15,7 +13,7 @@ import {
   editAction,
   listInput,
 } from '../../shared/resource'
-import { registerResourceRoutes } from '../../shared/resource-routes'
+import { buildResourceApp } from '../../shared/resource-routes'
 
 const notificationResource: ResourceDefinition = {
   actions: [createAction],
@@ -37,9 +35,7 @@ const notificationResource: ResourceDefinition = {
   update: (c, id, input) => updateWebNotification(c, id, input as never),
 }
 
-const webNotificationApi = new Hono<AppEnv>()
-
-registerResourceRoutes(webNotificationApi, notificationResource, { tag: 'admin' })
+const webNotificationApi = buildResourceApp(notificationResource, { tag: 'admin' })
 
 export default webNotificationApi
 

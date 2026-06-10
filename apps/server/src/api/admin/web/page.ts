@@ -1,7 +1,5 @@
-import type { AppEnv } from '@hono-admin/runtime'
 import type { ResourceField } from '../../schema'
 import type { ResourceDefinition } from '../../shared/resource'
-import { Hono } from 'hono'
 import {
   createWebPage,
   deleteWebPage,
@@ -15,7 +13,7 @@ import {
   editAction,
   listInput,
 } from '../../shared/resource'
-import { registerResourceRoutes } from '../../shared/resource-routes'
+import { buildResourceApp } from '../../shared/resource-routes'
 
 const pageResource: ResourceDefinition = {
   actions: [createAction],
@@ -37,9 +35,7 @@ const pageResource: ResourceDefinition = {
   update: (c, id, input) => updateWebPage(c, id, input as never),
 }
 
-const webPageApi = new Hono<AppEnv>()
-
-registerResourceRoutes(webPageApi, pageResource, { tag: 'admin' })
+const webPageApi = buildResourceApp(pageResource, { tag: 'admin' })
 
 export default webPageApi
 

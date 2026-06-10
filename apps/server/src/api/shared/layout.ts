@@ -13,7 +13,6 @@ import { getOptionalSessionUser } from './session'
 export async function getLayoutPayload(
   c: Context<AppEnv>,
   surface: 'admin' | 'user',
-  activeMenuName: string,
 ) {
   const siteConfig = await getSiteConfig(c).catch(() => ({ title: 'HonoAdmin' }))
   const sessionUser = await getOptionalSessionUser(c)
@@ -23,7 +22,6 @@ export async function getLayoutPayload(
     : userMenus
 
   return {
-    activeMenuName,
     menus,
     siteTitle: siteConfig.title,
     user: profile,

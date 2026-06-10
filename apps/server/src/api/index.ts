@@ -7,8 +7,6 @@ import installApi from './install'
 import { describeRoute, jsonResponse } from './shared/openapi'
 import userApi from './user'
 
-const api = new Hono<AppEnv>()
-
 const healthPayloadSchema = z.object({
   app: z.string(),
   ok: z.boolean(),
@@ -16,25 +14,27 @@ const healthPayloadSchema = z.object({
   timestamp: z.number(),
 })
 
-api.get(
-  '/health',
-  describeRoute({
-    tags: ['system'],
-    summary: '运行时健康检查',
-    responses: { 200: jsonResponse(healthPayloadSchema, '健康检查') },
-  }),
-  (c) =>
-    c.json({
-      app: 'hono-admin',
-      ok: true,
-      runtime: c.config.runtimeTarget,
-      timestamp: c.now(),
+const api = new Hono<AppEnv>()
+  .get(
+    '/health',
+    describeRoute({
+      tags: ['system'],
+      summary: '运行时健康检查',
+      responses: { 200: jsonResponse(healthPayloadSchema, '健康检查') },
     }),
-)
+    (c) =>
+      c.json({
+        app: 'hono-admin',
+        ok: true,
+        runtime: c.config.runtimeTarget,
+        timestamp: c.now(),
+      }),
+  )
+  .route('/auth', authApi)
+  .route('/install', installApi)
+  .route('/admin', adminApi)
+  .route('/user', userApi)
 
-api.route('/auth', authApi)
-api.route('/install', installApi)
-api.route('/admin', adminApi)
-api.route('/user', userApi)
+export type AppType = typeof api
 
 export default api

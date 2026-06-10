@@ -21,7 +21,7 @@ import {
   listInput,
   uploadAction,
 } from '../../shared/resource'
-import { registerResourceRoutes } from '../../shared/resource-routes'
+import { buildResourceApp } from '../../shared/resource-routes'
 import { getOptionalSessionUser } from '../../shared/session'
 
 const fileResource: ResourceDefinition = {
@@ -49,39 +49,37 @@ const fileResource: ResourceDefinition = {
 }
 
 const systemFileApi = new Hono<AppEnv>()
-
-systemFileApi.post(
-  '/upload',
-  describeRoute({
-    tags: ['admin'],
-    summary: '上传系统文件',
-    requestBody: {
-      content: {
-        'multipart/form-data': {
-          schema: {
-            type: 'object',
-            properties: {
-              file: { type: 'array', items: { type: 'string', format: 'binary' } },
-              uploadType: { type: 'string' },
+  .post(
+    '/upload',
+    describeRoute({
+      tags: ['admin'],
+      summary: '上传系统文件',
+      requestBody: {
+        content: {
+          'multipart/form-data': {
+            schema: {
+              type: 'object',
+              properties: {
+                file: { type: 'array', items: { type: 'string', format: 'binary' } },
+                uploadType: { type: 'string' },
+              },
+              required: ['uploadType', 'file'],
             },
-            required: ['uploadType', 'file'],
           },
         },
       },
-    },
-    responses: { 200: jsonResponse(resourceMutationSchema, '文件已上传') },
-  }),
-  async (c) => c.json(await uploadSystemFiles(c)),
-)
-
-registerResourceRoutes(systemFileApi, fileResource, { tag: 'admin' })
+      responses: { 200: jsonResponse(resourceMutationSchema, '文件已上传') },
+    }),
+    async (c) => c.json(await uploadSystemFiles(c)),
+  )
+  .route('/', buildResourceApp(fileResource, { tag: 'admin' }))
 
 export default systemFileApi
 
 function fileUploadFields() {
   return [
     { key: 'uploadType', label: '上传类型', options: fileUploadTypeOptions, required: true, type: 'select' as const },
-    { help: '支持 JPG、PNG、WEBP、GIF，可多选。', key: 'file', label: '上传文件', required: true, type: 'upload' as const },
+    { help: '支持 JPG、PNG、WEBP、GIF,可多选。', key: 'file', label: '上传文件', required: true, type: 'upload' as const },
   ]
 }
 

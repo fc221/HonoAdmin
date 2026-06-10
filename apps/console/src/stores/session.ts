@@ -6,24 +6,37 @@ import { apiClient } from '../api/client'
 export type ConsoleSurface = 'admin' | 'user'
 
 export const useSessionStore = defineStore('session', () => {
-  const layout = ref<LayoutPayload | null>(null)
+  const layouts = ref<Record<ConsoleSurface, LayoutPayload | null>>({ admin: null, user: null })
+  const activeSurface = ref<ConsoleSurface>('admin')
   const loading = ref(false)
+
+  const layout = computed(() => layouts.value[activeSurface.value])
   const menus = computed(() => layout.value?.menus ?? [])
   const siteTitle = computed(() => layout.value?.siteTitle ?? 'HonoAdmin')
   const user = computed(() => layout.value?.user ?? null)
 
-  async function loadLayout(surface: ConsoleSurface, activeMenuName: string): Promise<LayoutPayload> {
+  function setActiveSurface(surface: ConsoleSurface): void {
+    activeSurface.value = surface
+  }
+
+  async function ensureLayout(surface: ConsoleSurface): Promise<LayoutPayload> {
+    const cached = layouts.value[surface]
+    if (cached) {
+      return cached
+    }
+
     loading.value = true
     try {
-      layout.value = await apiClient.getLayout(surface, activeMenuName)
-      return layout.value
+      const data = await apiClient.getLayout(surface)
+      layouts.value[surface] = data
+      return data
     } finally {
       loading.value = false
     }
   }
 
   function clearLayout(): void {
-    layout.value = null
+    layouts.value = { admin: null, user: null }
   }
 
   async function logout(): Promise<void> {
@@ -38,12 +51,14 @@ export const useSessionStore = defineStore('session', () => {
   }
 
   return {
+    activeSurface,
     clearLayout,
+    ensureLayout,
     layout,
-    loadLayout,
     loading,
     logout,
     menus,
+    setActiveSurface,
     siteTitle,
     switchRole,
     user,

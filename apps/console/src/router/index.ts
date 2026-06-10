@@ -24,7 +24,7 @@ export const router = createRouter({
 function resolveView(path: string) {
   const component = viewModules[path]
   if (!component) {
-    throw new Error(`视图不存在：${path}`)
+    throw new Error(`视图不存在:${path}`)
   }
 
   return component

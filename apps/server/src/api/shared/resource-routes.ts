@@ -1,6 +1,6 @@
 import type { AppEnv } from '@hono-admin/runtime'
-import type { Hono } from 'hono'
 import type { ResourceDefinition } from './resource'
+import { Hono } from 'hono'
 import { describeRoute, jsonResponse, validate } from './openapi'
 import {
   createResource,
@@ -25,31 +25,26 @@ interface ResourceRouteOptions {
 }
 
 /**
- * 按 ResourceDefinition 的能力(get/create/update/delete)注册标准 CRUD 路由,
- * 每条路由就近声明 describeRoute(响应 schema)+ validator(param/query/json)。
- * 自定义路由(如 /panel、/upload、/clear、/password)仍由各 feature 显式声明。
+ * 构建一个仅包含标准 CRUD 路由的 Hono sub-app(链式,带完整类型)。
+ * 总是注册 5 条路由;definition 未提供的能力,运行时返回 404。
+ * 这样保证 Hono RPC 的 AppType 形态稳定,client 端 hc<AppType> 一致可用。
  */
-export function registerResourceRoutes(
-  app: Hono<AppEnv>,
-  definition: ResourceDefinition,
-  options: ResourceRouteOptions,
-): void {
+export function buildResourceApp(definition: ResourceDefinition, options: ResourceRouteOptions) {
   const tags = [options.tag]
   const title = options.title ?? definition.title
 
-  app.get(
-    '/',
-    describeRoute({
-      tags,
-      summary: `${title} - 列表`,
-      responses: { 200: jsonResponse(resourceListSchema, '资源列表') },
-    }),
-    validate('query', resourceQuerySchema),
-    async (c) => c.json(await listResource(definition, c)),
-  )
-
-  if (definition.get) {
-    app.get(
+  return new Hono<AppEnv>()
+    .get(
+      '/',
+      describeRoute({
+        tags,
+        summary: `${title} - 列表`,
+        responses: { 200: jsonResponse(resourceListSchema, '资源列表') },
+      }),
+      validate('query', resourceQuerySchema),
+      async (c) => c.json(await listResource(definition, c)),
+    )
+    .get(
       '/:id',
       describeRoute({
         tags,
@@ -57,12 +52,14 @@ export function registerResourceRoutes(
         responses: { 200: jsonResponse(resourceDetailSchema, '资源详情') },
       }),
       validate('param', resourceIdParamSchema),
-      async (c) => c.json(await getResourceDetail(definition, c, c.req.valid('param').id)),
+      async (c) => {
+        if (!definition.get) {
+          return c.json({ message: '该资源不支持详情查询。' }, 404)
+        }
+        return c.json(await getResourceDetail(definition, c, c.req.valid('param').id))
+      },
     )
-  }
-
-  if (definition.create) {
-    app.post(
+    .post(
       '/',
       describeRoute({
         tags,
@@ -70,12 +67,14 @@ export function registerResourceRoutes(
         responses: { 200: jsonResponse(resourceMutationSchema, '创建成功') },
       }),
       validate('json', resourceBodySchema),
-      async (c) => c.json(await createResource(definition, c, c.req.valid('json'))),
+      async (c) => {
+        if (!definition.create) {
+          return c.json({ message: '该资源不支持新增。' }, 404)
+        }
+        return c.json(await createResource(definition, c, c.req.valid('json')))
+      },
     )
-  }
-
-  if (definition.update) {
-    app.put(
+    .put(
       '/:id',
       describeRoute({
         tags,
@@ -84,12 +83,14 @@ export function registerResourceRoutes(
       }),
       validate('param', resourceIdParamSchema),
       validate('json', resourceBodySchema),
-      async (c) => c.json(await updateResource(definition, c, c.req.valid('param').id, c.req.valid('json'))),
+      async (c) => {
+        if (!definition.update) {
+          return c.json({ message: '该资源不支持更新。' }, 404)
+        }
+        return c.json(await updateResource(definition, c, c.req.valid('param').id, c.req.valid('json')))
+      },
     )
-  }
-
-  if (definition.delete) {
-    app.delete(
+    .delete(
       '/:id',
       describeRoute({
         tags,
@@ -97,7 +98,11 @@ export function registerResourceRoutes(
         responses: { 200: jsonResponse(resourceMutationSchema, '删除成功') },
       }),
       validate('param', resourceIdParamSchema),
-      async (c) => c.json(await deleteResource(definition, c, c.req.valid('param').id)),
+      async (c) => {
+        if (!definition.delete) {
+          return c.json({ message: '该资源不支持删除。' }, 404)
+        }
+        return c.json(await deleteResource(definition, c, c.req.valid('param').id))
+      },
     )
-  }
 }

@@ -25,7 +25,7 @@ import {
   deleteAction,
   editAction,
 } from '../../../shared/resource'
-import { registerResourceRoutes } from '../../../shared/resource-routes'
+import { buildResourceApp } from '../../../shared/resource-routes'
 
 const configResource: ResourceDefinition = {
   actions: [createAction],
@@ -48,49 +48,46 @@ const configResource: ResourceDefinition = {
 }
 
 const systemConfigApi = new Hono<AppEnv>()
+  .get(
+    '/panel',
+    describeRoute({
+      tags: ['admin'],
+      summary: '配置面板',
+      responses: { 200: jsonResponse(configPanelPayloadSchema, '配置面板数据') },
+    }),
+    async (c) =>
+      c.json(configPanelPayloadSchema.parse({
+        configs: await listConfigs(c),
+        definitions: builtInConfigDefinitions,
+        types: configTypeOptions,
+      })),
+  )
+  .post(
+    '/values',
+    describeRoute({
+      tags: ['admin'],
+      summary: '批量更新配置值',
+      responses: { 200: jsonResponse(resourceMutationSchema, '配置已更新') },
+    }),
+    validate('json', configValuesInputSchema),
+    async (c) => {
+      const input = c.req.valid('json')
+      const updateCount = await updateConfigValues(c, input)
 
-systemConfigApi.get(
-  '/panel',
-  describeRoute({
-    tags: ['admin'],
-    summary: '配置面板',
-    responses: { 200: jsonResponse(configPanelPayloadSchema, '配置面板数据') },
-  }),
-  async (c) =>
-    c.json(configPanelPayloadSchema.parse({
-      configs: await listConfigs(c),
-      definitions: builtInConfigDefinitions,
-      types: configTypeOptions,
-    })),
-)
+      await createRequestOperateLog(c, {
+        logMsg: `更新${getConfigTypeLabel(input.configType)}配置 ${updateCount} 项`,
+        logType: 'updateOne',
+        method: 'updateConfigValues',
+      })
 
-systemConfigApi.post(
-  '/values',
-  describeRoute({
-    tags: ['admin'],
-    summary: '批量更新配置值',
-    responses: { 200: jsonResponse(resourceMutationSchema, '配置已更新') },
-  }),
-  validate('json', configValuesInputSchema),
-  async (c) => {
-    const input = c.req.valid('json')
-    const updateCount = await updateConfigValues(c, input)
-
-    await createRequestOperateLog(c, {
-      logMsg: `更新${getConfigTypeLabel(input.configType)}配置 ${updateCount} 项`,
-      logType: 'updateOne',
-      method: 'updateConfigValues',
-    })
-
-    return c.json(resourceMutationSchema.parse({
-      data: { count: updateCount },
-      message: '配置已更新。',
-      ok: true,
-    }))
-  },
-)
-
-registerResourceRoutes(systemConfigApi, configResource, { tag: 'admin' })
+      return c.json(resourceMutationSchema.parse({
+        data: { count: updateCount },
+        message: '配置已更新。',
+        ok: true,
+      }))
+    },
+  )
+  .route('/', buildResourceApp(configResource, { tag: 'admin' }))
 
 export default systemConfigApi
 

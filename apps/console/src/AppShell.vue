@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ApiClientError } from '@hono-admin/server/api/client'
 import { useLoadingBar, useNotification, useThemeVars } from 'naive-ui'
 import { storeToRefs } from 'pinia'
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { ApiClientError } from './api/client'
 import AppLayout from './components/layout/AppLayout.vue'
 import { useSessionStore } from './stores/session'
 
@@ -29,31 +29,23 @@ const activeMenuName = computed(() =>
   String(route.meta.activeMenuName ?? (surface.value === 'user' ? 'user.dashboard' : 'admin.dashboard')),
 )
 const section = computed(() => surface.value === 'user' ? '用户中心' : '管理后台')
-const layoutLoadKey = computed(() => [
-  isPublic.value ? 'public' : 'private',
-  surface.value,
-  activeMenuName.value,
-].join(':'))
 const routeViewKey = computed(() => `${route.path}:${routeRefreshKey.value}`)
 
+// 仅在 surface(admin/user)切换或公私态变化时触发,菜单切换不再重拉 layout。
 watch(
-  layoutLoadKey,
-  async () => {
-    if (isPublic.value)
+  [surface, isPublic],
+  async ([nextSurface, isPub]) => {
+    sessionStore.setActiveSurface(nextSurface)
+    if (isPub)
       return
 
     const requestedPath = route.fullPath
     loadingBar.start()
     try {
-      await sessionStore.loadLayout(surface.value, activeMenuName.value)
+      await sessionStore.ensureLayout(nextSurface)
       loadingBar.finish()
     }
     catch (reason) {
-      if (isPublic.value) {
-        loadingBar.finish()
-        return
-      }
-
       if (reason instanceof ApiClientError && reason.status === 401) {
         loadingBar.finish()
         await router.replace(`${loginPath.value}?${new URLSearchParams({ returnTo: requestedPath })}`)
@@ -105,8 +97,9 @@ async function switchRole(roleId: number) {
       await router.push(target)
       return
     }
-
-    await sessionStore.loadLayout(surface.value, activeMenuName.value)
+    // 角色切换会清空缓存,这里按当前 surface 再拉一次以恢复菜单/用户。
+    await sessionStore.ensureLayout(surface.value)
+    refreshCurrentRoute()
   }
   catch (reason) {
     loadingBar.error()
