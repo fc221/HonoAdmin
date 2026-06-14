@@ -32,7 +32,13 @@ app.use('*', async (c, next) => {
 
 app.use('*', requestBodyLimit as MiddlewareHandler<AppEnv>)
 app.use('*', requestId())
-app.use('*', logger())
+// hono/logger 每个请求都 console.log。Bun 下,当 stdout 的 sink 停止消费(断开的 pty、
+// backpressure 的日志管道 / 容器日志驱动等),console.log 会阻塞事件循环 → 整个服务卡死,
+// 只能重启恢复,且全程不涨内存/fd。生产默认关闭按请求访问日志(交给前置代理),
+// 需要时设 HONO_ADMIN_ACCESS_LOG=1 显式开启。
+if (import.meta.env?.DEV || process.env.HONO_ADMIN_ACCESS_LOG === '1') {
+  app.use('*', logger())
+}
 app.use('*', timing())
 app.use('*', compress())
 
