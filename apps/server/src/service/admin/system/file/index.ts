@@ -9,7 +9,7 @@ import type {
 import type { FileEntity } from './entity'
 import type { FileStorageMode, FileUploadType } from './enum'
 import { createFileStorageAdapter } from '@hono-admin/file-storage/factory'
-import { formatSize } from '../../../../utils/common'
+import { formatSize } from '@hono-admin/utils/common'
 import { ConfigurationError, NotFoundError, ValidationError } from '../../../../utils/errors'
 import {
   createPaginatedResult,

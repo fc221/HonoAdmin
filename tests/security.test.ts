@@ -1,5 +1,6 @@
 import { MemoryCacheAdapter } from '@hono-admin/cache/adapter/memory'
 import { resolveSecurityRuntimeConfig } from '@hono-admin/runtime/security-config'
+import { sanitizeRichTextHtml } from '@hono-admin/utils/html'
 import { describe, expect, test } from 'bun:test'
 import { Hono } from 'hono'
 import {
@@ -19,7 +20,6 @@ import {
   createRateLimitKey,
 } from '../apps/server/src/service/security/rate-limit'
 import { DatabaseError, toErrorShape, TooManyRequestsError } from '../apps/server/src/utils/errors'
-import { sanitizeRichTextHtml } from '../apps/server/src/utils/html'
 
 describe('security utilities', () => {
   test('rich text sanitizer blocks scriptable URLs and event handlers', () => {

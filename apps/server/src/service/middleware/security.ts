@@ -1,9 +1,9 @@
 import type { AppEnv } from '@hono-admin/runtime'
 import type { Context } from 'hono'
 import { defaultSecurityRuntimeConfig } from '@hono-admin/runtime/security-config'
+import { formatSize } from '@hono-admin/utils/common'
 import { createMiddleware } from 'hono/factory'
 import { secureHeaders } from 'hono/secure-headers'
-import { formatSize } from '../../utils/common'
 import { ForbiddenError } from '../../utils/errors'
 import {
   prepareCsrfToken,

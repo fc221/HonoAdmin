@@ -1,4 +1,4 @@
-import { toHex } from '../../../../utils/crypto'
+import { toHex } from '@hono-admin/utils/crypto'
 
 export const passwordHashAlgorithm = 'pbkdf2-sha256'
 // Cloudflare Workers rejects PBKDF2 requests above 100000 iterations.

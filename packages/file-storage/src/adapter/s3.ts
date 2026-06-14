@@ -3,7 +3,7 @@ import type {
   FileStoragePutInput,
   S3FileStorageConfig,
 } from '../types'
-import { toHex } from '../crypto'
+import { toHex } from '@hono-admin/utils/crypto'
 
 const algorithm = 'AWS4-HMAC-SHA256'
 const serviceName = 's3'

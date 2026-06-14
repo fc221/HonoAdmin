@@ -15,8 +15,8 @@ import type {
   UserHeaderProfileEntity,
 } from './mappers'
 import { buildCacheKey } from '@hono-admin/cache'
-import { hasField } from '../../../../utils/common'
-import { constantTimeEqual } from '../../../../utils/crypto'
+import { hasField } from '@hono-admin/utils/common'
+import { constantTimeEqual } from '@hono-admin/utils/crypto'
 import { NotFoundError, ValidationError } from '../../../../utils/errors'
 import {
   createPaginatedResult,

@@ -1,5 +1,5 @@
 import type { ServiceRequestContext } from '../types'
-import { constantTimeEqual } from '../../utils/crypto'
+import { constantTimeEqual } from '@hono-admin/utils/crypto'
 
 export function verifyAdminBearerToken(
   token: string,

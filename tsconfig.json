@@ -18,6 +18,7 @@
     "skipLibCheck": true
   },
   "references": [
+    { "path": "./packages/utils" },
     { "path": "./packages/db" },
     { "path": "./packages/cache" },
     { "path": "./packages/file-storage" },

@@ -15,7 +15,7 @@ import type {
   RoleMenuEntity,
 } from './entity'
 import { buildCacheKey } from '@hono-admin/cache'
-import { createPlaceholders } from '../../../../utils/common'
+import { createPlaceholders } from '@hono-admin/utils/common'
 import { NotFoundError, ValidationError } from '../../../../utils/errors'
 import {
   createPaginatedResult,

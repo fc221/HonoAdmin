@@ -6,7 +6,7 @@ import type {
   RolePermissionEntity,
   RolePolicyEntity,
 } from './entity'
-import { createPlaceholders } from '../../../../utils/common'
+import { createPlaceholders } from '@hono-admin/utils/common'
 
 const alwaysAllowedAdminPaths = new Set([
   '/admin',

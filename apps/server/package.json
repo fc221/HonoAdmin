@@ -25,6 +25,7 @@
     "@hono-admin/db": "workspace:*",
     "@hono-admin/file-storage": "workspace:*",
     "@hono-admin/runtime": "workspace:*",
+    "@hono-admin/utils": "workspace:*",
     "@standard-community/standard-json": "^0.3.5",
     "@standard-community/standard-openapi": "^0.2.9",
     "hono": "^4.12.18",

@@ -1,17 +1,16 @@
 {
-  "name": "@hono-admin/file-storage",
+  "name": "@hono-admin/utils",
   "type": "module",
   "private": true,
   "exports": {
     ".": "./src/index.ts",
-    "./adapter/*": "./src/adapter/*.ts",
-    "./factory": "./src/factory.ts"
+    "./*": "./src/*.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@hono-admin/utils": "workspace:*"
+    "dayjs": "^1.11.20"
   },
   "devDependencies": {}
 }

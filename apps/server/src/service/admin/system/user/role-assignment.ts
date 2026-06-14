@@ -1,7 +1,7 @@
 import type { ServiceContext } from '../../../types'
 import type { RoleCatalogEntry } from '../role/catalog'
 import type { CreateUserInput, UserSessionRole } from './dto'
-import { createPlaceholders } from '../../../../utils/common'
+import { createPlaceholders } from '@hono-admin/utils/common'
 import { ValidationError } from '../../../../utils/errors'
 import { getRoleCatalog } from '../role/catalog'
 

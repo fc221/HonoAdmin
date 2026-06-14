@@ -9,6 +9,7 @@
         "@hono-admin/db": "workspace:*",
         "@hono-admin/file-storage": "workspace:*",
         "@hono-admin/runtime": "workspace:*",
+        "@hono-admin/utils": "workspace:*",
         "@hono/node-server": "2.0.4",
         "@hono/standard-validator": "^0.2.2",
         "@hono/swagger-ui": "^0.6.1",
@@ -80,6 +81,7 @@
         "@hono-admin/db": "workspace:*",
         "@hono-admin/file-storage": "workspace:*",
         "@hono-admin/runtime": "workspace:*",
+        "@hono-admin/utils": "workspace:*",
         "@standard-community/standard-json": "^0.3.5",
         "@standard-community/standard-openapi": "^0.2.9",
         "hono": "^4.12.18",
@@ -103,12 +105,21 @@
     },
     "packages/file-storage": {
       "name": "@hono-admin/file-storage",
+      "dependencies": {
+        "@hono-admin/utils": "workspace:*",
+      },
     },
     "packages/runtime": {
       "name": "@hono-admin/runtime",
       "dependencies": {
         "@hono-admin/cache": "workspace:*",
         "@hono-admin/db": "workspace:*",
+      },
+    },
+    "packages/utils": {
+      "name": "@hono-admin/utils",
+      "dependencies": {
+        "dayjs": "^1.11.20",
       },
     },
   },
@@ -288,6 +299,8 @@
     "@hono-admin/runtime": ["@hono-admin/runtime@workspace:packages/runtime"],
 
     "@hono-admin/server": ["@hono-admin/server@workspace:apps/server"],
+
+    "@hono-admin/utils": ["@hono-admin/utils@workspace:packages/utils"],
 
     "@hono/node-server": ["@hono/node-server@2.0.4", "", { "peerDependencies": { "hono": "^4" } }, "sha512-Ut3y0dMMPWy6bZ2kVfx25EOVbZlm15dhF4mOsezMlhpNHy+4MkU1qN9Y6lnruYi4wPmFzimGX2X7LF/FwHli4A=="],
 

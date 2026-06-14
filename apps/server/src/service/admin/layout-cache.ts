@@ -1,6 +1,6 @@
 import type { ServiceContext } from '../types'
 import { buildCacheKey } from '@hono-admin/cache'
-import { devWarn } from '../../utils/log'
+import { devWarn } from '@hono-admin/utils/log'
 
 const adminLayoutCacheVersionKey = buildCacheKey('system', 'layout', 'version')
 export const adminLayoutCacheTtlSeconds = 60

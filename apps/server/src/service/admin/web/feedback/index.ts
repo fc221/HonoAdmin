@@ -7,7 +7,7 @@ import type {
   WebFeedbackRecord,
 } from './dto'
 import type { WebFeedbackEntity } from './entity'
-import { hasField } from '../../../../utils/common'
+import { hasField } from '@hono-admin/utils/common'
 import { NotFoundError } from '../../../../utils/errors'
 import {
   createPaginatedResult,

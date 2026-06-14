@@ -2,7 +2,7 @@ import type { UserCredential } from '../admin/system/user'
 import type { ServiceRequestContext } from '../types'
 import type { UserLoginInput } from './login'
 import { buildCacheKey } from '@hono-admin/cache'
-import { constantTimeEqual, toHex } from '../../utils/crypto'
+import { constantTimeEqual, toHex } from '@hono-admin/utils/crypto'
 import {
   ConfigurationError,
   UnauthorizedError,

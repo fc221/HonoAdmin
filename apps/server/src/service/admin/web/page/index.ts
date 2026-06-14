@@ -7,9 +7,9 @@ import type {
   WebPageRecord,
 } from './dto'
 import type { WebPageEntity } from './entity'
-import { hasField } from '../../../../utils/common'
+import { hasField } from '@hono-admin/utils/common'
+import { sanitizeRichTextHtml } from '@hono-admin/utils/html'
 import { NotFoundError, ValidationError } from '../../../../utils/errors'
-import { sanitizeRichTextHtml } from '../../../../utils/html'
 import {
   createPaginatedResult,
   getPaginationOffset,
