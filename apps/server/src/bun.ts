@@ -1,6 +1,7 @@
 import type { CachePolicy } from './static'
 import { createBunRuntime } from '@hono-admin/runtime/bun'
 import app, { setApiRuntimeContextMiddleware } from './app'
+import { startRuntimeDiagnostics } from './diagnostics'
 import { createAttachRuntime } from './service/middleware/context'
 import {
   buildCacheControl,
@@ -26,7 +27,7 @@ const distRoots = {
 
 setApiRuntimeContextMiddleware(createAttachRuntime(createBunRuntime))
 
-Bun.serve({
+const server = Bun.serve({
   async fetch(request, server) {
     const url = new URL(request.url)
 
@@ -51,10 +52,14 @@ Bun.serve({
     }
     return new Response('Not Found', { status: 404 })
   },
+  // 安全阀:卡住/半开连接最多空闲 30s 后回收,避免长期累积。
+  idleTimeout: 30,
   port,
 })
 
 console.log(`HonoAdmin API listening on http://127.0.0.1:${port}`)
+
+startRuntimeDiagnostics(server)
 
 async function serveBunFile(
   file: Bun.BunFile,
