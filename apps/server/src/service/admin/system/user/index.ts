@@ -14,6 +14,7 @@ import type {
   UserCredentialEntity,
   UserHeaderProfileEntity,
 } from './mappers'
+import { buildCacheKey } from '@hono-admin/cache'
 import { hasField } from '../../../../utils/common'
 import { constantTimeEqual } from '../../../../utils/crypto'
 import { NotFoundError, ValidationError } from '../../../../utils/errors'
@@ -130,13 +131,28 @@ export async function listUsers(
   )
 }
 
+const adminInstalledCacheKey = buildCacheKey('system', 'admin-installed')
+
 export async function isAdminInstalled(ctx: ServiceContext): Promise<boolean> {
-  const row = await ctx.db.first<{ count: number }>(
-    'SELECT COUNT(*) AS count FROM sys_user WHERE is_root = 1 AND status = ?',
+  // 安装完成后此状态恒为 true,而 requireApiSession 在每个受保护请求上都会调用它。
+  // 只缓存 true(安装前仍每次实查,以便装好后能立刻检测到),省掉每请求一次 COUNT。
+  const cached = await ctx.cache.get<boolean>(adminInstalledCacheKey).catch(() => null)
+  if (cached === true) {
+    return true
+  }
+
+  const row = await ctx.db.first<{ installed: number }>(
+    'SELECT 1 AS installed FROM sys_user WHERE is_root = 1 AND status = ? LIMIT 1',
     [UserStatus.NORMAL],
   )
+  const installed = !!row
+  if (installed) {
+    await ctx.cache
+      .set(adminInstalledCacheKey, true, { ttlSeconds: 3600 })
+      .catch(() => {})
+  }
 
-  return (row?.count ?? 0) > 0
+  return installed
 }
 
 export async function createUser(
