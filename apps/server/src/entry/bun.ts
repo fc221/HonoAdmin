@@ -1,8 +1,8 @@
 import type { CachePolicy } from './static'
 import { createBunRuntime } from '@hono-admin/runtime/bun'
-import app, { setApiRuntimeContextMiddleware } from './app'
+import app, { setApiRuntimeContextMiddleware } from '../app'
+import { createAttachRuntime } from '../service/middleware/context'
 import { startRuntimeDiagnostics } from './diagnostics'
-import { createAttachRuntime } from './service/middleware/context'
 import {
   buildCacheControl,
   buildEtag,

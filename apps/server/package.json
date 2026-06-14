@@ -15,9 +15,9 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 3000",
     "typecheck": "tsc --noEmit",
-    "build:bun": "bun build src/bun.ts --target=bun --outdir=dist",
-    "build:node": "bun build src/node.ts --target=node --define=__APP_RUNTIME_TARGET__=\"node\" --outdir=dist",
-    "build:workers": "bun build src/worker.ts --target=browser --outdir=dist/workers",
+    "build:bun": "bun build src/entry/bun.ts --target=bun --outdir=dist",
+    "build:node": "bun build src/entry/node.ts --target=node --define=__APP_RUNTIME_TARGET__=\"node\" --outdir=dist",
+    "build:workers": "bun build src/entry/worker.ts --target=browser --outdir=dist/workers",
     "compile:bun": "bun run build:bun && bun build --compile --minify --sourcemap dist/bun.js --outfile dist/hono-admin"
   },
   "dependencies": {

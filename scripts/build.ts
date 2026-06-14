@@ -50,7 +50,7 @@ if (target === 'node') {
   await run([
     'bun',
     'build',
-    'apps/server/src/node.ts',
+    'apps/server/src/entry/node.ts',
     '--target=node',
     `--define=__APP_RUNTIME_TARGET__="node"`,
     '--outdir=apps/server/dist',
@@ -59,7 +59,7 @@ if (target === 'node') {
   await run([
     'bun',
     'build',
-    'apps/server/src/bun.ts',
+    'apps/server/src/entry/bun.ts',
     '--target=bun',
     '--outdir=apps/server/dist',
   ])

@@ -4,8 +4,8 @@ import { readFile, stat } from 'node:fs/promises'
 import { createNodeRuntime } from '@hono-admin/runtime/node'
 import { serve } from '@hono/node-server'
 import { getMimeType } from 'hono/utils/mime'
-import app, { setApiRuntimeContextMiddleware } from './app'
-import { createAttachRuntime } from './service/middleware/context'
+import app, { setApiRuntimeContextMiddleware } from '../app'
+import { createAttachRuntime } from '../service/middleware/context'
 import {
   buildCacheControl,
   buildEtag,
