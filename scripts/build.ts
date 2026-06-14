@@ -61,6 +61,7 @@ if (target === 'node') {
     'build',
     'apps/server/src/entry/bun.ts',
     '--target=bun',
+    `--define=__APP_RUNTIME_TARGET__="bun"`,
     '--outdir=apps/server/dist',
   ])
 }

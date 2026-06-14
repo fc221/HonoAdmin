@@ -1,6 +1,6 @@
 import type { FileStorageAdapter, FileStorageConfig } from './types'
 
-declare const __APP_RUNTIME_TARGET__: 'bun' | 'cloudflare-workers' | undefined
+declare const __APP_RUNTIME_TARGET__: 'bun' | 'cloudflare-workers' | 'node' | undefined
 
 export type {
   FileStorageAccess,
