@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { ResourceAction, ResourceList } from '@hono-admin/server/api/schema'
 import type { DataTableColumns, FormInst, FormRules, UploadFileInfo } from 'naive-ui'
+import { formatFileSize } from '@hono-admin/utils/common'
 import {
   NButton,
   NCard,
@@ -24,7 +25,6 @@ import { computed, h, onMounted, ref } from 'vue'
 import { apiClient } from '../../../api/client'
 import AppIcon from '../../../components/AppIcon.vue'
 import Upload from '../../../components/Upload.vue'
-import { formatFileSize } from '../../../utils'
 
 const message = useMessage()
 const loadingBar = useLoadingBar()

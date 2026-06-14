@@ -9,7 +9,7 @@ import type {
 import type { FileEntity } from './entity'
 import type { FileStorageMode, FileUploadType } from './enum'
 import { createFileStorageAdapter } from '@hono-admin/file-storage/factory'
-import { formatSize } from '@hono-admin/utils/common'
+import { formatFileSize } from '@hono-admin/utils/common'
 import { ConfigurationError, NotFoundError, ValidationError } from '../../../../utils/errors'
 import {
   createPaginatedResult,
@@ -226,7 +226,7 @@ async function normalizeUploadedFile(
   }
 
   if (file.size > maxFileSizeBytes) {
-    throw new ValidationError(`图片不能超过 ${formatSize(maxFileSizeBytes)}。`, {
+    throw new ValidationError(`图片不能超过 ${formatFileSize(maxFileSizeBytes)}。`, {
       field: 'file',
       maxFileSizeBytes,
     })

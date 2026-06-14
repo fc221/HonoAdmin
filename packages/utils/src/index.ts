@@ -1,4 +1,5 @@
 export * from './avatar'
+export * from './browser'
 export * from './common'
 export * from './crypto'
 export * from './datetime'

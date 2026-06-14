@@ -47,6 +47,7 @@
       "name": "@hono-admin/console",
       "dependencies": {
         "@hono-admin/server": "workspace:*",
+        "@hono-admin/utils": "workspace:*",
         "@iconify-json/ri": "^1.2.10",
         "@iconify/vue": "^5.0.1",
         "@tailwindcss/vite": "^4.0.9",

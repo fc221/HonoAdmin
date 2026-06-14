@@ -1,4 +1,5 @@
-export async function copyText(text: string) {
+/** 浏览器端剪贴板复制,带 execCommand 兜底。仅在前端环境调用。 */
+export async function copyText(text: string): Promise<void> {
   if (navigator.clipboard?.writeText) {
     try {
       await navigator.clipboard.writeText(text)
@@ -20,21 +21,4 @@ export async function copyText(text: string) {
   if (!copied) {
     throw new Error('copy failed')
   }
-}
-
-export function formatFileSize(value: unknown): string {
-  const size = Number(value)
-  if (!Number.isFinite(size)) {
-    return '-'
-  }
-
-  if (size < 1024) {
-    return `${size} B`
-  }
-
-  if (size < 1024 * 1024) {
-    return `${(size / 1024).toFixed(1)} KB`
-  }
-
-  return `${(size / 1024 / 1024).toFixed(1)} MB`
 }

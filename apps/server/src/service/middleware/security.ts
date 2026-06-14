@@ -1,7 +1,7 @@
 import type { AppEnv } from '@hono-admin/runtime'
 import type { Context } from 'hono'
 import { defaultSecurityRuntimeConfig } from '@hono-admin/runtime/security-config'
-import { formatSize } from '@hono-admin/utils/common'
+import { formatFileSize } from '@hono-admin/utils/common'
 import { createMiddleware } from 'hono/factory'
 import { secureHeaders } from 'hono/secure-headers'
 import { ForbiddenError } from '../../utils/errors'
@@ -30,7 +30,7 @@ export const requestBodyLimit = createMiddleware<AppEnv>(async (c, next) => {
     && contentLength > maxSize
     && !hasTransferEncoding
   ) {
-    return c.text(`请求体不能超过 ${formatSize(maxSize)}。`, 413)
+    return c.text(`请求体不能超过 ${formatFileSize(maxSize)}。`, 413)
   }
 
   let size = 0
@@ -45,7 +45,7 @@ export const requestBodyLimit = createMiddleware<AppEnv>(async (c, next) => {
 
     size += value.length
     if (size > maxSize) {
-      return c.text(`请求体不能超过 ${formatSize(maxSize)}。`, 413)
+      return c.text(`请求体不能超过 ${formatFileSize(maxSize)}。`, 413)
     }
 
     chunks.push(value)

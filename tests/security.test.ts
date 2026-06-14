@@ -75,7 +75,7 @@ describe('security utilities', () => {
     })
 
     expect(response.status).toBe(413)
-    expect(await response.text()).toContain('6MB')
+    expect(await response.text()).toContain('6 MB')
   })
 
   test('security headers allow upload blob previews without COOP warnings on LAN HTTP', async () => {
