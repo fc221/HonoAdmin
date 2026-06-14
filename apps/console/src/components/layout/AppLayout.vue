@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import type { MenuItem, UserProfile } from '@hono-admin/server/api/schema'
 import type { DropdownOption } from 'naive-ui'
-import { NLayout, NLayoutContent, NLayoutHeader, useThemeVars } from 'naive-ui'
+import { NLayout, NLayoutContent, NLayoutHeader, useLoadingBar, useNotification } from 'naive-ui'
 import { storeToRefs } from 'pinia'
 import { computed, h, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ApiClientError } from '../../api/client'
 import { useLayoutStore } from '../../stores/layout'
+import { useSessionStore } from '../../stores/session'
 import { useThemeStore } from '../../stores/theme'
 import AppIcon from '../AppIcon.vue'
 import AppHeader from './components/AppHeader.vue'
@@ -26,41 +28,37 @@ import {
   isTopNavVariant,
 } from './layout-config'
 
-const props = withDefaults(defineProps<{
-  activeMenuName: string
-  menus?: MenuItem[]
-  section: string
-  siteTitle: string
-  user: UserProfile | null
-}>(), {
-  menus: () => [],
-})
-
-const emit = defineEmits<{
-  logout: []
-  navigate: [href: string]
-  refresh: []
-  roleSwitch: [roleId: number]
-}>()
-
+const route = useRoute()
+const router = useRouter()
+const loadingBar = useLoadingBar()
+const notification = useNotification()
 const themeStore = useThemeStore()
 const layoutStore = useLayoutStore()
+const sessionStore = useSessionStore()
 layoutStore.normalizeForConsole()
-const themeVars = useThemeVars()
 const { selectedTheme } = storeToRefs(themeStore)
+const { loading, menus, siteTitle, user } = storeToRefs(sessionStore)
 const {
   mainWidth,
   sidebarCollapsed,
-  sidebarLogoStyle,
-  sidebarMenuStyle,
+  sidebarStyle,
   topMenuCentered,
   variant,
 } = storeToRefs(layoutStore)
 const mobileOpen = ref(false)
 const menuExpandedKeys = ref<Array<string | number>>([])
+const routeRefreshKey = ref(0)
 
-const activePath = computed(() => getActivePath(props.menus, props.activeMenuName) ?? [])
-const activeRoot = computed(() => activePath.value[0] ?? props.menus[0])
+// surface(admin/user)由当前路由所在的布局父路由决定,不再靠 AppShell 透传。
+const surface = computed<'admin' | 'user'>(() => route.path.startsWith('/user') ? 'user' : 'admin')
+const loginPath = computed(() => surface.value === 'user' ? '/user/login' : '/admin/login')
+const activeMenuName = computed(() =>
+  String(route.meta.activeMenuName ?? (surface.value === 'user' ? 'user.dashboard' : 'admin.dashboard')),
+)
+const routeViewKey = computed(() => `${route.path}:${routeRefreshKey.value}`)
+
+const activePath = computed(() => getActivePath(menus.value, activeMenuName.value) ?? [])
+const activeRoot = computed(() => activePath.value[0] ?? menus.value[0])
 const breadcrumbs = computed(() => activePath.value.map(item => ({
   href: item.href,
   label: item.label,
@@ -94,10 +92,10 @@ const contentWidthClass = computed(() =>
     ? 'mx-auto w-full max-w-7xl'
     : 'w-full',
 )
-const expandableMenuKeys = computed(() => new Set(getExpandableMenuKeys(props.menus)))
-const logoText = computed(() => getLogoText(props.siteTitle))
-const menuOptions = computed(() => createMenuOptions(props.menus))
-const rootMenuOptions = computed(() => createRootMenuOptions(props.menus))
+const expandableMenuKeys = computed(() => new Set(getExpandableMenuKeys(menus.value)))
+const logoText = computed(() => getLogoText(siteTitle.value))
+const menuOptions = computed(() => createMenuOptions(menus.value))
+const rootMenuOptions = computed(() => createRootMenuOptions(menus.value))
 const activeChildrenMenus = computed(() => {
   const root = activeRoot.value
   if (!root) {
@@ -116,9 +114,9 @@ const mobileMenuOptions = computed(() => mobileSidebarMenuOptions.value ?? menuO
 const topMenuOptions = computed(() =>
   hybridLayout.value ? rootMenuOptions.value : menuOptions.value,
 )
-const topSelectedMenuKey = computed(() => activeRoot.value?.name ?? props.activeMenuName)
+const topSelectedMenuKey = computed(() => activeRoot.value?.name ?? activeMenuName.value)
 const desktopSidebarLogoVisible = computed(() => !hybridLayout.value)
-const userLabel = computed(() => props.user?.nickname || props.user?.username || '用户')
+const userLabel = computed(() => user.value?.nickname || user.value?.username || '用户')
 const themeDropdownOptions = computed<DropdownOption[]>(() =>
   themeStore.themeOptions.map(option => ({
     icon: renderThemeIcon(option.icon),
@@ -126,14 +124,14 @@ const themeDropdownOptions = computed<DropdownOption[]>(() =>
     label: () => h('span', { class: 'flex min-w-0 items-center justify-between gap-3' }, [
       h('span', { class: 'truncate' }, option.label),
       selectedTheme.value === option.value
-        ? h(AppIcon, { color: themeVars.value.primaryColor, name: 'ri:check-line' })
+        ? h(AppIcon, { class: 'text-primary', name: 'ri:check-line' })
         : null,
     ]),
   })),
 )
 const roleOptions = computed<DropdownOption[]>(() =>
-  props.user?.roles.map(role => ({
-    disabled: props.user?.activeRoleId === role.id,
+  user.value?.roles.map(role => ({
+    disabled: user.value?.activeRoleId === role.id,
     key: role.id,
     label: role.name,
   })) ?? [],
@@ -150,14 +148,49 @@ const userDropdownOptions = computed<DropdownOption[]>(() => [
 ])
 
 watch(
-  () => [props.menus, props.activeMenuName] as const,
+  () => [menus.value, activeMenuName.value] as const,
   () => {
     const validKeys = expandableMenuKeys.value
     const nextKeys = new Set(menuExpandedKeys.value.filter(key => validKeys.has(key)))
-    for (const key of getExpandedMenuKeys(props.menus, props.activeMenuName, activePath.value)) {
+    for (const key of getExpandedMenuKeys(menus.value, activeMenuName.value, activePath.value)) {
       nextKeys.add(key)
     }
     menuExpandedKeys.value = [...nextKeys]
+  },
+  { immediate: true },
+)
+
+// 仅在 surface(admin/user)切换时拉一次布局,菜单内切换不重拉(ensureLayout 自带缓存)。
+// 加载/401/428/异常的编排从原 AppShell 整体搬到这里。
+watch(
+  surface,
+  async (nextSurface) => {
+    sessionStore.setActiveSurface(nextSurface)
+    const requestedPath = route.fullPath
+    loadingBar.start()
+    try {
+      await sessionStore.ensureLayout(nextSurface)
+      loadingBar.finish()
+    }
+    catch (reason) {
+      if (reason instanceof ApiClientError && reason.status === 401) {
+        loadingBar.finish()
+        await router.replace(`${loginPath.value}?${new URLSearchParams({ returnTo: requestedPath })}`)
+        return
+      }
+      if (reason instanceof ApiClientError && reason.status === 428) {
+        loadingBar.finish()
+        await router.replace('/install')
+        return
+      }
+
+      loadingBar.error()
+      notification.error({
+        content: reason instanceof Error ? reason.message : '布局加载失败。',
+        duration: 4500,
+        title: '页面加载失败',
+      })
+    }
   },
   { immediate: true },
 )
@@ -166,8 +199,12 @@ function closeMobile() {
   mobileOpen.value = false
 }
 
+function navigate(href: string) {
+  router.push(href)
+}
+
 function refreshPage() {
-  emit('refresh')
+  routeRefreshKey.value += 1
 }
 
 function selectTheme(key: string | number) {
@@ -180,17 +217,48 @@ function updateSidebarCollapsed(collapsed: boolean) {
 
 function selectUserAction(key: string | number) {
   if (key === 'profile') {
-    emit('navigate', '/user/profile')
+    navigate('/user/profile')
   }
   if (key === 'logout') {
-    emit('logout')
+    logout()
   }
 }
 
 function selectRole(key: string | number) {
   const roleId = Number(key)
   if (Number.isInteger(roleId) && roleId > 0) {
-    emit('roleSwitch', roleId)
+    switchRole(roleId)
+  }
+}
+
+async function logout() {
+  loadingBar.start()
+  await sessionStore.logout()
+  loadingBar.finish()
+  await router.replace(loginPath.value)
+}
+
+async function switchRole(roleId: number) {
+  loadingBar.start()
+  try {
+    const result = await sessionStore.switchRole(roleId)
+    const target = typeof result.data?.target === 'string' ? result.data.target : ''
+    loadingBar.finish()
+    if (target) {
+      await router.push(target)
+      return
+    }
+    // 角色切换会清空缓存,这里按当前 surface 再拉一次以恢复菜单/用户。
+    await sessionStore.ensureLayout(surface.value)
+    refreshPage()
+  }
+  catch (reason) {
+    loadingBar.error()
+    notification.error({
+      content: reason instanceof Error ? reason.message : '角色切换失败。',
+      duration: 4500,
+      title: '操作失败',
+    })
   }
 }
 </script>
@@ -198,11 +266,10 @@ function selectRole(key: string | number) {
 <template>
   <NLayout
     :has-sider="layoutHasSider"
-    class="ha-layout min-w-0"
+    class="ha-layout min-w-0 bg-base-100 text-base-content"
     content-class="h-full"
     :class="[rootClass, layoutVariantClass]"
     :native-scrollbar="false"
-    :style="{ background: themeVars.bodyColor, color: themeVars.textColor1 }"
   >
     <AppSidebar
       v-if="!topNavLayout"
@@ -215,11 +282,10 @@ function selectRole(key: string | number) {
       :logo-text="logoText"
       :menu-options="sidebarMenuOptions"
       :selected-theme="selectedTheme"
-      :sidebar-logo-style="sidebarLogoStyle"
-      :sidebar-menu-style="sidebarMenuStyle"
+      :sidebar-style="sidebarStyle"
       :site-title="siteTitle"
       :theme-dropdown-options="themeDropdownOptions"
-      @navigate="href => emit('navigate', href)"
+      @navigate="navigate"
       @select-theme="selectTheme"
       @update:collapsed="updateSidebarCollapsed"
     />
@@ -230,13 +296,12 @@ function selectRole(key: string | number) {
       :flush="flushLayout"
       :logo-text="logoText"
       :menu-options="mobileMenuOptions"
-      :sidebar-logo-style="sidebarLogoStyle"
-      :sidebar-menu-style="sidebarMenuStyle"
+      :sidebar-style="sidebarStyle"
       :site-title="siteTitle"
       :theme-dropdown-options="themeDropdownOptions"
       :selected-theme="selectedTheme"
       @close-mobile="closeMobile"
-      @navigate="href => emit('navigate', href)"
+      @navigate="navigate"
       @select-theme="selectTheme"
     />
 
@@ -247,9 +312,8 @@ function selectRole(key: string | number) {
       :native-scrollbar="false"
     >
       <NLayoutHeader
-        class="sticky top-0 z-10 shrink-0" :style="{
-          borderRadius: flushLayout ? '0' : themeVars.borderRadius,
-        }"
+        class="sticky top-0 z-10 shrink-0"
+        :class="flushLayout ? 'rounded-none' : 'rounded-naive'"
       >
         <AppHeader
           v-if="!topNavLayout && !hybridLayout"
@@ -263,7 +327,7 @@ function selectRole(key: string | number) {
           :user="user"
           :user-dropdown-options="userDropdownOptions"
           :user-label="userLabel"
-          @navigate="href => emit('navigate', href)"
+          @navigate="navigate"
           @refresh="refreshPage"
           @role-switch="selectRole"
           @select-theme="selectTheme"
@@ -282,7 +346,7 @@ function selectRole(key: string | number) {
           :user="user"
           :user-dropdown-options="userDropdownOptions"
           :user-label="userLabel"
-          @navigate="href => emit('navigate', href)"
+          @navigate="navigate"
           @refresh="refreshPage"
           @role-switch="selectRole"
           @select-theme="selectTheme"
@@ -303,7 +367,7 @@ function selectRole(key: string | number) {
           :user="user"
           :user-dropdown-options="userDropdownOptions"
           :user-label="userLabel"
-          @navigate="href => emit('navigate', href)"
+          @navigate="navigate"
           @refresh="refreshPage"
           @role-switch="selectRole"
           @select-theme="selectTheme"
@@ -319,7 +383,13 @@ function selectRole(key: string | number) {
       >
         <main class="ha-main min-w-0 overflow-x-clip flex-1">
           <div :class="contentWidthClass">
-            <slot />
+            <div
+              v-if="loading"
+              class="rounded-naive border border-base-border bg-base-card p-4 text-sm text-base-muted"
+            >
+              页面加载中...
+            </div>
+            <RouterView v-else :key="routeViewKey" />
           </div>
         </main>
         <footer class="mt-2 p-4 text-center text-xs text-base-muted">

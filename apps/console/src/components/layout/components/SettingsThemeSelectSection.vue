@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { NSelect, useThemeVars } from 'naive-ui'
+import { NSelect } from 'naive-ui'
 import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
 import { useThemeStore } from '../../../stores/theme'
 
 const themeStore = useThemeStore()
-const themeVars = useThemeVars()
 const { selectedTheme } = storeToRefs(themeStore)
 const themeSelectOptions = computed(() =>
   themeStore.themeOptions.map(option => ({
@@ -17,7 +16,7 @@ const themeSelectOptions = computed(() =>
 
 <template>
   <section>
-    <h3 class="mb-3 text-sm font-semibold" :style="{ color: themeVars.textColor1 }">
+    <h3 class="mb-3 text-sm font-semibold text-base-content">
       主题
     </h3>
     <div class="flex justify-center">

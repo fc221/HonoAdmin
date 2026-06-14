@@ -6,7 +6,7 @@ import type {
   NaiveThemeRadius,
   NaiveThemeSize,
 } from '../../theme/naive-theme'
-import { NButton, NColorPicker, NInput, NSwitch, useThemeVars } from 'naive-ui'
+import { NButton, NColorPicker, NInput, NSwitch } from 'naive-ui'
 import { computed } from 'vue'
 import AppIcon from '../../AppIcon.vue'
 import {
@@ -33,7 +33,6 @@ const props = defineProps<{
 }>()
 
 const draft = defineModel<NaiveThemeDraft>('draft', { required: true })
-const themeVars = useThemeVars()
 const depthEnabled = computed({
   get: () => hasNaiveDraftDepth(draft.value),
   set: value => updateDraft(setNaiveDraftDepth(draft.value, value)),
@@ -101,7 +100,7 @@ function updateCommonSize(key: CommonSizeKey, value: NaiveThemeSize): void {
 
 <template>
   <section>
-    <h3 class="mb-3 text-sm font-semibold" :style="{ color: themeVars.textColor1 }">
+    <h3 class="mb-3 text-sm font-semibold text-base-content">
       Name
     </h3>
     <div class="flex justify-center">
@@ -118,7 +117,7 @@ function updateCommonSize(key: CommonSizeKey, value: NaiveThemeSize): void {
 
   <section>
     <div class="mb-3 flex items-center justify-between">
-      <h3 class="text-sm font-semibold" :style="{ color: themeVars.textColor1 }">
+      <h3 class="text-sm font-semibold text-base-content">
         配色
       </h3>
       <NButton quaternary size="tiny" @click="resetThemeDraft">
@@ -130,17 +129,16 @@ function updateCommonSize(key: CommonSizeKey, value: NaiveThemeSize): void {
     </div>
     <div class="space-y-4">
       <div v-for="group in colorGroups" :key="group.title">
-        <div class="mb-2 text-xs" :style="{ color: themeVars.textColor3 }">
+        <div class="mb-2 text-xs text-base-muted">
           {{ group.title }}
         </div>
         <div class="grid grid-cols-2 gap-2">
           <label
             v-for="pair in group.pairs"
             :key="pair.key"
-            class="grid min-w-0 grid-cols-[minmax(0,1fr)_2rem] items-center gap-2 border px-2 py-1.5"
-            :style="{ borderColor: themeVars.borderColor, borderRadius: themeVars.borderRadiusSmall }"
+            class="grid min-w-0 grid-cols-[minmax(0,1fr)_2rem] items-center gap-2 border border-base-border rounded-naive-sm px-2 py-1.5"
           >
-            <span class="truncate text-xs" :style="{ color: themeVars.textColor1 }">{{ pair.label }}</span>
+            <span class="truncate text-xs text-base-content">{{ pair.label }}</span>
             <NColorPicker
               :value="draft.common[pair.key]"
               :modes="colorPickerModes"
@@ -154,12 +152,8 @@ function updateCommonSize(key: CommonSizeKey, value: NaiveThemeSize): void {
                 <button
                   :ref="setTriggerRef"
                   type="button"
-                  class="grid size-7 place-items-center rounded-full ring-1 ring-offset-1 transition hover:scale-105"
-                  :style="{
-                    'background': draft.common[pair.key],
-                    '--tw-ring-color': themeVars.borderColor,
-                    '--tw-ring-offset-color': themeVars.cardColor,
-                  }"
+                  class="grid size-7 place-items-center rounded-full ring-1 ring-base-border transition hover:scale-105"
+                  :style="{ background: draft.common[pair.key] }"
                   :title="pair.label"
                   @click="onClick"
                 >
@@ -174,12 +168,12 @@ function updateCommonSize(key: CommonSizeKey, value: NaiveThemeSize): void {
   </section>
 
   <section>
-    <h3 class="mb-3 text-sm font-semibold" :style="{ color: themeVars.textColor1 }">
+    <h3 class="mb-3 text-sm font-semibold text-base-content">
       圆角
     </h3>
     <div class="space-y-2">
       <div class="grid grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-2">
-        <span class="text-xs" :style="{ color: themeVars.textColor3 }">Box</span>
+        <span class="text-xs text-base-muted">Box</span>
         <div class="grid grid-cols-6 gap-1">
           <NButton
             v-for="(value, index) in naiveRadiusScale"
@@ -193,7 +187,7 @@ function updateCommonSize(key: CommonSizeKey, value: NaiveThemeSize): void {
         </div>
       </div>
       <div class="grid grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-2">
-        <span class="text-xs" :style="{ color: themeVars.textColor3 }">Field</span>
+        <span class="text-xs text-base-muted">Field</span>
         <div class="grid grid-cols-6 gap-1">
           <NButton
             v-for="(value, index) in naiveRadiusScale"
@@ -207,7 +201,7 @@ function updateCommonSize(key: CommonSizeKey, value: NaiveThemeSize): void {
         </div>
       </div>
       <div class="grid grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-2">
-        <span class="text-xs" :style="{ color: themeVars.textColor3 }">Table</span>
+        <span class="text-xs text-base-muted">Table</span>
         <div class="grid grid-cols-6 gap-1">
           <NButton
             v-for="(value, index) in naiveRadiusScale"
@@ -221,7 +215,7 @@ function updateCommonSize(key: CommonSizeKey, value: NaiveThemeSize): void {
         </div>
       </div>
       <div class="grid grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-2">
-        <span class="text-xs" :style="{ color: themeVars.textColor3 }">Menu</span>
+        <span class="text-xs text-base-muted">Menu</span>
         <div class="grid grid-cols-6 gap-1">
           <NButton
             v-for="(value, index) in naiveRadiusScale"
@@ -238,12 +232,12 @@ function updateCommonSize(key: CommonSizeKey, value: NaiveThemeSize): void {
   </section>
 
   <section>
-    <h3 class="mb-3 text-sm font-semibold" :style="{ color: themeVars.textColor1 }">
+    <h3 class="mb-3 text-sm font-semibold text-base-content">
       尺寸
     </h3>
     <div class="space-y-2">
       <div class="grid grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-2">
-        <span class="text-xs" :style="{ color: themeVars.textColor3 }">Small</span>
+        <span class="text-xs text-base-muted">Small</span>
         <div class="grid grid-cols-5 gap-1">
           <NButton
             v-for="(value, index) in naiveSizeScale"
@@ -257,7 +251,7 @@ function updateCommonSize(key: CommonSizeKey, value: NaiveThemeSize): void {
         </div>
       </div>
       <div class="grid grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-2">
-        <span class="text-xs" :style="{ color: themeVars.textColor3 }">Medium</span>
+        <span class="text-xs text-base-muted">Medium</span>
         <div class="grid grid-cols-5 gap-1">
           <NButton
             v-for="(value, index) in naiveSizeScale"
@@ -271,7 +265,7 @@ function updateCommonSize(key: CommonSizeKey, value: NaiveThemeSize): void {
         </div>
       </div>
       <div class="grid grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-2">
-        <span class="text-xs" :style="{ color: themeVars.textColor3 }">Large</span>
+        <span class="text-xs text-base-muted">Large</span>
         <div class="grid grid-cols-5 gap-1">
           <NButton
             v-for="(value, index) in naiveSizeScale"
@@ -288,14 +282,13 @@ function updateCommonSize(key: CommonSizeKey, value: NaiveThemeSize): void {
   </section>
 
   <section>
-    <h3 class="mb-3 text-sm font-semibold" :style="{ color: themeVars.textColor1 }">
+    <h3 class="mb-3 text-sm font-semibold text-base-content">
       效果
     </h3>
     <label
-      class="flex cursor-pointer items-center justify-between border p-3"
-      :style="{ borderColor: themeVars.borderColor, borderRadius: themeVars.borderRadius }"
+      class="flex cursor-pointer items-center justify-between border border-base-border rounded-naive p-3"
     >
-      <span class="text-sm font-medium" :style="{ color: themeVars.textColor1 }">Depth</span>
+      <span class="text-sm font-medium text-base-content">Depth</span>
       <NSwitch v-model:value="depthEnabled" />
     </label>
   </section>

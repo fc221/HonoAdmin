@@ -62,6 +62,12 @@
 
   /* 行高 */
   --leading-naive: var(--line-height);
+
+  /* 效果/阴影(naive 3 档景深)挂到 Tailwind --shadow-* 命名空间,
+     生成 shadow-naive / shadow-naive-md / shadow-naive-lg,随深度开关(setNaiveDraftDepth)联动 */
+  --shadow-naive: var(--box-shadow-1);
+  --shadow-naive-md: var(--box-shadow-2);
+  --shadow-naive-lg: var(--box-shadow-3);
 }
 
 /* 组件高度(naive 6 档)。Tailwind v4 没有 --height-* 命名空间,显式登记只生成 h-*,

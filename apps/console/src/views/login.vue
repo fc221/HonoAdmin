@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { DropdownOption, FormInst, FormRules } from 'naive-ui'
-import { NButton, NCheckbox, NDropdown, NForm, NFormItem, NInput, useMessage, useThemeVars } from 'naive-ui'
+import { NButton, NCheckbox, NDropdown, NForm, NFormItem, NInput, useMessage } from 'naive-ui'
 import { storeToRefs } from 'pinia'
 import { computed, h, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -12,7 +12,6 @@ const route = useRoute()
 const router = useRouter()
 const message = useMessage()
 const themeStore = useThemeStore()
-const themeVars = useThemeVars()
 const { selectedTheme } = storeToRefs(themeStore)
 const formRef = ref<FormInst | null>(null)
 const loading = ref(false)
@@ -35,7 +34,7 @@ const themeDropdownOptions = computed<DropdownOption[]>(() =>
     label: () => h('span', { class: 'flex min-w-0 items-center justify-between gap-3' }, [
       h('span', { class: 'truncate' }, option.label),
       selectedTheme.value === option.value
-        ? h(AppIcon, { color: themeVars.value.primaryColor, name: 'ri:check-line' })
+        ? h(AppIcon, { class: 'text-primary', name: 'ri:check-line' })
         : null,
     ]),
   })),

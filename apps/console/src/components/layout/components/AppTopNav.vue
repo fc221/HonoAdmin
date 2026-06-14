@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { UserProfile } from '@hono-admin/server/api/schema'
 import type { DropdownOption, MenuOption } from 'naive-ui'
-import { NAvatar, NButton, NDropdown, NMenu, useThemeVars } from 'naive-ui'
+import { NAvatar, NButton, NDropdown, NMenu } from 'naive-ui'
 import { computed, defineAsyncComponent } from 'vue'
 import AppIcon from '../../AppIcon.vue'
 import { findMenuHref, getLogoText } from '../helpers'
@@ -37,7 +37,6 @@ const canEditInterface = import.meta.env.DEV
 const SettingsDrawer = canEditInterface
   ? defineAsyncComponent(() => import('./SettingsDrawer.vue'))
   : null
-const themeVars = useThemeVars()
 const homeHref = computed(() => findFirstMenuHref(props.menuOptions) || '/')
 const selectedMenuKeyModel = computed({
   get: () => props.selectedMenuKey || props.activeMenuName,
@@ -69,10 +68,10 @@ function findFirstMenuHref(options: MenuOption[]): string {
   <header
     class="flex h-16 shrink-0 items-center px-4"
     :style="{
-      background: themeVars.cardColor,
-      borderBottom: flush ? `1px solid ${themeVars.borderColor}` : '0',
-      borderRadius: flush ? '0' : themeVars.borderRadius,
-      color: themeVars.textColor1,
+      background: 'var(--card-color)',
+      borderBottom: flush ? '1px solid var(--border-color)' : '0',
+      borderRadius: flush ? '0' : 'var(--border-radius)',
+      color: 'var(--text-color-1)',
     }"
   >
     <div class="flex h-full w-full min-w-0 items-center gap-3">
@@ -85,13 +84,13 @@ function findFirstMenuHref(options: MenuOption[]): string {
         <span
           class="grid size-9 shrink-0 place-items-center text-sm font-bold text-white"
           :style="{
-            background: `linear-gradient(135deg, ${themeVars.primaryColor}, ${themeVars.primaryColorHover})`,
-            borderRadius: themeVars.borderRadius,
+            background: 'linear-gradient(135deg, var(--primary-color), var(--primary-color-hover))',
+            borderRadius: 'var(--border-radius)',
           }"
         >
           {{ logoText }}
         </span>
-        <span class="max-w-40 truncate text-base font-semibold" :style="{ color: themeVars.textColor1 }">
+        <span class="max-w-40 truncate text-base font-semibold text-base-content">
           {{ siteTitle }}
         </span>
       </button>

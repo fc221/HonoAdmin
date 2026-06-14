@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { DropdownOption, MenuOption, MenuProps } from 'naive-ui'
-import type { LayoutSidebarLogoStyle, LayoutSidebarMenuStyle } from '../layout-config'
-import { NButton, NDropdown, NLayoutSider, NMenu, useThemeVars } from 'naive-ui'
+import type { LayoutSidebarStyle } from '../layout-config'
+import { NButton, NDropdown, NLayoutSider, NMenu } from 'naive-ui'
 import { computed } from 'vue'
 import AppIcon from '../../AppIcon.vue'
 import { findMenuHref } from '../helpers'
@@ -16,8 +16,7 @@ const props = withDefaults(defineProps<{
   logoText: string
   menuOptions: MenuOption[]
   selectedTheme: string
-  sidebarLogoStyle: LayoutSidebarLogoStyle
-  sidebarMenuStyle: LayoutSidebarMenuStyle
+  sidebarStyle: LayoutSidebarStyle
   siteTitle: string
   themeDropdownOptions: DropdownOption[]
 }>(), {
@@ -33,7 +32,6 @@ const emit = defineEmits<{
   'update:expandedKeys': [keys: Array<string | number>]
 }>()
 
-const themeVars = useThemeVars()
 const expandedKeysModel = computed({
   get: () => props.expandedKeys,
   set: value => emit('update:expandedKeys', value),
@@ -49,26 +47,30 @@ const selectedMenuKey = computed({
 })
 const logoClass = computed(() =>
   [
-    props.sidebarLogoStyle === 'hidden' ? 'hidden' : '',
     props.desktopLogoVisible ? '' : 'lg:hidden',
     props.collapsed ? 'grid place-items-center gap-0! p-0!' : '',
   ].filter(Boolean).join(' '),
 )
 const menuShellClass = computed(() =>
-  props.collapsed || props.sidebarMenuStyle === 'plain'
+  props.collapsed || props.sidebarStyle === 'plain'
     ? 'bg-transparent px-0'
     : 'p-2',
 )
+const siderContentClass = computed(() =>
+  props.sidebarStyle === 'plain'
+    ? 'flex h-full min-w-0 flex-col items-center p-4'
+    : 'flex h-full min-w-0 flex-col items-center gap-3 p-4',
+)
 
 const logoStyle = computed(() => ({
-  borderRadius: props.sidebarLogoStyle === 'plain' ? '0' : themeVars.value.borderRadius,
-  color: props.sidebarLogoStyle === 'brand' ? '#ffffff' : themeVars.value.textColor1,
+  borderRadius: props.sidebarStyle === 'plain' ? '0' : 'var(--border-radius)',
+  color: props.sidebarStyle === 'card' ? '#ffffff' : 'var(--text-color-1)',
 }))
 const menuShellStyle = computed(() => ({
-  background: props.collapsed || props.sidebarMenuStyle === 'plain'
+  background: props.collapsed || props.sidebarStyle === 'plain'
     ? 'transparent'
-    : themeVars.value.tableHeaderColor,
-  borderRadius: themeVars.value.borderRadius,
+    : 'var(--table-header-color)',
+  borderRadius: 'var(--border-radius)',
 }))
 const collapsedMenuThemeOverrides: NonNullable<MenuProps['themeOverrides']> = {
   itemHeight: '32px',
@@ -97,12 +99,12 @@ const siderClass = computed(() => [
     collapse-mode="width"
     :collapsed="collapsed"
     :collapsed-width="80"
-    content-class="flex h-full min-w-0 flex-col items-center gap-3 p-4"
+    :content-class="siderContentClass"
     :native-scrollbar="false"
     :style="{
-      background: themeVars.cardColor,
-      borderRadius: flush ? '0' : themeVars.borderRadius,
-      color: themeVars.textColor1,
+      background: 'var(--card-color)',
+      borderRadius: flush ? '0' : 'var(--border-radius)',
+      color: 'var(--text-color-1)',
       position: 'fixed',
       zIndex: 60,
     }"
@@ -111,8 +113,15 @@ const siderClass = computed(() => [
     :class="siderClass"
     @update:collapsed="value => emit('update:collapsed', value)"
   >
-    <div class="flex w-full min-w-0 items-center gap-3 overflow-hidden p-4 bg-linear-to-br from-primary to-primary/30" :class="logoClass" :style="logoStyle">
-      <div class="grid size-12 shrink-0 place-items-center text-lg font-bold bg-white/20" :style="{ borderRadius: themeVars.borderRadius }">
+    <div
+      class="flex w-full min-w-0 items-center gap-3 overflow-hidden p-4"
+      :class="[logoClass, sidebarStyle === 'card' ? 'bg-linear-to-br from-primary to-primary/30' : '']"
+      :style="logoStyle"
+    >
+      <div
+        class="grid size-12 shrink-0 place-items-center rounded-naive text-lg font-bold text-white"
+        :class="sidebarStyle === 'card' ? 'bg-white/20' : 'bg-primary'"
+      >
         {{ logoText }}
       </div>
       <div v-if="!collapsed" class="min-w-0">
@@ -142,9 +151,8 @@ const siderClass = computed(() => [
     </nav>
 
     <div
-      class="flex w-full min-w-0 justify-between gap-2 border-t pt-2"
+      class="flex w-full min-w-0 justify-between gap-2 border-t border-base-border pt-2"
       :class="collapsed ? 'flex-col items-center justify-end' : 'items-center'"
-      :style="{ borderColor: themeVars.borderColor }"
     >
       <NDropdown :options="themeDropdownOptions" trigger="click" :width="176" @select="key => emit('selectTheme', key)">
         <NButton quaternary circle :title="`当前主题：${selectedTheme}`">

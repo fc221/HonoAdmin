@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { DropdownOption, MenuOption } from 'naive-ui'
-import type { LayoutSidebarLogoStyle, LayoutSidebarMenuStyle } from '../layout-config'
-import { NButton, NDropdown, NLayoutSider, NMenu, useThemeVars } from 'naive-ui'
+import type { LayoutSidebarStyle } from '../layout-config'
+import { NButton, NDropdown, NLayoutSider, NMenu } from 'naive-ui'
 import { computed } from 'vue'
 import AppIcon from '../../AppIcon.vue'
 import { findMenuHref } from '../helpers'
@@ -13,8 +13,7 @@ const props = withDefaults(defineProps<{
   logoText: string
   menuOptions: MenuOption[]
   selectedTheme: string
-  sidebarLogoStyle: LayoutSidebarLogoStyle
-  sidebarMenuStyle: LayoutSidebarMenuStyle
+  sidebarStyle: LayoutSidebarStyle
   siteTitle: string
   themeDropdownOptions: DropdownOption[]
 }>(), {
@@ -28,7 +27,6 @@ const emit = defineEmits<{
   'update:expandedKeys': [keys: Array<string | number>]
 }>()
 
-const themeVars = useThemeVars()
 const expandedKeysModel = computed({
   get: () => props.expandedKeys,
   set: value => emit('update:expandedKeys', value),
@@ -48,33 +46,35 @@ const mobileSiderClass = computed(() =>
     ? 'left-0 top-0 h-dvh rounded-none'
     : 'left-3 top-3 h-[calc(100dvh-1.5rem)]',
 )
-const logoClass = computed(() =>
-  props.sidebarLogoStyle === 'hidden' ? 'hidden' : '',
-)
 const menuShellClass = computed(() =>
-  props.sidebarMenuStyle === 'plain'
+  props.sidebarStyle === 'plain'
     ? 'bg-transparent px-0'
     : 'p-2',
 )
+const siderContentClass = computed(() =>
+  props.sidebarStyle === 'plain'
+    ? 'flex h-full min-w-0 flex-col items-center p-4'
+    : 'flex h-full min-w-0 flex-col items-center gap-3 p-4',
+)
 const logoStyle = computed(() => ({
-  background: props.sidebarLogoStyle === 'brand'
-    ? `linear-gradient(135deg, ${themeVars.value.primaryColor}, ${themeVars.value.primaryColorHover})`
+  background: props.sidebarStyle === 'card'
+    ? 'linear-gradient(135deg, var(--primary-color), var(--primary-color-hover))'
     : 'transparent',
-  borderRadius: props.sidebarLogoStyle === 'plain' ? '0' : themeVars.value.borderRadius,
-  color: props.sidebarLogoStyle === 'brand' ? '#ffffff' : themeVars.value.textColor1,
+  borderRadius: props.sidebarStyle === 'plain' ? '0' : 'var(--border-radius)',
+  color: props.sidebarStyle === 'card' ? '#ffffff' : 'var(--text-color-1)',
 }))
 const logoMarkStyle = computed(() => ({
-  background: props.sidebarLogoStyle === 'brand'
+  background: props.sidebarStyle === 'card'
     ? 'rgba(255, 255, 255, 0.2)'
-    : themeVars.value.primaryColor,
-  borderRadius: themeVars.value.borderRadius,
+    : 'var(--primary-color)',
+  borderRadius: 'var(--border-radius)',
   color: '#ffffff',
 }))
 const menuShellStyle = computed(() => ({
-  background: props.sidebarMenuStyle === 'plain'
+  background: props.sidebarStyle === 'plain'
     ? 'transparent'
-    : themeVars.value.tableHeaderColor,
-  borderRadius: themeVars.value.borderRadius,
+    : 'var(--table-header-color)',
+  borderRadius: 'var(--border-radius)',
 }))
 </script>
 
@@ -88,12 +88,12 @@ const menuShellStyle = computed(() => ({
     collapse-mode="width"
     :collapsed="false"
     :collapsed-width="80"
-    content-class="flex h-full min-w-0 flex-col items-center gap-3 p-4"
+    :content-class="siderContentClass"
     :native-scrollbar="false"
     :style="{
-      background: themeVars.cardColor,
-      borderRadius: flush ? '0' : themeVars.borderRadius,
-      color: themeVars.textColor1,
+      background: 'var(--card-color)',
+      borderRadius: flush ? '0' : 'var(--border-radius)',
+      color: 'var(--text-color-1)',
       position: 'fixed',
       zIndex: 50,
     }"
@@ -101,7 +101,7 @@ const menuShellStyle = computed(() => ({
     class="min-w-0 overflow-hidden shadow-xl shadow-black/10 transition-transform duration-300 ease-out lg:hidden!"
     :class="mobileSiderClass"
   >
-    <div class="flex w-full min-w-0 items-center gap-3 overflow-hidden p-4" :class="logoClass" :style="logoStyle">
+    <div class="flex w-full min-w-0 items-center gap-3 overflow-hidden p-4" :style="logoStyle">
       <div class="grid size-12 shrink-0 place-items-center text-lg font-bold" :style="logoMarkStyle">
         {{ logoText }}
       </div>
@@ -131,8 +131,7 @@ const menuShellStyle = computed(() => ({
     </nav>
 
     <div
-      class="flex w-full min-w-0 items-center justify-between gap-2 border-t pt-2"
-      :style="{ borderColor: themeVars.borderColor }"
+      class="flex w-full min-w-0 items-center justify-between gap-2 border-t border-base-border pt-2"
     >
       <NDropdown :options="themeDropdownOptions" trigger="click" :width="176" @select="key => emit('selectTheme', key)">
         <NButton quaternary circle :title="`当前主题：${selectedTheme}`">

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { NaiveThemeDraft, NaiveThemeMode } from '../../theme/naive-theme'
-import { NButton, NDrawer, NDrawerContent, useMessage, useThemeVars } from 'naive-ui'
+import { NButton, NDrawer, NDrawerContent, useMessage } from 'naive-ui'
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import { useLayoutStore } from '../../../stores/layout'
@@ -18,7 +18,6 @@ const isDev = import.meta.env.DEV
 const show = ref(false)
 const layoutStore = useLayoutStore()
 const themeStore = useThemeStore()
-const themeVars = useThemeVars()
 const { effectiveTheme, selectedTheme } = storeToRefs(themeStore)
 const message = useMessage()
 const layoutCopyLabel = ref('复制 layout config')
@@ -104,10 +103,7 @@ async function writeClipboardText(text: string): Promise<void> {
         </div>
 
         <template #footer>
-          <div
-            class="grid grid-cols-2 overflow-hidden border"
-            :style="{ borderColor: themeVars.borderColor, borderRadius: themeVars.borderRadiusSmall }"
-          >
+          <div class="grid grid-cols-2 overflow-hidden border border-base-border rounded-naive-sm">
             <NButton quaternary class="rounded-none!" @click="copyLayoutConfig">
               <template #icon>
                 <AppIcon name="ri:layout-grid-line" />

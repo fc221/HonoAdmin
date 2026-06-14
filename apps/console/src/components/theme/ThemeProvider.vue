@@ -3,6 +3,7 @@ import { darkTheme, NConfigProvider, NDialogProvider, NElement, NLoadingBarProvi
 import { storeToRefs } from 'pinia'
 import { computed, onMounted, watch } from 'vue'
 import { useThemeStore } from '../../stores/theme'
+import ThemeCssVars from './ThemeCssVars.vue'
 
 const themeStore = useThemeStore()
 const { currentThemeOverrides, effectiveTheme, selectedTheme } = storeToRefs(themeStore)
@@ -14,6 +15,7 @@ watch([effectiveTheme, selectedTheme], () => themeStore.applyThemeClass())
 
 <template>
   <NConfigProvider :theme="naiveTheme" :theme-overrides="currentThemeOverrides">
+    <ThemeCssVars />
     <NElement tag="div" class="min-h-screen bg-base-100 text-base-content">
       <NLoadingBarProvider>
         <NMessageProvider>

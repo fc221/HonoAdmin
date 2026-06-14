@@ -15,19 +15,14 @@ export const layoutMainWidths = ['wide', 'narrow'] as const
 
 export type LayoutMainWidth = (typeof layoutMainWidths)[number]
 
-export const layoutSidebarLogoStyles = ['brand', 'plain', 'hidden'] as const
+export const layoutSidebarStyles = ['card', 'plain'] as const
 
-export type LayoutSidebarLogoStyle = (typeof layoutSidebarLogoStyles)[number]
-
-export const layoutSidebarMenuStyles = ['card', 'plain'] as const
-
-export type LayoutSidebarMenuStyle = (typeof layoutSidebarMenuStyles)[number]
+export type LayoutSidebarStyle = (typeof layoutSidebarStyles)[number]
 
 export interface LayoutConfig {
   mainWidth: LayoutMainWidth
   sidebarCollapsed: boolean
-  sidebarLogoStyle: LayoutSidebarLogoStyle
-  sidebarMenuStyle: LayoutSidebarMenuStyle
+  sidebarStyle: LayoutSidebarStyle
   topMenuCentered: boolean
   variant: LayoutVariant
 }
@@ -35,8 +30,7 @@ export interface LayoutConfig {
 export const defaultLayoutConfig: LayoutConfig = {
   mainWidth: 'narrow',
   sidebarCollapsed: false,
-  sidebarLogoStyle: 'brand',
-  sidebarMenuStyle: 'card',
+  sidebarStyle: 'card',
   topMenuCentered: true,
   variant: 'sidebar',
 }
@@ -53,18 +47,9 @@ export const layoutVariantOptions: Array<{
   { label: '综合贴边', value: 'hybrid-flush' },
 ]
 
-export const sidebarLogoStyleOptions: Array<{
+export const sidebarStyleOptions: Array<{
   label: string
-  value: LayoutSidebarLogoStyle
-}> = [
-  { label: '品牌卡片', value: 'brand' },
-  { label: '简洁', value: 'plain' },
-  { label: '隐藏', value: 'hidden' },
-]
-
-export const sidebarMenuStyleOptions: Array<{
-  label: string
-  value: LayoutSidebarMenuStyle
+  value: LayoutSidebarStyle
 }> = [
   { label: '卡片', value: 'card' },
   { label: '简洁', value: 'plain' },
@@ -78,14 +63,9 @@ export function isLayoutMainWidth(value: unknown): value is LayoutMainWidth {
   return typeof value === 'string' && layoutMainWidths.includes(value as LayoutMainWidth)
 }
 
-export function isLayoutSidebarLogoStyle(value: unknown): value is LayoutSidebarLogoStyle {
+export function isLayoutSidebarStyle(value: unknown): value is LayoutSidebarStyle {
   return typeof value === 'string'
-    && layoutSidebarLogoStyles.includes(value as LayoutSidebarLogoStyle)
-}
-
-export function isLayoutSidebarMenuStyle(value: unknown): value is LayoutSidebarMenuStyle {
-  return typeof value === 'string'
-    && layoutSidebarMenuStyles.includes(value as LayoutSidebarMenuStyle)
+    && layoutSidebarStyles.includes(value as LayoutSidebarStyle)
 }
 
 export function isTopNavVariant(variant: LayoutVariant): boolean {

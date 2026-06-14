@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import AppShell from './AppShell.vue'
+import { RouterView } from 'vue-router'
 import ThemeProvider from './components/theme/ThemeProvider.vue'
 </script>
 
 <template>
   <ThemeProvider>
-    <AppShell />
+    <RouterView />
   </ThemeProvider>
 </template>

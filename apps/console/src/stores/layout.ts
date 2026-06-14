@@ -1,7 +1,6 @@
 import type {
   LayoutMainWidth,
-  LayoutSidebarLogoStyle,
-  LayoutSidebarMenuStyle,
+  LayoutSidebarStyle,
   LayoutVariant,
 } from '../components/layout/layout-config'
 import { defineStore } from 'pinia'
@@ -13,8 +12,7 @@ import {
   hasMobileSidebarVariant,
   isHybridVariant,
   isLayoutMainWidth,
-  isLayoutSidebarLogoStyle,
-  isLayoutSidebarMenuStyle,
+  isLayoutSidebarStyle,
   isLayoutVariant,
   isTopNavVariant,
   layoutConfigStorageKey,
@@ -26,15 +24,13 @@ export const useLayoutStore = defineStore('layout', () => {
   const variant = ref<LayoutVariant>(defaultLayoutConfig.variant)
   const mainWidth = ref<LayoutMainWidth>(defaultLayoutConfig.mainWidth)
   const sidebarCollapsed = ref(defaultLayoutConfig.sidebarCollapsed)
-  const sidebarLogoStyle = ref<LayoutSidebarLogoStyle>(defaultLayoutConfig.sidebarLogoStyle)
-  const sidebarMenuStyle = ref<LayoutSidebarMenuStyle>(defaultLayoutConfig.sidebarMenuStyle)
+  const sidebarStyle = ref<LayoutSidebarStyle>(defaultLayoutConfig.sidebarStyle)
   const topMenuCentered = ref(defaultLayoutConfig.topMenuCentered)
 
   const config = computed(() => ({
     mainWidth: mainWidth.value,
     sidebarCollapsed: sidebarCollapsed.value,
-    sidebarLogoStyle: sidebarLogoStyle.value,
-    sidebarMenuStyle: sidebarMenuStyle.value,
+    sidebarStyle: sidebarStyle.value,
     topMenuCentered: topMenuCentered.value,
     variant: variant.value,
   }))
@@ -75,23 +71,13 @@ export const useLayoutStore = defineStore('layout', () => {
     }
   }
 
-  function setSidebarLogoStyle(value: string | number): void {
+  function setSidebarStyle(value: string | number): void {
     if (!canEditInterface) {
       return
     }
 
-    if (isLayoutSidebarLogoStyle(value) && canUseSidebarStyle.value) {
-      sidebarLogoStyle.value = value
-    }
-  }
-
-  function setSidebarMenuStyle(value: string | number): void {
-    if (!canEditInterface) {
-      return
-    }
-
-    if (isLayoutSidebarMenuStyle(value) && canUseSidebarStyle.value) {
-      sidebarMenuStyle.value = value
+    if (isLayoutSidebarStyle(value) && canUseSidebarStyle.value) {
+      sidebarStyle.value = value
     }
   }
 
@@ -108,8 +94,7 @@ export const useLayoutStore = defineStore('layout', () => {
   function normalizeForConsole(): void {
     if (!canEditInterface) {
       mainWidth.value = defaultLayoutConfig.mainWidth
-      sidebarLogoStyle.value = defaultLayoutConfig.sidebarLogoStyle
-      sidebarMenuStyle.value = defaultLayoutConfig.sidebarMenuStyle
+      sidebarStyle.value = defaultLayoutConfig.sidebarStyle
       topMenuCentered.value = defaultLayoutConfig.topMenuCentered
       variant.value = defaultLayoutConfig.variant
       return
@@ -135,13 +120,11 @@ export const useLayoutStore = defineStore('layout', () => {
     normalizeForConsole,
     setMainWidth,
     setSidebarCollapsed,
-    setSidebarLogoStyle,
-    setSidebarMenuStyle,
+    setSidebarStyle,
     setTopMenuCentered,
     setVariant,
     sidebarCollapsed,
-    sidebarLogoStyle,
-    sidebarMenuStyle,
+    sidebarStyle,
     topMenuCentered,
     variant,
   }
@@ -152,8 +135,7 @@ export const useLayoutStore = defineStore('layout', () => {
         pick: [
           'mainWidth',
           'sidebarCollapsed',
-          'sidebarLogoStyle',
-          'sidebarMenuStyle',
+          'sidebarStyle',
           'topMenuCentered',
           'variant',
         ],

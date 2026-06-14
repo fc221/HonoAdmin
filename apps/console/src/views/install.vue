@@ -14,7 +14,6 @@ import {
   useLoadingBar,
   useMessage,
   useNotification,
-  useThemeVars,
 } from 'naive-ui'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -23,7 +22,6 @@ import { apiClient } from '../api/client'
 const message = useMessage()
 const loadingBar = useLoadingBar()
 const notification = useNotification()
-const themeVars = useThemeVars()
 const router = useRouter()
 const adminFormRef = ref<FormInst | null>(null)
 const status = ref<InstallStatus | null>(null)
@@ -161,21 +159,21 @@ onMounted(load)
 </script>
 
 <template>
-  <main class="min-h-screen px-4 py-10" :style="{ background: themeVars.bodyColor, color: themeVars.textColor1 }">
+  <main class="min-h-screen px-4 py-10 bg-base-100 text-base-content">
     <section class="mx-auto w-full max-w-3xl">
       <div class="mb-6 flex items-start justify-between gap-4">
         <div>
-          <p class="text-sm font-medium" :style="{ color: themeVars.primaryColor }">
+          <p class="text-sm font-medium text-primary">
             首次安装
           </p>
           <h1 class="mt-2 text-3xl font-bold">
             初始化 HonoAdmin
           </h1>
-          <p class="mt-2 text-sm leading-6" :style="{ color: themeVars.textColor3 }">
+          <p class="mt-2 text-sm leading-6 text-base-muted">
             配置运行环境、初始化数据库并创建第一个 root 管理员。
           </p>
         </div>
-        <div class="grid size-12 shrink-0 place-items-center rounded-lg text-lg font-bold text-white" :style="{ background: themeVars.primaryColor }">
+        <div class="grid size-12 shrink-0 place-items-center rounded-lg text-lg font-bold text-white bg-primary">
           HA
         </div>
       </div>

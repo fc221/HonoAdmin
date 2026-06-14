@@ -2,7 +2,7 @@
 import type { UserProfile } from '@hono-admin/server/api/schema'
 import type { DropdownOption } from 'naive-ui'
 import type { BreadcrumbItem } from '../helpers'
-import { NAvatar, NBreadcrumb, NBreadcrumbItem, NButton, NDropdown, useThemeVars } from 'naive-ui'
+import { NAvatar, NBreadcrumb, NBreadcrumbItem, NButton, NDropdown } from 'naive-ui'
 import { defineAsyncComponent } from 'vue'
 import AppIcon from '../../AppIcon.vue'
 import { getLogoText } from '../helpers'
@@ -38,7 +38,6 @@ const canEditInterface = import.meta.env.DEV
 const SettingsDrawer = canEditInterface
   ? defineAsyncComponent(() => import('./SettingsDrawer.vue'))
   : null
-const themeVars = useThemeVars()
 
 function handleBreadcrumbClick(event: MouseEvent, href: string | undefined, isCurrent: boolean): void {
   if (!href || isCurrent) {
@@ -54,9 +53,9 @@ function handleBreadcrumbClick(event: MouseEvent, href: string | undefined, isCu
   <header
     class="flex h-16 shrink-0 items-center justify-between px-4"
     :style="{
-      background: themeVars.cardColor,
-      borderRadius: flush ? '0' : themeVars.borderRadius,
-      color: themeVars.textColor1,
+      background: 'var(--card-color)',
+      borderRadius: flush ? '0' : 'var(--border-radius)',
+      color: 'var(--text-color-1)',
     }"
   >
     <div class="flex min-w-0 items-center gap-2">
