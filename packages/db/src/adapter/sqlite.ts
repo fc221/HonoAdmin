@@ -81,18 +81,47 @@ function isBunRuntime(): boolean {
   )
 }
 
-export class SqliteAdapter implements DBAdapter {
+/**
+ * 异步互斥锁(promise 链)。bun:sqlite 是单个同步连接,事务的 BEGIN..COMMIT 跨越多个 await,
+ * 一旦事务回调里 await 了真异步 I/O(让出宏任务),并发请求可能交错进它的事务,污染数据甚至
+ * 卡死状态机。用它把事务串行化:事务期间独占连接,其它语句/事务排队等待,杜绝交错。
+ */
+class Mutex {
+  private tail: Promise<void> = Promise.resolve()
+
+  acquire(): Promise<() => void> {
+    let release!: () => void
+    const next = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    const acquired = this.tail.then(() => release)
+    this.tail = this.tail.then(() => next)
+    return acquired
+  }
+}
+
+function toDatabaseError(
+  error: unknown,
+  action: string,
+  sql: string,
+): DatabaseError {
+  const causeMessage = error instanceof Error ? error.message : String(error)
+  return new DatabaseError(`failed to execute SQLite ${action}`, {
+    cause: error,
+    causeMessage,
+    sql,
+  })
+}
+
+/**
+ * 事务内执行器:直接对底层连接跑语句,不再加锁(外层事务已独占连接)。
+ * 同时作为 SqliteAdapter 的原始语句实现基类。
+ */
+class SqliteTransactionAdapter implements DBAdapter {
   readonly dialect = 'sqlite' as const
   readonly kind = 'sqlite' as const
-  private readonly database: SqliteDatabase
-  private inTransaction = false
 
-  /** 创建 SQLite 适配器并初始化常用 pragma。 */
-  constructor(database: SqliteDatabase) {
-    this.database = database
-    this.database.exec('PRAGMA journal_mode = WAL')
-    this.database.exec('PRAGMA foreign_keys = ON')
-  }
+  constructor(protected readonly database: SqliteDatabase) {}
 
   /** 执行查询并返回结果列表。 */
   async query<T extends QueryRow = QueryRow>(
@@ -100,17 +129,9 @@ export class SqliteAdapter implements DBAdapter {
     params: SQLParameter[] = [],
   ): Promise<T[]> {
     try {
-      const stmt = this.database.prepare(sql)
-      return stmt.all(...params) as T[]
+      return this.database.prepare(sql).all(...params) as T[]
     } catch (error) {
-      const causeMessage
-        = error instanceof Error ? error.message : String(error)
-
-      throw new DatabaseError('failed to execute SQLite query', {
-        cause: error,
-        causeMessage,
-        sql,
-      })
+      throw toDatabaseError(error, 'query', sql)
     }
   }
 
@@ -120,17 +141,9 @@ export class SqliteAdapter implements DBAdapter {
     params: SQLParameter[] = [],
   ): Promise<T | null> {
     try {
-      const statement = this.database.prepare(sql)
-      return (statement.get(...params) as T | null | undefined) ?? null
+      return (this.database.prepare(sql).get(...params) as T | null | undefined) ?? null
     } catch (error) {
-      const causeMessage
-        = error instanceof Error ? error.message : String(error)
-
-      throw new DatabaseError('failed to execute SQLite first', {
-        cause: error,
-        causeMessage,
-        sql,
-      })
+      throw toDatabaseError(error, 'first', sql)
     }
   }
 
@@ -140,23 +153,14 @@ export class SqliteAdapter implements DBAdapter {
     params: SQLParameter[] = [],
   ): Promise<QueryResult> {
     try {
-      const statement = this.database.prepare(sql)
-      const result = statement.run(...params)
-
+      const result = this.database.prepare(sql).run(...params)
       return {
         rows: [],
         rowsAffected: result.changes ?? 0,
         lastInsertId: result.lastInsertRowid,
       }
     } catch (error) {
-      const causeMessage
-        = error instanceof Error ? error.message : String(error)
-
-      throw new DatabaseError('failed to execute SQLite statement', {
-        cause: error,
-        causeMessage,
-        sql,
-      })
+      throw toDatabaseError(error, 'statement', sql)
     }
   }
 
@@ -168,45 +172,82 @@ export class SqliteAdapter implements DBAdapter {
     return Number(result.lastInsertId)
   }
 
-  /** 用显式 BEGIN/COMMIT/ROLLBACK 包装事务回调。 */
+  /** 已在外层事务内:嵌套事务复用当前事务,不再 BEGIN。 */
   async transaction<T>(callback: (db: DBAdapter) => Promise<T>): Promise<T> {
-    this.database.exec('BEGIN')
-    this.inTransaction = true
-
-    try {
-      const result = await callback(this)
-      this.database.exec('COMMIT')
-      this.inTransaction = false
-      return result
-    } catch (error) {
-      this.database.exec('ROLLBACK')
-      this.inTransaction = false
-      throw error
-    }
+    return callback(this)
   }
 
-  /** 在同一事务里顺序执行多条 SQL 语句。
-   * 如果调用方已在 transaction() 内，直接顺序执行；
-   * 否则用显式 BEGIN/COMMIT 包装。 */
+  /** 已在事务内:顺序执行即可。 */
   async batch(
     statements: Array<{ sql: string, params?: SQLParameter[] }>,
   ): Promise<void> {
-    if (this.inTransaction) {
-      for (const s of statements) {
-        this.database.prepare(s.sql).run(...(s.params ?? []))
-      }
-      return
+    for (const statement of statements) {
+      this.runStatement(statement)
     }
+  }
 
-    this.database.exec('BEGIN')
+  protected runStatement(
+    statement: { sql: string, params?: SQLParameter[] },
+  ): void {
     try {
-      for (const s of statements) {
-        this.database.prepare(s.sql).run(...(s.params ?? []))
+      this.database.prepare(statement.sql).run(...(statement.params ?? []))
+    } catch (error) {
+      throw toDatabaseError(error, 'statement', statement.sql)
+    }
+  }
+}
+
+export class SqliteAdapter extends SqliteTransactionAdapter {
+  private readonly mutex = new Mutex()
+
+  /** 创建 SQLite 适配器并初始化常用 pragma。 */
+  constructor(database: SqliteDatabase) {
+    super(database)
+    this.database.exec('PRAGMA journal_mode = WAL')
+    this.database.exec('PRAGMA foreign_keys = ON')
+  }
+
+  // 注意:单语句(query/first/execute)直接继承基类的「裸执行」,不加锁。
+  // bun:sqlite 单语句是同步原子的,且事务回调里若误用外层 db,裸执行会并入当前事务
+  // (与改造前行为一致),而不会去抢事务持有的锁造成死锁。锁只用于串行化事务 / batch。
+
+  /** 用显式 BEGIN/COMMIT/ROLLBACK 包装事务回调,并独占连接直至结束。 */
+  async transaction<T>(callback: (db: DBAdapter) => Promise<T>): Promise<T> {
+    const release = await this.mutex.acquire()
+    const tx = new SqliteTransactionAdapter(this.database)
+    try {
+      this.database.exec('BEGIN')
+      try {
+        const result = await callback(tx)
+        this.database.exec('COMMIT')
+        return result
+      } catch (error) {
+        this.database.exec('ROLLBACK')
+        throw error
       }
-      this.database.exec('COMMIT')
-    } catch (err) {
-      this.database.exec('ROLLBACK')
-      throw err
+    } finally {
+      release()
+    }
+  }
+
+  /** 顶层 batch:独占连接,用显式 BEGIN/COMMIT 包一层。 */
+  async batch(
+    statements: Array<{ sql: string, params?: SQLParameter[] }>,
+  ): Promise<void> {
+    const release = await this.mutex.acquire()
+    try {
+      this.database.exec('BEGIN')
+      try {
+        for (const statement of statements) {
+          this.runStatement(statement)
+        }
+        this.database.exec('COMMIT')
+      } catch (error) {
+        this.database.exec('ROLLBACK')
+        throw error
+      }
+    } finally {
+      release()
     }
   }
 
