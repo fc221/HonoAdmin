@@ -1,22 +1,49 @@
-import type { AppRuntime, RuntimeBindings } from './types'
+import type { DBAdapter } from '@hono-admin/db'
+import type { AppRuntime, RuntimeBindings } from '../types'
 import { UnavailableDBAdapter } from '@hono-admin/db/adapter/unavailable'
 import {
   getBunBootstrapConfigStatus,
   getNodeBootstrapConfigStatus,
-} from './bootstrap'
-import { createServerCacheAdapter } from './cache'
+} from '../bootstrap'
+import { resolveSecurityRuntimeConfig } from '../security-config'
+import { getAppName, getAppVersion } from '../utils/app-meta'
+import { normalizeTimezone } from '../utils/datetime'
+import { createServerCacheAdapter } from './local-cache'
 import { createLocalDatabaseAdapter } from './local-sqlite'
-import { resolveSecurityRuntimeConfig } from './security-config'
-import { normalizeTimezone } from './utils/datetime'
+
+type LocalRuntimeTarget = 'bun' | 'node'
+
+let localRuntimeCache: {
+  promise: Promise<AppRuntime>
+  target: LocalRuntimeTarget
+} | null = null
 
 /**
  * Bun 和 Node 共用同一份组装逻辑;真正的运行时差异(SQLite 驱动、fs 实现、Redis 客户端)
  * 都在各 adapter 内部以 `isBunRuntime()` 之类的运行期判别自动切换。
  * 这里只负责拉 bootstrap + 选 db + 选 cache + 填 config。
  */
+export async function getCachedLocalRuntime(
+  bindings: RuntimeBindings = {},
+  target: LocalRuntimeTarget,
+): Promise<AppRuntime> {
+  if (localRuntimeCache?.target === target) {
+    return localRuntimeCache.promise
+  }
+
+  return replaceCachedLocalRuntime(bindings, target)
+}
+
+export async function reloadCachedLocalRuntime(
+  bindings: RuntimeBindings = {},
+  target: LocalRuntimeTarget,
+): Promise<AppRuntime> {
+  return replaceCachedLocalRuntime(bindings, target)
+}
+
 export async function createLocalRuntime(
   bindings: RuntimeBindings = {},
-  target: 'bun' | 'node',
+  target: LocalRuntimeTarget,
 ): Promise<AppRuntime> {
   const bootstrap = target === 'node'
     ? await getNodeBootstrapConfigStatus(bindings)
@@ -39,12 +66,20 @@ export async function createLocalRuntime(
   )
 
   const targetLabel = target === 'node' ? 'Node' : 'Bun'
-  const db = bootstrap.isConfigured
+  const db: DBAdapter = bootstrap.isConfigured
     ? await createLocalDatabaseAdapter(databaseUrl)
     : new UnavailableDBAdapter(`${targetLabel} 运行时配置尚未完成。`)
+  const cache = await createServerCacheAdapter({ cacheNamespace, redisUrl })
 
   return {
-    cache: await createServerCacheAdapter({ cacheNamespace, redisUrl }),
+    cache,
+    async close() {
+      try {
+        await db.close?.()
+      } finally {
+        await cache.destroy?.()
+      }
+    },
     config: {
       appName: getAppName(),
       appVersion: getAppVersion(),
@@ -56,6 +91,45 @@ export async function createLocalRuntime(
       timezone,
     },
     db,
+  }
+}
+
+function replaceCachedLocalRuntime(
+  bindings: RuntimeBindings,
+  target: LocalRuntimeTarget,
+): Promise<AppRuntime> {
+  const previous = localRuntimeCache
+  const nextRuntimePromise = (async () => {
+    const previousRuntime = previous
+      ? await previous.promise.catch(() => null)
+      : null
+    await closeRuntime(previousRuntime)
+    return createLocalRuntime(bindings, target)
+  })()
+
+  localRuntimeCache = { promise: nextRuntimePromise, target }
+
+  nextRuntimePromise.catch(() => {
+    if (localRuntimeCache?.promise === nextRuntimePromise) {
+      localRuntimeCache = null
+    }
+  })
+
+  return nextRuntimePromise
+}
+
+async function closeRuntime(runtime: AppRuntime | null): Promise<void> {
+  if (!runtime) return
+
+  if (runtime.close) {
+    await runtime.close()
+    return
+  }
+
+  try {
+    await runtime.db.close?.()
+  } finally {
+    await runtime.cache.destroy?.()
   }
 }
 
@@ -73,12 +147,4 @@ function getBootstrapValue(
   return bootstrap.requirements.find((requirement) => requirement.key === key)
     ?.value
     ?.trim() ?? ''
-}
-
-function getAppName(): string {
-  return typeof __APP_NAME__ === 'undefined' ? 'hono-admin' : __APP_NAME__
-}
-
-function getAppVersion(): string {
-  return typeof __APP_VERSION__ === 'undefined' ? '0.0.0' : __APP_VERSION__
 }

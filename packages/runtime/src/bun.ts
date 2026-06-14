@@ -1,8 +1,0 @@
-import type { AppRuntime, RuntimeBindings } from './types'
-import { createLocalRuntime } from './local-runtime'
-
-export async function createBunRuntime(
-  bindings: RuntimeBindings = {},
-): Promise<AppRuntime> {
-  return createLocalRuntime(bindings, 'bun')
-}

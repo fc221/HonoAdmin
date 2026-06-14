@@ -6,6 +6,8 @@ import {
   getCloudflareWorkersBootstrapConfigStatus,
   saveBunRuntimeConfig,
 } from '@hono-admin/runtime/bootstrap'
+import { createBunRuntime } from '@hono-admin/runtime/bun'
+import { createCloudflareWorkersRuntime } from '@hono-admin/runtime/cloudflare-workers'
 import { reloadBunRuntime } from '@hono-admin/runtime/factory'
 import { describe, expect, test } from 'bun:test'
 
@@ -130,6 +132,41 @@ describe('bootstrap runtime config', () => {
     }
   })
 
+  test('reuses Bun runtime across requests until explicit reload', async () => {
+    const originalRuntimeEnv = snapshotRuntimeEnv()
+    const dir = await mkdtemp(join(tmpdir(), 'hono-admin-bootstrap-'))
+    const envPath = join(dir, '.env')
+    const dbPath = join(dir, 'runtime.sqlite')
+
+    try {
+      clearRuntimeEnv()
+      await saveBunRuntimeConfig({
+        appTimezone: 'Asia/Shanghai',
+        cacheNamespace: 'hono-admin-reuse',
+        databaseUrl: dbPath,
+        jwtSecret: '1234567890abcdef',
+        sessionSecret: 'session-secret-1234567890',
+      }, envPath)
+
+      const bindings = { HONO_ADMIN_ENV_FILE: envPath }
+      const firstRuntime = await reloadBunRuntime(bindings)
+      const secondRuntime = await createBunRuntime(bindings)
+      const thirdRuntime = await createBunRuntime(bindings)
+
+      expect(secondRuntime).toBe(firstRuntime)
+      expect(thirdRuntime).toBe(firstRuntime)
+
+      await firstRuntime.cache.set('runtime-cache-probe', 'ok')
+      await expect(thirdRuntime.cache.get('runtime-cache-probe')).resolves.toBe('ok')
+    } finally {
+      await reloadBunRuntime({
+        HONO_ADMIN_ENV_FILE: join(dir, 'missing.env'),
+      }).catch(() => undefined)
+      restoreRuntimeEnv(originalRuntimeEnv)
+      await rm(dir, { force: true, recursive: true })
+    }
+  })
+
   test('reports missing Cloudflare Workers bindings and secrets', () => {
     const status = getCloudflareWorkersBootstrapConfigStatus({})
 
@@ -141,6 +178,15 @@ describe('bootstrap runtime config', () => {
       'JWT_SECRET',
       'SESSION_SECRET',
     ])
+  })
+
+  test('does not cache Cloudflare Workers runtime objects', async () => {
+    const firstRuntime = await createCloudflareWorkersRuntime({})
+    const secondRuntime = await createCloudflareWorkersRuntime({})
+
+    expect(secondRuntime).not.toBe(firstRuntime)
+    expect(secondRuntime.cache).not.toBe(firstRuntime.cache)
+    expect(secondRuntime.config.runtimeTarget).toBe('cloudflare-workers')
   })
 })
 

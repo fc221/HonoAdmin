@@ -38,6 +38,7 @@ export type AppRuntimeConfig = {
 
 export type AppRuntime = {
   cache: CacheAdapter
+  close?: () => Promise<void> | void
   config: AppRuntimeConfig
   db: DBAdapter
 }

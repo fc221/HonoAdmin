@@ -1,12 +1,13 @@
-import type { AppRuntime, RuntimeBindings } from './types'
+import type { AppRuntime, RuntimeBindings } from '../types'
 import { KVCacheAdapter } from '@hono-admin/cache/adapter/kv'
 import { NoopCacheAdapter } from '@hono-admin/cache/adapter/noop'
 import { D1Adapter } from '@hono-admin/db/adapter/d1'
 import { UnavailableDBAdapter } from '@hono-admin/db/adapter/unavailable'
 
-import { getCloudflareWorkersBootstrapConfigStatus } from './bootstrap'
-import { resolveSecurityRuntimeConfig } from './security-config'
-import { normalizeTimezone } from './utils/datetime'
+import { getCloudflareWorkersBootstrapConfigStatus } from '../bootstrap'
+import { resolveSecurityRuntimeConfig } from '../security-config'
+import { getAppName, getAppVersion } from '../utils/app-meta'
+import { normalizeTimezone } from '../utils/datetime'
 
 export async function createCloudflareWorkersRuntime(
   bindings: RuntimeBindings,
@@ -21,8 +22,8 @@ export async function createCloudflareWorkersRuntime(
       ? new KVCacheAdapter(bindings.CACHE, 'hono-admin', 300)
       : new NoopCacheAdapter(),
     config: {
-      appName: __APP_NAME__,
-      appVersion: __APP_VERSION__,
+      appName: getAppName(),
+      appVersion: getAppVersion(),
       bootstrap,
       jwtSecret: bindings.JWT_SECRET?.trim() || undefined,
       runtimeTarget: 'cloudflare-workers',

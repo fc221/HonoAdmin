@@ -1,25 +1,21 @@
 import type { AppRuntime, RuntimeBindings, RuntimeTarget } from './types'
 
-let localRuntimePromise: Promise<AppRuntime> | null = null
-
 export async function createAppRuntime(
   bindings: RuntimeBindings = {},
 ): Promise<AppRuntime> {
   const target = getAppRuntimeTarget()
 
   if (target === 'bun') {
-    const { createBunRuntime } = await import('./bun')
-    localRuntimePromise ??= createBunRuntime(bindings)
-    return localRuntimePromise
+    const { createBunRuntime } = await import('./target/bun')
+    return createBunRuntime(bindings)
   }
 
   if (target === 'node') {
-    const { createNodeRuntime } = await import('./node')
-    localRuntimePromise ??= createNodeRuntime(bindings)
-    return localRuntimePromise
+    const { createNodeRuntime } = await import('./target/node')
+    return createNodeRuntime(bindings)
   }
 
-  const { createCloudflareWorkersRuntime } = await import('./cloudflare-workers')
+  const { createCloudflareWorkersRuntime } = await import('./target/cloudflare-workers')
   return createCloudflareWorkersRuntime(bindings)
 }
 
@@ -41,23 +37,8 @@ export async function reloadLocalRuntime(
     throw new Error('Cloudflare Workers runtime does not support reload.')
   }
 
-  const oldRuntime = localRuntimePromise ? await localRuntimePromise : null
-  await oldRuntime?.db.close?.()
-
-  const nextRuntimePromise = target === 'node'
-    ? (await import('./node')).createNodeRuntime(bindings)
-    : (await import('./bun')).createBunRuntime(bindings)
-  localRuntimePromise = nextRuntimePromise
-
-  try {
-    return await nextRuntimePromise
-  } catch (error) {
-    if (localRuntimePromise === nextRuntimePromise) {
-      localRuntimePromise = null
-    }
-
-    throw error
-  }
+  const { reloadCachedLocalRuntime } = await import('./target/local-runtime')
+  return reloadCachedLocalRuntime(bindings, target)
 }
 
 function getAppRuntimeTarget(): RuntimeTarget {

@@ -4,6 +4,7 @@ export interface CacheSetOptions {
 
 export interface CacheAdapter {
   readonly kind: 'memory' | 'kv' | 'noop' | 'redis'
+  destroy?: () => Promise<void> | void
   get: <T = unknown>(key: string) => Promise<T | null>
   set: <T = unknown>(key: string, value: T, options?: CacheSetOptions) => Promise<void>
   delete: (key: string) => Promise<void>

@@ -5,11 +5,11 @@
   "exports": {
     ".": "./src/index.ts",
     "./bootstrap": "./src/bootstrap.ts",
-    "./bun": "./src/bun.ts",
-    "./cloudflare-workers": "./src/cloudflare-workers.ts",
+    "./bun": "./src/target/bun.ts",
+    "./cloudflare-workers": "./src/target/cloudflare-workers.ts",
     "./factory": "./src/factory.ts",
-    "./node": "./src/node.ts",
-    "./local-sqlite": "./src/local-sqlite.ts",
+    "./node": "./src/target/node.ts",
+    "./local-sqlite": "./src/target/local-sqlite.ts",
     "./security-config": "./src/security-config.ts"
   },
   "scripts": {
