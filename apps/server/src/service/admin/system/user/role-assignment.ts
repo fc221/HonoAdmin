@@ -1,7 +1,9 @@
 import type { ServiceContext } from '../../../types'
+import type { RoleCatalogEntry } from '../role/catalog'
 import type { CreateUserInput, UserSessionRole } from './dto'
 import { createPlaceholders } from '../../../../utils/common'
 import { ValidationError } from '../../../../utils/errors'
+import { getRoleCatalog } from '../role/catalog'
 
 export async function listUserRoleIds(
   ctx: ServiceContext,
@@ -225,15 +227,8 @@ async function listRoleIdsByCodes(
   ctx: ServiceContext,
   codes: string[],
 ): Promise<number[]> {
-  const rows = await ctx.db.query<{ code: string, id: number }>(
-    `
-      SELECT id, code
-      FROM sys_role
-      WHERE code IN (${createPlaceholders(codes)})
-    `,
-    codes,
-  )
-  const roleIdsByCode = new Map(rows.map((row) => [row.code, row.id]))
+  const catalog = await getRoleCatalog(ctx)
+  const roleIdsByCode = new Map(catalog.map((role) => [role.code, role.id]))
 
   return codes
     .map((code) => roleIdsByCode.get(code))
@@ -244,19 +239,13 @@ async function listUserSessionRolesByCodes(
   ctx: ServiceContext,
   codes: string[],
 ): Promise<UserSessionRole[]> {
-  const rows = await ctx.db.query<UserSessionRole>(
-    `
-      SELECT id, code, name
-      FROM sys_role
-      WHERE code IN (${createPlaceholders(codes)})
-    `,
-    codes,
-  )
-  const rolesByCode = new Map(rows.map((role) => [role.code, role]))
+  const catalog = await getRoleCatalog(ctx)
+  const rolesByCode = new Map(catalog.map((role) => [role.code, role]))
 
   return codes
     .map((code) => rolesByCode.get(code))
-    .filter((role): role is UserSessionRole => !!role)
+    .filter((role): role is RoleCatalogEntry => !!role)
+    .map((role) => ({ code: role.code, id: role.id, name: role.name }))
 }
 
 function mergeSessionRoles(

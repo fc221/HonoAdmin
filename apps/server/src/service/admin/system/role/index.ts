@@ -42,6 +42,7 @@ import {
   uniquePolicies,
   uniqueStrings,
 } from './access-helpers'
+import { getRoleCatalog, invalidateRoleCatalogCache } from './catalog'
 import { createRoleSchema, listRoleSchema, updateRoleSchema } from './dto'
 
 const roleColumns = `
@@ -99,16 +100,12 @@ export async function listPaginatedRoles(
 export async function listRoleOptions(
   ctx: ServiceContext,
 ): Promise<RoleOption[]> {
-  const rows = await ctx.db.query<Pick<RoleEntity, 'code' | 'id' | 'name'>>(`
-    SELECT id, code, name
-    FROM sys_role
-    ORDER BY id ASC
-  `)
+  const catalog = await getRoleCatalog(ctx)
 
-  return rows.map((row) => ({
-    code: row.code,
-    id: row.id,
-    name: row.name,
+  return catalog.map((role) => ({
+    code: role.code,
+    id: role.id,
+    name: role.name,
   }))
 }
 
@@ -155,6 +152,7 @@ export async function createRole(
   })
 
   await invalidateRoleAccessCache(ctx, role.id)
+  await invalidateRoleCatalogCache(ctx)
   await bumpAdminLayoutCacheVersion(ctx)
   return role
 }
@@ -194,6 +192,7 @@ export async function updateRole(
   })
 
   await invalidateRoleAccessCache(ctx, id)
+  await invalidateRoleCatalogCache(ctx)
   await bumpAdminLayoutCacheVersion(ctx)
   return getRoleById(ctx, id)
 }
@@ -225,6 +224,7 @@ export async function deleteRole(
   })
 
   await invalidateRoleAccessCache(ctx, id)
+  await invalidateRoleCatalogCache(ctx)
   await bumpAdminLayoutCacheVersion(ctx)
 }
 
