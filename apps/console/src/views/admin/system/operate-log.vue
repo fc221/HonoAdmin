@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ResourceAction, ResourceField, ResourceList } from '@hono-admin/server/api/schema'
-import { NButton, NCard, NInput, NPagination, useLoadingBar, useMessage, useNotification } from 'naive-ui'
+import { NButton, NCard, NInput, NPagination, useDialog, useLoadingBar, useMessage, useNotification } from 'naive-ui'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { apiClient } from '../../../api/client'
@@ -9,6 +9,7 @@ import DataTable from '../../../components/DataTable.vue'
 import ResourceFormModal from '../../../components/ResourceFormModal.vue'
 
 const route = useRoute()
+const dialog = useDialog()
 const loadingBar = useLoadingBar()
 const message = useMessage()
 const notification = useNotification()
@@ -60,6 +61,21 @@ async function handleTopAction(action: ResourceAction) {
     return
   }
 
+  if (action.danger) {
+    dialog.warning({
+      title: '确认操作',
+      content: `确定要「${action.label}」吗?此操作不可撤销。`,
+      negativeText: '取消',
+      positiveText: '确定',
+      onPositiveClick: () => runTopAction(action),
+    })
+    return
+  }
+
+  await runTopAction(action)
+}
+
+async function runTopAction(action: ResourceAction) {
   submitting.value = true
   try {
     const result = await apiClient.runResourceAction('admin', resourceName(), action.key)
