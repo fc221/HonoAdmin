@@ -52,6 +52,7 @@ type ResourceQuery = { keyword?: string, page?: number, pageSize?: number, uploa
 const resourcePaths: Record<Surface, Record<string, string>> = {
   admin: {
     'system-config': '/admin/system/config',
+    'system-cron': '/admin/system/cron',
     'system-file': '/admin/system/file',
     'system-operate-log': '/admin/system/operate-log',
     'system-role': '/admin/system/role',
@@ -137,6 +138,14 @@ export const apiClient = {
 
   async runResourceAction(surface: Surface, resource: string, action: string): Promise<ResourceMutation> {
     return jsonFetch<ResourceMutation>(resourceUrl(surface, resource, `/${action}`), {
+      method: 'POST',
+      body: JSON.stringify({}),
+    })
+  },
+
+  /** 针对单行的动作(如定时任务「执行」):POST /{resource}/{id}/{action}。 */
+  async runResourceItemAction(surface: Surface, resource: string, id: number, action: string): Promise<ResourceMutation> {
+    return jsonFetch<ResourceMutation>(resourceUrl(surface, resource, `/${id}/${action}`), {
       method: 'POST',
       body: JSON.stringify({}),
     })

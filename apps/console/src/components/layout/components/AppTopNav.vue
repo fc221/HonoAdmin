@@ -96,14 +96,14 @@ function findFirstMenuHref(options: MenuOption[]): string {
       </button>
 
       <nav
-        class="min-w-0 flex-1 overflow-hidden"
-        :class="topMenuCentered ? 'flex justify-center' : ''"
+        class="ha-topnav-menu min-w-0 flex-1 overflow-hidden"
+        :class="{ 'ha-topnav-menu--centered': topMenuCentered }"
         aria-label="主导航"
       >
         <NMenu
           v-model:value="selectedMenuKeyModel"
           mode="horizontal"
-          responsive
+          :responsive="!topMenuCentered"
           :icon-size="18"
           :options="menuOptions"
         />
@@ -140,3 +140,16 @@ function findFirstMenuHref(options: MenuOption[]): string {
     </div>
   </header>
 </template>
+
+<style scoped>
+/*
+ * 顶部菜单居中:
+ * naive 横向菜单根是 width:100% 的 flex,容器上的 justify-center 无效(菜单占满整行)。
+ * responsive 模式下菜单项被包进 .v-overflow 包裹层,justify-content 也居中不到菜单项,
+ * 所以居中时关闭 responsive(:responsive="!topMenuCentered"),让菜单项成为根的直接
+ * flex 子元素,再用 justify-content: center 居中。顶部菜单项通常不多,关闭 responsive 可接受。
+ */
+.ha-topnav-menu--centered :deep(.n-menu.n-menu--horizontal) {
+  justify-content: center;
+}
+</style>

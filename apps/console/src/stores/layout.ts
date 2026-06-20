@@ -9,7 +9,6 @@ import {
   buildLayoutConfigSnippet,
   defaultLayoutConfig,
   hasCollapsibleSidebarVariant,
-  hasMobileSidebarVariant,
   isHybridVariant,
   isLayoutMainWidth,
   isLayoutSidebarStyle,
@@ -35,7 +34,8 @@ export const useLayoutStore = defineStore('layout', () => {
     variant: variant.value,
   }))
   const canCollapseSidebar = computed(() => hasCollapsibleSidebarVariant(variant.value))
-  const canUseSidebarStyle = computed(() => hasMobileSidebarVariant(variant.value))
+  // 仅"有桌面侧栏"的变体(侧边栏 / 综合)可调侧栏样式;顶部导航(顶栏/顶部贴边)无桌面侧栏,禁用。
+  const canUseSidebarStyle = computed(() => hasCollapsibleSidebarVariant(variant.value))
   const canUseTopNavOptions = computed(() => isTopNavVariant(variant.value))
   const layoutConfigSnippet = computed(() => buildLayoutConfigSnippet(config.value))
 

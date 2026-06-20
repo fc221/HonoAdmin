@@ -5,6 +5,7 @@ import { createNodeRuntime } from '@hono-admin/runtime/node'
 import { serve } from '@hono/node-server'
 import { getMimeType } from 'hono/utils/mime'
 import app, { setApiRuntimeContextMiddleware } from '../app'
+import { startLocalScheduler } from '../service/admin/system/cron'
 import { createAttachRuntime } from '../service/middleware/context'
 import {
   buildCacheControl,
@@ -57,6 +58,11 @@ app.use('*', async (c, next) => {
 
 serve({ fetch: app.fetch, port })
 console.log(`HonoAdmin API listening on http://127.0.0.1:${port}`)
+
+// 进程内定时任务心跳(每分钟)。不经过 HTTP,直接用运行时的 db/cache 执行。
+void createNodeRuntime({})
+  .then(startLocalScheduler)
+  .catch((error) => console.error('[scheduler] 启动失败', error))
 
 async function statOrNull(filePath: URL): Promise<Stats | null> {
   try {

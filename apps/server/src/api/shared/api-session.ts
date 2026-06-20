@@ -78,6 +78,7 @@ const adminFeaturePaths: Array<{
 }> = [
   { adminPath: '/admin/system/user', apiPrefix: '/api/admin/user' },
   { adminPath: '/admin/system/config', apiPrefix: '/api/admin/system/config' },
+  { adminPath: '/admin/system/cron', apiPrefix: '/api/admin/system/cron' },
   { adminPath: '/admin/system/file', apiPrefix: '/api/admin/system/file' },
   { adminPath: '/admin/system/operate-log', apiPrefix: '/api/admin/system/operate-log' },
   { adminPath: '/admin/system/role', apiPrefix: '/api/admin/system/role' },
@@ -108,7 +109,9 @@ function getAdminFeatureTarget(c: Context<AppEnv>): {
           ? 'upload'
           : detail === 'clear'
             ? 'clear'
-            : undefined,
+            : detail.endsWith('/run')
+              ? 'run'
+              : undefined,
       adminPath: feature.adminPath,
       detail,
     }

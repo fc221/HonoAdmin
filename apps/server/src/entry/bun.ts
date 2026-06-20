@@ -1,6 +1,7 @@
 import type { CachePolicy } from './static'
 import { createBunRuntime } from '@hono-admin/runtime/bun'
 import app, { setApiRuntimeContextMiddleware } from '../app'
+import { startLocalScheduler } from '../service/admin/system/cron'
 import { createAttachRuntime } from '../service/middleware/context'
 import { startRuntimeDiagnostics } from './diagnostics'
 import {
@@ -60,6 +61,11 @@ const server = Bun.serve({
 console.log(`HonoAdmin API listening on http://127.0.0.1:${port}`)
 
 startRuntimeDiagnostics(server)
+
+// 进程内定时任务心跳(每分钟)。不经过 HTTP,直接用运行时的 db/cache 执行。
+void createBunRuntime({})
+  .then(startLocalScheduler)
+  .catch((error) => console.error('[scheduler] 启动失败', error))
 
 async function serveBunFile(
   file: Bun.BunFile,

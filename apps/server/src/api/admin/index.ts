@@ -8,6 +8,7 @@ import { describeRoute, jsonResponse } from '../shared/openapi'
 import {
   adminUserApi,
   systemConfigApi,
+  systemCronApi,
   systemFileApi,
   systemOperateLogApi,
   systemRoleApi,
@@ -21,6 +22,7 @@ import {
 
 const systemApi = new Hono<AppEnv>()
   .route('/config', systemConfigApi)
+  .route('/cron', systemCronApi)
   .route('/file', systemFileApi)
   .route('/operate-log', systemOperateLogApi)
   .route('/role', systemRoleApi)

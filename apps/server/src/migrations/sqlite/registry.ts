@@ -15,6 +15,7 @@ import { migration0013RemoveSeededAgentRole } from './0013_remove_seeded_agent_r
 import { migration0014RootUserRoleAssignment } from './0014_root_user_role_assignment'
 import { migration0015FileS3PublicBaseUrl } from './0015_file_s3_public_base_url'
 import { migration0016RemoveAdminWildcardPolicy } from './0016_remove_admin_wildcard_policy'
+import { migration0017ScheduledJobManagement } from './0017_scheduled_job_management'
 
 export const sqliteMigrations: Migration[] = [
   migration0001AdminCore,
@@ -33,4 +34,5 @@ export const sqliteMigrations: Migration[] = [
   migration0014RootUserRoleAssignment,
   migration0015FileS3PublicBaseUrl,
   migration0016RemoveAdminWildcardPolicy,
+  migration0017ScheduledJobManagement,
 ]

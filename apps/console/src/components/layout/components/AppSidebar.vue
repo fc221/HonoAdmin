@@ -172,3 +172,20 @@ const siderClass = computed(() => [
     </div>
   </NLayoutSider>
 </template>
+
+<style scoped>
+/*
+ * 折叠态背景由 naive 画在 .n-menu-item-content::before 伪元素上(已定好居中圆角几何),
+ * 且只给「选中叶子」(--selected)上色。这里给「含选中子项的父级」(--child-active)
+ * 补同一 ::before 背景,几何与选中项一致(直接给内容 div 上色会因 paddingLeft 缩进而错位)。
+ */
+.ha-sidebar-menu :deep(.n-menu-item-content--collapsed.n-menu-item-content--child-active::before) {
+  background-color: var(--hover-color) !important;
+}
+
+/* 折叠态图标默认被 naive 强制成 itemIconColorCollapsed(深色);把选中/含选中子项的图标改主色,与展开态一致。 */
+.ha-sidebar-menu :deep(.n-menu-item-content--collapsed.n-menu-item-content--selected .n-menu-item-content__icon),
+.ha-sidebar-menu :deep(.n-menu-item-content--collapsed.n-menu-item-content--child-active .n-menu-item-content__icon) {
+  color: var(--primary-color) !important;
+}
+</style>

@@ -7,7 +7,7 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "bun run dev:server",
+    "dev": "bun run scripts/dev.ts",
     "dev:server": "cd apps/server && bun run dev",
     "dev:console": "cd apps/console && bun run dev",
     "dev:public": "cd apps/public && bun run dev",

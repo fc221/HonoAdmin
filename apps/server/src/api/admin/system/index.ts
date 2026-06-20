@@ -1,4 +1,5 @@
 export { default as systemConfigApi } from './config'
+export { default as systemCronApi } from './cron'
 export { default as systemFileApi } from './file'
 export { default as systemOperateLogApi } from './operate-log'
 export { default as systemRoleApi } from './role'

@@ -102,6 +102,14 @@ export const adminMenus: MenuItem[] = [
         component: 'admin/system/operate-log',
       },
       {
+        href: '/admin/system/cron',
+        icon: 'ri:timer-line',
+        label: '定时任务',
+        name: 'admin.system.cron',
+        routePath: '/admin/system/cron',
+        component: 'admin/system/cron',
+      },
+      {
         href: '/admin/system/update',
         icon: 'ri:refresh-line',
         label: '更新管理',
