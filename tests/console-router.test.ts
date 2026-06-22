@@ -9,6 +9,7 @@ const viewModules = Object.fromEntries(
   [
     'admin/dashboard',
     'admin/system/config',
+    'admin/system/cron',
     'admin/system/file',
     'admin/system/operate-log',
     'admin/system/role',
