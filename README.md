@@ -2,7 +2,7 @@
 
 中文 | [English](./README.en-US.md)
 
-HonoAdmin 是一个前后端分离的中后台基础项目。Server 使用 Hono API、原生 SQL、在线迁移和运行时 adapter；Console 使用 Vue 3、Naive UI、Tailwind CSS 承载 `/admin/*` 和 `/user/*`；Public 使用 Astro 预留 SEO 页面能力。
+HonoAdmin 是一个前后端分离的中后台基础项目。Server 使用 Hono API、原生 SQL、在线迁移和运行时 adapter；Console 使用 Vue 3、Naive UI、Tailwind CSS 承载 `/admin/*` 和 `/user/*`；Public 是纯 HTML 占位目录，预留 SSR Vue / 手写 HTML 扩展点。
 
 业务代码通过 Hono Context 使用 `c.runtime`、`c.db`、`c.cache`、`c.config` 和 `c.now()`，本地 Bun、Cloudflare Workers/D1、SQLite、MySQL、PostgreSQL 等运行时差异都收在 adapter 层。
 
@@ -11,7 +11,7 @@ HonoAdmin 是一个前后端分离的中后台基础项目。Server 使用 Hono 
 - Monorepo：Bun Workspaces。
 - Server：Hono + TypeScript + Zod + OpenAPI metadata。
 - Console：Vue 3 + Vite + Vue Router + Pinia + Naive UI + Tailwind CSS。
-- Public：Astro，占位保留 SEO app。
+- Public：纯 HTML 占位，预留 SSR Vue / 手写 HTML 扩展点。
 - Database：native SQL + SQLite/D1、MySQL、PostgreSQL adapter/migrations。
 - Runtime：Bun 本地/生产入口，Cloudflare Workers build。
 
@@ -20,7 +20,7 @@ HonoAdmin 是一个前后端分离的中后台基础项目。Server 使用 Hono 
 ```txt
 apps/server   Hono API、service、migrations、Bun/Workers 入口、backend utils
 apps/console  Vue SPA，包含 admin/user 页面、路由、store、components
-apps/public   Astro public app，占位保留
+apps/public   纯 HTML 占位目录，预留 SSR Vue / 手写 HTML
 packages/db   DBAdapter 与 SQLite/D1/MySQL/PostgreSQL 实现
 packages/cache  CacheAdapter 与 memory/KV/noop 实现
 packages/file-storage  文件存储 contract 与 local/S3 实现
@@ -55,12 +55,6 @@ bun run dev:console
 ```bash
 cd apps/console
 bunx vite --host 127.0.0.1 --port 5175
-```
-
-Public 当前只验证可构建；需要预览时运行：
-
-```bash
-bun run dev:public
 ```
 
 ## 安装流程

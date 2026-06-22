@@ -2,7 +2,7 @@
 
 [中文](./README.md) | English
 
-HonoAdmin is a front/back separated admin foundation. The server is a Hono API with native SQL, online migrations, and runtime adapters. The console is a Vue 3 SPA for `/admin/*` and `/user/*` built with Naive UI and Tailwind CSS. The public app is an Astro placeholder for future SEO pages.
+HonoAdmin is a front/back separated admin foundation. The server is a Hono API with native SQL, online migrations, and runtime adapters. The console is a Vue 3 SPA for `/admin/*` and `/user/*` built with Naive UI and Tailwind CSS. The public app is a plain HTML placeholder reserved for future SSR Vue or hand-written HTML.
 
 Runtime resources are exposed through Hono Context as `c.runtime`, `c.db`, `c.cache`, `c.config`, and `c.now()`. Bun, Cloudflare Workers/D1, SQLite, MySQL, and PostgreSQL differences stay inside adapters.
 
@@ -11,7 +11,7 @@ Runtime resources are exposed through Hono Context as `c.runtime`, `c.db`, `c.ca
 - Monorepo: Bun Workspaces.
 - Server: Hono + TypeScript + Zod + OpenAPI metadata.
 - Console: Vue 3 + Vite + Vue Router + Pinia + Naive UI + Tailwind CSS.
-- Public: Astro placeholder.
+- Public: plain HTML placeholder, reserved for future SSR Vue or hand-written HTML.
 - Database: native SQL + SQLite/D1, MySQL, PostgreSQL adapters and migrations.
 - Runtime: Bun and Cloudflare Workers builds.
 
@@ -20,7 +20,7 @@ Runtime resources are exposed through Hono Context as `c.runtime`, `c.db`, `c.ca
 ```txt
 apps/server   Hono API, services, migrations, Bun/Workers entries, backend utils
 apps/console  Vue SPA with admin/user pages, router, stores, components
-apps/public   Astro public app placeholder
+apps/public   plain HTML placeholder, reserved for SSR Vue / hand-written HTML
 packages/db   DBAdapter and SQLite/D1/MySQL/PostgreSQL implementations
 packages/cache  CacheAdapter and memory/KV/noop implementations
 packages/file-storage  file storage contract and local/S3 implementations

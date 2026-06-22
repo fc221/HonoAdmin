@@ -30,13 +30,14 @@ export default antfu(
     react: false,
     vue: true,
     ignores: [
-      '**/.astro/**',
       '**/.wrangler/**',
       '**/dist/**',
       '**/drizzle/**',
       '**/node_modules/**',
       '**/*.md',
       '**/*.tsbuildinfo',
+      // 机器生成的图标数据(单行 JSON 字面量),由 scripts/gen-console-icons.ts 重生成。
+      'apps/console/src/icons/ri-offline.ts',
     ],
   },
   {

@@ -14,8 +14,6 @@
 - Vue Router LLM docs index: https://router.vuejs.org/llms.txt
 - Vite LLM docs index: https://vite.dev/llms.txt
 - Vite full LLM documentation: https://vite.dev/llms-full.txt
-- Astro LLM docs index: https://docs.astro.build/llms.txt
-- Astro full LLM documentation: https://docs.astro.build/llms-full.txt
 - Bun LLM docs index: https://bun.com/llms.txt
 - Zod LLM docs index: https://zod.dev/llms.txt
 - Zod full LLM documentation: https://zod.dev/llms-full.txt
@@ -30,7 +28,7 @@
 使用规则：
 
 - 改 Hono 路由、middleware、验证、Vite dev-server、Bun/Workers 运行时前，优先查 Hono LLM 文档。
-- 改 Vue、Vue Router、Vite、Astro、Bun、Zod、Cloudflare Workers/D1 时，优先查对应 LLM 文档。
+- 改 Vue、Vue Router、Vite、Bun、Zod、Cloudflare Workers/D1 时，优先查对应 LLM 文档。
 - 某技术没有确认可用的 LLM 文档时，只使用官方文档，不补假链接。
 
 ## 会话流程
@@ -46,7 +44,7 @@
 - 当前项目是前后端分离 Monorepo：`apps/server`、`apps/console`、`apps/public`、`packages/*`。
 - `apps/server`：Hono API、Bun/Workers 入口、service、migrations、backend utils。
 - `apps/console`：Vue 3 SPA，同时承载 `/admin/*` 和 `/user/*`。
-- `apps/public`：Astro SEO app，当前只保持架构和 build 能力，不做业务 demo。
+- `apps/public`：纯 HTML 占位目录，预留未来 SSR Vue 或手写 HTML 实现，当前不做业务 demo。
 - `apps/console/src/components`、`layout`、`theme`：Naive UI + Tailwind CSS 的布局、主题和通用控件封装。
 - `packages/runtime`：runtime factory、bootstrap、安全配置和运行时上下文。
 - `packages/db`、`packages/cache`、`packages/file-storage`：adapter contract 和实现。
@@ -126,7 +124,7 @@
 - Runtime 相关改动：额外运行 `bun run build:bun` 或 `bun run build:workers`，并请求至少一个实际路径。
 - 结构相关改动：运行 `bun run audit:structure`。
 - UI 相关改动：用浏览器验证关键页面，至少覆盖当前用户指出的问题路径；必要时做桌面/移动宽度截图。
-- Public 仅占位阶段：确认 `apps/public` 可 typecheck/build，不新增业务 demo。
+- Public 仅占位阶段：确认 `apps/public` 的占位 HTML 可被构建拷贝到 server 静态目录，不新增业务 demo。
 
 ## 最终回复要求
 
@@ -138,3 +136,17 @@
 - Verification：实际运行的命令、请求过的路径、`audit:structure` 结果、剩余风险。
 
 不要在未验证时声称通过。遇到无法运行的检查，要明确说明原因。
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues (github.com/fc221/HonoAdmin); external PRs are NOT a triage surface. Uses the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Five canonical labels: `needs-triage` / `needs-info` / `ready-for-agent` / `ready-for-human` / `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.

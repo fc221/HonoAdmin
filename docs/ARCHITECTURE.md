@@ -6,7 +6,7 @@ HonoAdmin is a front/back separated monorepo:
 
 - `apps/server`: Hono API, Bun and Workers entrypoints, service layer, migrations, and backend utilities.
 - `apps/console`: Vue 3 SPA for both Admin (`/admin/*`) and User (`/user/*`).
-- `apps/public`: Astro public SEO app. It is buildable and documented only until the SEO scope starts.
+- `apps/public`: plain HTML placeholder, reserved for future SSR Vue or hand-written HTML. It ships a single `index.html` until the public scope starts.
 - `apps/console/src/components`: Naive UI wrappers plus Tailwind CSS layout primitives.
 - `packages/runtime`: runtime factory, bootstrap, security config, and runtime context types.
 - `packages/db`: DB adapter contract and SQLite/D1/MySQL/PostgreSQL adapters.

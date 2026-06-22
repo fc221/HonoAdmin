@@ -3,7 +3,6 @@ dist/
 
 # dev
 .hono/
-.astro/
 .wrangler/
 *.sqlite
 *.sqlite-shm

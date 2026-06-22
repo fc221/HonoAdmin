@@ -8,6 +8,7 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "types": [
+      "node",
       "vite/client",
       "bun-types",
       "@cloudflare/workers-types"
@@ -24,8 +25,7 @@
     { "path": "./packages/file-storage" },
     { "path": "./packages/runtime" },
     { "path": "./apps/server" },
-    { "path": "./apps/console" },
-    { "path": "./apps/public" }
+    { "path": "./apps/console" }
   ],
   "files": []
 }

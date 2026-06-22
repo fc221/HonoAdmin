@@ -6,7 +6,7 @@ HonoAdmin separates product surfaces without changing the backend persistence mo
 
 - Server: Hono API, native SQL, Zod API schemas, Bun runtime, and Cloudflare Workers build.
 - Console: one Vue 3 SPA for `/admin/*` and `/user/*`, using Naive UI controls and Tailwind CSS layout.
-- Public: Astro app reserved for SEO pages. The current scope keeps it buildable and documented.
+- Public: plain HTML placeholder reserved for future SSR Vue or hand-written HTML. The current scope ships a single `index.html` only.
 
 The production path is `apps/server`, `apps/console`, and `apps/public`.
 
@@ -57,4 +57,4 @@ packages/
 
 ## Public App Rule
 
-`apps/public` is intentionally a buildable placeholder. Do not add homepage, pricing, docs, or content demos until the public SEO scope is explicitly started.
+`apps/public` is a plain HTML placeholder. Future SSR Vue or hand-written HTML pages will live here; do not add homepage, pricing, docs, blog, or content demos until the public scope is explicitly started.
