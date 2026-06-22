@@ -10,7 +10,6 @@ import userApi from './user'
 const healthPayloadSchema = z.object({
   app: z.string(),
   ok: z.boolean(),
-  runtime: z.enum(['bun', 'cloudflare-workers']),
   timestamp: z.number(),
 })
 
@@ -26,7 +25,6 @@ const api = new Hono<AppEnv>()
       c.json({
         app: 'hono-admin',
         ok: true,
-        runtime: c.config.runtimeTarget,
         timestamp: c.now(),
       }),
   )
