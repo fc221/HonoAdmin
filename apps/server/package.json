@@ -6,6 +6,7 @@
     ".": "./src/app.ts",
     "./app": "./src/app.ts",
     "./api/routes": "./src/api/index.ts",
+    "./api/menu": "./src/api/menu.ts",
     "./api/openapi": "./src/api/openapi.ts",
     "./api/schema": "./src/api/schema.ts",
     "./migrations/*": "./src/migrations/*",

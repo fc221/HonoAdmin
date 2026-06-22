@@ -1,4 +1,4 @@
-import { adminMenus, userMenus } from '@hono-admin/server/api/schema'
+import { adminMenus, userMenus } from '@hono-admin/server/api/menu'
 import { createRouter, createWebHistory } from 'vue-router'
 import AppLayout from '../components/layout/AppLayout.vue'
 import { createMenuRouteRecords } from './menu-routes'
