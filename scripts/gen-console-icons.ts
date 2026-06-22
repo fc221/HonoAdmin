@@ -74,7 +74,6 @@ const subset = {
 // 3) 写出生成文件
 const banner = '// 本文件由 scripts/gen-console-icons.ts 生成,请勿手改。\n'
   + '// 重新生成:bun run scripts/gen-console-icons.ts\n'
-  + '/* eslint-disable */\n'
 const body = `import type { IconifyJSON } from '@iconify/vue'\n\n`
   + `export const riOfflineIcons: IconifyJSON = ${JSON.stringify(subset)}\n`
 mkdirSync(dirname(outFile), { recursive: true })
