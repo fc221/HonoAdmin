@@ -178,6 +178,15 @@ export const apiClient = {
     return unwrap<ResourceMutation>(res)
   },
 
+  async uploadProfileAvatar(file: File): Promise<ResourceMutation> {
+    const body = new FormData()
+    body.set('file', file)
+    return jsonFetch<ResourceMutation>('/api/user/profile/avatar', {
+      method: 'POST',
+      body,
+    })
+  },
+
   async switchRole(roleId: number): Promise<ResourceMutation> {
     const res = await client.auth.role.$post({ json: { roleId } })
     return unwrap<ResourceMutation>(res)

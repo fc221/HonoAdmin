@@ -16,7 +16,12 @@ export async function getLayoutPayload(
 ) {
   const siteConfig = await getSiteConfig(c).catch(() => ({ title: 'HonoAdmin' }))
   const sessionUser = await getOptionalSessionUser(c)
-  const profile = await getSessionProfile(c)
+  const profile = sessionUser
+    ? withSurfaceActiveRole(
+        await getSessionProfileByUserId(c, sessionUser.id, sessionUser.roleId ?? null),
+        surface,
+      )
+    : null
   const menus = surface === 'admin'
     ? sessionUser ? await listAuthorizedAdminMenus(c, sessionUser) : adminMenus
     : userMenus
@@ -26,6 +31,20 @@ export async function getLayoutPayload(
     siteTitle: siteConfig.title,
     user: profile,
   }
+}
+
+function withSurfaceActiveRole(
+  profile: UserProfile | null,
+  surface: 'admin' | 'user',
+): UserProfile | null {
+  if (!profile || surface !== 'user') {
+    return profile
+  }
+
+  const userRole = profile.roles.find((role) => role.code === 'user')
+  return userRole && profile.activeRoleId !== userRole.id
+    ? { ...profile, activeRoleId: userRole.id }
+    : profile
 }
 
 export async function getSessionProfile(c: Context<AppEnv>): Promise<UserProfile | null> {

@@ -6,9 +6,11 @@ import { Hono } from 'hono'
 import { userGenderOptions } from '../../../service/admin/system/user/enum'
 import {
   getCurrentUserProfilePageData,
+  updateCurrentUserAvatar,
   updateCurrentUserPassword,
   updateCurrentUserProfile,
 } from '../../../service/user/profile'
+import { ValidationError } from '../../../utils/errors'
 import { profilePasswordInputSchema } from '../../schema'
 import { describeRoute, jsonResponse, validate } from '../../shared/openapi'
 import { listInput } from '../../shared/resource'
@@ -41,6 +43,41 @@ const profileResource: ResourceDefinition = {
 }
 
 const profileApi = new Hono<AppEnv>()
+  .post(
+    '/avatar',
+    describeRoute({
+      tags: ['profile'],
+      summary: '上传并更新当前用户头像',
+      requestBody: {
+        content: {
+          'multipart/form-data': {
+            schema: {
+              type: 'object',
+              properties: {
+                file: { type: 'string', format: 'binary' },
+              },
+              required: ['file'],
+            },
+          },
+        },
+      },
+      responses: { 200: jsonResponse(resourceMutationSchema, '头像已更新') },
+    }),
+    async (c) => {
+      const body = await c.req.parseBody()
+      const file = body.file
+      if (!(file instanceof File)) {
+        throw new ValidationError('请选择头像图片。', { field: 'file' })
+      }
+
+      const user = await updateCurrentUserAvatar(c, file)
+      return c.json(resourceMutationSchema.parse({
+        data: { avatar: user.avatar },
+        message: '头像已更新。',
+        ok: true,
+      }))
+    },
+  )
   .post(
     '/password',
     describeRoute({

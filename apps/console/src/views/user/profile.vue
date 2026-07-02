@@ -15,10 +15,10 @@ import {
   useMessage,
   useNotification,
 } from 'naive-ui'
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { apiClient } from '../../api/client'
 import DataTable from '../../components/DataTable.vue'
-import Upload from '../../components/Upload.vue'
+import AvatarUpload from './AvatarUpload.vue'
 import ProfileInfoCard from './ProfileInfoCard.vue'
 
 const message = useMessage()
@@ -69,6 +69,10 @@ const genderOptions = [
   { label: '女', value: 'female' },
   { label: '未知', value: 'unknown' },
 ]
+const avatarInitials = computed(() => {
+  const source = profileForm.nickname || profileForm.username || session.value?.username || 'U'
+  return source.trim().slice(0, 2).toUpperCase()
+})
 
 async function load() {
   loadingBar.start()
@@ -99,30 +103,32 @@ function applyProfile(data: Record<string, unknown>) {
   profileForm.username = stringValue(data.username)
 }
 
-async function uploadAvatar() {
-  const files = avatarFiles.value
-    .map(file => file.file)
-    .filter((file): file is File => file instanceof File)
+async function handleAvatarFilesChange(files: UploadFileInfo[]) {
+  avatarFiles.value = files
+  const file = selectedAvatarFile()
 
-  if (!files.length) {
-    message.warning('请选择头像图片。')
+  if (!file) {
+    return
+  }
+
+  if (!session.value) {
+    message.warning('请先登录。')
+    avatarFiles.value = []
     return
   }
 
   submitting.value = true
   try {
-    const result = await apiClient.uploadSystemFiles('avatar', files.slice(0, 1))
-    const uploaded = Array.isArray(result.data?.files) ? result.data.files[0] : null
-    const url = typeof uploaded === 'object' && uploaded && 'url' in uploaded
-      ? String(uploaded.url)
-      : ''
-    if (url) {
-      profileForm.avatar = url
-      message.success('头像已上传。')
+    const result = await apiClient.uploadProfileAvatar(file)
+    if (typeof result.data?.avatar === 'string') {
+      profileForm.avatar = result.data.avatar
     }
+    message.success(result.message)
+    avatarFiles.value = []
+    await load()
   }
   catch (reason) {
-    message.error(reason instanceof Error ? reason.message : '头像上传失败。')
+    notifyError('头像上传失败', reason, '头像上传失败。')
   }
   finally {
     submitting.value = false
@@ -195,6 +201,12 @@ function stringValue(value: unknown) {
   return typeof value === 'string' ? value : ''
 }
 
+function selectedAvatarFile() {
+  return avatarFiles.value
+    .map(file => file.file)
+    .find((file): file is File => file instanceof File)
+}
+
 function notifyError(title: string, reason: unknown, fallback: string) {
   notification.error({
     content: reason instanceof Error ? reason.message : fallback,
@@ -217,16 +229,14 @@ onMounted(load)
         <NTabs type="line" animated>
           <NTabPane name="profile" tab="信息编辑">
             <NForm ref="profileFormRef" class="max-w-2xl" label-placement="top" :model="profileForm" :rules="profileRules" :show-require-mark="false">
-              <NFormItem label="头像 URL">
-                <NInput v-model:value="profileForm.avatar" placeholder="头像 URL" />
-              </NFormItem>
               <NFormItem label="上传头像">
-                <div class="w-full space-y-3">
-                  <Upload v-model:file-list="avatarFiles" :max="1" :multiple="false" :disabled="submitting" />
-                  <NButton size="small" :loading="submitting" @click="uploadAvatar">
-                    上传头像
-                  </NButton>
-                </div>
+                <AvatarUpload
+                  :avatar="profileForm.avatar"
+                  :disabled="submitting"
+                  :file-list="avatarFiles"
+                  :initials="avatarInitials"
+                  @update:file-list="handleAvatarFilesChange"
+                />
               </NFormItem>
               <NFormItem label="昵称">
                 <NInput v-model:value="profileForm.nickname" placeholder="用户昵称" maxlength="80" />

@@ -15,6 +15,10 @@ import type {
 import { UnauthorizedError, ValidationError } from '../../../utils/errors'
 import { getAdminSessionUser, setAdminSession } from '../../admin/session'
 import {
+  deleteFile,
+  uploadFile,
+} from '../../admin/system/file'
+import {
   createRequestOperateLog,
   listOperateLogs,
 } from '../../admin/system/operate-log'
@@ -95,6 +99,35 @@ export async function updateUserProfileById(
   })
 
   return user
+}
+
+export async function updateCurrentUserAvatar(
+  c: ServiceRequestContext,
+  file: File,
+): Promise<UserRecord> {
+  const sessionUser = await requireCurrentUserSession(c)
+  const uploaded = await uploadFile(c, {
+    file,
+    uploadType: 'avatar',
+    userId: sessionUser.id,
+  })
+
+  try {
+    const user = await updateUser(c, sessionUser.id, { avatar: uploaded.url })
+
+    await createRequestOperateLog(c, {
+      logData: { fileId: uploaded.id },
+      logMsg: '上传头像',
+      logType: 'updateOne',
+      method: 'user.profile.avatar',
+      userId: sessionUser.id,
+    })
+
+    return user
+  } catch (error) {
+    await deleteFile(c, uploaded.id).catch(() => {})
+    throw error
+  }
 }
 
 export async function updateCurrentUserPassword(
