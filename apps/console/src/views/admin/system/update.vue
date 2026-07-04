@@ -1,146 +1,53 @@
 <script setup lang="ts">
-import type { ResourceAction, ResourceField, ResourceList } from '@hono-admin/server/api/schema'
-import { NButton, NCard, NInput, NPagination, useLoadingBar, useMessage, useNotification } from 'naive-ui'
-import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import type { UpdateStatus } from '@hono-admin/server/api/schema'
+import { NAlert, NButton, NCard, NTag, useLoadingBar, useMessage, useNotification } from 'naive-ui'
+import { computed, onMounted, ref } from 'vue'
 import { apiClient } from '../../../api/client'
 import AppIcon from '../../../components/AppIcon.vue'
-import DataTable from '../../../components/DataTable.vue'
-import ResourceFormModal from '../../../components/ResourceFormModal.vue'
 
-const route = useRoute()
 const loadingBar = useLoadingBar()
 const message = useMessage()
 const notification = useNotification()
-const data = ref<ResourceList | null>(null)
-const formFields = ref<ResourceField[]>([])
-const formInitial = ref<Record<string, unknown>>({})
-const formMode = ref<'create' | 'edit'>('create')
-const formOpen = ref(false)
-const keyword = ref('')
 const loading = ref(false)
-const page = ref(1)
-const pageSize = ref(10)
-const selectedId = ref<number | null>(null)
-const submitting = ref(false)
+const migrating = ref(false)
+const status = ref<UpdateStatus | null>(null)
 
-const modalTitle = computed(() =>
-  formMode.value === 'create'
-    ? `新增${data.value?.title ?? ''}`
-    : `编辑${data.value?.title ?? ''}`,
-)
+const migration = computed(() => status.value?.migration ?? null)
+const isComplete = computed(() => migration.value?.isComplete === true)
+const pendingMigrations = computed(() => migration.value?.pendingMigrations ?? [])
 
 async function load() {
   loading.value = true
   loadingBar.start()
   try {
-    data.value = await apiClient.getResource('admin', resourceName(), {
-      keyword: keyword.value,
-      page: page.value,
-      pageSize: pageSize.value,
-    })
+    status.value = await apiClient.getUpdateStatus()
     loadingBar.finish()
   }
   catch (reason) {
     loadingBar.error()
-    notifyError('列表加载失败', reason, '列表加载失败。')
+    notifyError('状态加载失败', reason, '状态加载失败。')
   }
   finally {
     loading.value = false
   }
 }
 
-async function handleTopAction(action: ResourceAction) {
-  if (action.key === 'create') {
-    formMode.value = 'create'
-    formFields.value = data.value?.createFields ?? []
-    formInitial.value = {}
-    selectedId.value = null
-    formOpen.value = true
-    return
-  }
-
-  submitting.value = true
+async function migrate() {
+  migrating.value = true
+  loadingBar.start()
   try {
-    const result = await apiClient.runResourceAction('admin', resourceName(), action.key)
+    const result = await apiClient.runUpdateMigrations()
     message.success(result.message)
     await load()
+    loadingBar.finish()
   }
   catch (reason) {
-    notifyError('操作失败', reason, '操作失败。')
+    loadingBar.error()
+    notifyError('迁移失败', reason, '迁移失败。')
   }
   finally {
-    submitting.value = false
+    migrating.value = false
   }
-}
-
-async function handleRowAction(action: ResourceAction, row: Record<string, unknown>) {
-  const id = Number(row.id)
-  if (!Number.isInteger(id) || id <= 0) {
-    message.error('资源 ID 不正确。')
-    return
-  }
-
-  if (action.key === 'edit') {
-    submitting.value = true
-    try {
-      const detail = await apiClient.getResourceDetail('admin', resourceName(), id)
-      formMode.value = 'edit'
-      formFields.value = detail.fields
-      formInitial.value = detail.data
-      selectedId.value = id
-      formOpen.value = true
-    }
-    catch (reason) {
-      notifyError('详情加载失败', reason, '详情加载失败。')
-    }
-    finally {
-      submitting.value = false
-    }
-    return
-  }
-
-  if (action.key === 'delete') {
-    submitting.value = true
-    try {
-      const result = await apiClient.deleteResource('admin', resourceName(), id)
-      message.success(result.message)
-      await load()
-    }
-    catch (reason) {
-      notifyError('删除失败', reason, '删除失败。')
-    }
-    finally {
-      submitting.value = false
-    }
-  }
-}
-
-async function submitForm(input: Record<string, unknown>) {
-  submitting.value = true
-  try {
-    const result = formMode.value === 'create'
-      ? await apiClient.createResource('admin', resourceName(), input)
-      : await apiClient.updateResource('admin', resourceName(), selectedId.value ?? 0, input)
-    message.success(result.message)
-    formOpen.value = false
-    await load()
-  }
-  catch (reason) {
-    notifyError('保存失败', reason, '保存失败。')
-  }
-  finally {
-    submitting.value = false
-  }
-}
-
-function resourceName() {
-  return String(route.meta.resource)
-}
-
-function resetAndLoad() {
-  page.value = 1
-  void load()
 }
 
 function notifyError(title: string, reason: unknown, fallback: string) {
@@ -151,76 +58,96 @@ function notifyError(title: string, reason: unknown, fallback: string) {
   })
 }
 
-watch(() => route.fullPath, load)
 onMounted(load)
 </script>
 
 <template>
   <div class="space-y-4">
     <NCard class="overflow-hidden">
-      <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div class="flex flex-wrap items-center gap-2">
-          <NButton
-            v-for="action in data?.actions ?? []"
-            :key="action.key"
-            size="small"
-            :type="action.danger ? 'error' : 'primary'"
-            :loading="submitting"
-            @click="handleTopAction(action)"
-          >
-            <template v-if="action.key === 'create'" #icon>
-              <AppIcon name="ri:add-line" />
-            </template>
-            {{ action.label }}
-          </NButton>
+      <div class="mb-5 flex flex-wrap items-start justify-between gap-4">
+        <div class="min-w-0">
+          <div class="mb-2 flex items-center gap-2">
+            <AppIcon class="text-xl text-primary" name="ri:refresh-line" />
+            <h2 class="text-lg font-semibold">
+              数据库迁移
+            </h2>
+            <NTag v-if="migration" :type="isComplete ? 'success' : 'warning'" size="small" :bordered="false">
+              {{ isComplete ? '已是最新' : '待迁移' }}
+            </NTag>
+          </div>
+          <p class="text-sm text-base-muted">
+            当前版本 {{ status?.currentVersion ?? '-' }}
+          </p>
         </div>
 
-        <div class="ml-auto flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto" style="width: min(20rem, 100%)">
-          <NInput
-            v-model:value="keyword"
-            clearable
-            :placeholder="String(route.meta.searchPlaceholder ?? '关键词搜索')"
-            size="small"
-            style="width: min(16rem, 100%)"
-            @keyup.enter="resetAndLoad"
-          >
-            <template #prefix>
-              <AppIcon name="ri:search-line" />
-            </template>
-          </NInput>
-          <NButton size="small" type="primary" @click="resetAndLoad">
-            搜索
-          </NButton>
+        <NButton
+          type="primary"
+          :disabled="loading || isComplete"
+          :loading="migrating"
+          @click="migrate"
+        >
+          <template #icon>
+            <AppIcon name="ri:play-circle-line" />
+          </template>
+          执行迁移
+        </NButton>
+      </div>
+
+      <NAlert :type="isComplete ? 'success' : 'warning'" class="mb-5">
+        <template v-if="isComplete">
+          数据库结构已是最新。
+        </template>
+        <template v-else>
+          待执行迁移 {{ migration?.pendingCount ?? 0 }} 个。
+        </template>
+      </NAlert>
+
+      <div class="grid gap-3 md:grid-cols-3">
+        <div class="rounded border border-base-border p-4">
+          <div class="text-xs text-base-muted">
+            已执行
+          </div>
+          <div class="mt-1 text-2xl font-semibold">
+            {{ migration?.appliedCount ?? '-' }}
+          </div>
+        </div>
+        <div class="rounded border border-base-border p-4">
+          <div class="text-xs text-base-muted">
+            待执行
+          </div>
+          <div class="mt-1 text-2xl font-semibold">
+            {{ migration?.pendingCount ?? '-' }}
+          </div>
+        </div>
+        <div class="rounded border border-base-border p-4">
+          <div class="text-xs text-base-muted">
+            最新代码迁移
+          </div>
+          <div class="mt-1 truncate font-mono text-sm font-semibold">
+            {{ migration?.latestCodeMigrationId ?? '-' }}
+          </div>
         </div>
       </div>
 
-      <DataTable
-        :data="data"
-        :framed="false"
-        :loading="loading"
-        :row-actions="data?.rowActions ?? []"
-        @row-action="handleRowAction"
-      />
-      <div class="mt-4 flex justify-end">
-        <NPagination
-          v-model:page="page"
-          v-model:page-size="pageSize"
-          :item-count="data?.pagination.total ?? 0"
-          :page-sizes="[10, 20, 50]"
-          show-size-picker
-          @update:page="load"
-          @update:page-size="resetAndLoad"
-        />
+      <div class="mt-5 rounded border border-base-border">
+        <div class="grid gap-3 border-b border-base-border px-4 py-3 text-xs font-medium text-base-muted md:grid-cols-[1fr_1fr]">
+          <span>迁移 ID</span>
+          <span>名称</span>
+        </div>
+        <div v-if="pendingMigrations.length" class="divide-y divide-base-border">
+          <div
+            v-for="item in pendingMigrations"
+            :key="item.id"
+            class="grid gap-3 px-4 py-3 text-sm md:grid-cols-[1fr_1fr]"
+          >
+            <span class="break-all font-mono">{{ item.id }}</span>
+            <span>{{ item.name }}</span>
+          </div>
+        </div>
+        <div v-else class="px-4 py-6 text-center text-sm text-base-muted">
+          暂无待执行迁移
+        </div>
       </div>
     </NCard>
   </div>
-  <ResourceFormModal
-    v-model:show="formOpen"
-    :fields="formFields"
-    :initial="formInitial"
-    :submitting="submitting"
-    :title="modalTitle"
-    @cancel="formOpen = false"
-    @submit="submitForm"
-  />
 </template>

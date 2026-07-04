@@ -15,8 +15,8 @@ import { fileURLToPath } from 'node:url'
 
 const rootUrl = new URL('../', import.meta.url)
 
-const serverPort = process.env.SERVER_PORT ?? '3001'
-const consolePort = process.env.CONSOLE_PORT ?? '5174'
+const serverPort = process.env.SERVER_PORT ?? '2999'
+const consolePort = process.env.CONSOLE_PORT ?? '5100'
 
 // 关键:把解析后的端口显式写回子进程环境。server 监听端口、console 监听端口、
 // 以及 console 的 /api 代理目标都从这两个变量读取;不下传的话子进程会各自回退默认端口,

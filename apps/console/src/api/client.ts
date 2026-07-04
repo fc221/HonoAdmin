@@ -12,6 +12,7 @@ import type {
   ResourceList,
   ResourceMutation,
   RuntimeConfigInput,
+  UpdateStatus,
   UserProfile,
 } from '@hono-admin/server/api/schema'
 import { hc } from 'hono/client'
@@ -158,6 +159,16 @@ export const apiClient = {
 
   async updateAdminConfigValues(input: ConfigValuesInput): Promise<ResourceMutation> {
     const res = await client.admin.system.config.values.$post({ json: input })
+    return unwrap<ResourceMutation>(res)
+  },
+
+  async getUpdateStatus(): Promise<UpdateStatus> {
+    const res = await client.admin.system.update.status.$get()
+    return unwrap<UpdateStatus>(res)
+  },
+
+  async runUpdateMigrations(): Promise<ResourceMutation> {
+    const res = await client.admin.system.update.migrate.$post()
     return unwrap<ResourceMutation>(res)
   },
 

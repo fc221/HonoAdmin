@@ -7,7 +7,12 @@ import {
   needsPasswordRehash,
   verifyUserPassword,
 } from '../apps/server/src/service/admin/system/user'
-import { csrf, headers, requestBodyLimit } from '../apps/server/src/service/middleware/security'
+import { apiSameOrigin } from '../apps/server/src/service/middleware/api-same-origin'
+import {
+  csrf,
+  headers,
+  requestBodyLimit,
+} from '../apps/server/src/service/middleware/security'
 import {
   csrfCookieName,
   csrfFieldName,
@@ -95,6 +100,59 @@ describe('security utilities', () => {
     expect(csp).toContain('media-src \'self\' data: https: blob:')
     expect(lanResponse.headers.get('Cross-Origin-Opener-Policy')).toBeNull()
     expect(localhostResponse.headers.get('Cross-Origin-Opener-Policy')).toBe('same-origin')
+  })
+
+  test('same-origin guard rejects cross-site cookie API mutations', async () => {
+    const api = new Hono()
+    api.use('/api/*', apiSameOrigin)
+    api.onError((error, c) => {
+      const shape = toErrorShape(error)
+      return c.json(shape.body, shape.status as never)
+    })
+    api.post('/api/admin/save', (c) => c.json({ ok: true }))
+
+    const blocked = await api.request(new Request('http://localhost/api/admin/save', {
+      headers: {
+        cookie: 'hono_admin_session=session',
+        origin: 'https://evil.example',
+      },
+      method: 'POST',
+    }))
+    expect(blocked.status).toBe(403)
+
+    const blockedByFetchSite = await api.request(new Request('http://localhost/api/admin/save', {
+      headers: {
+        'cookie': 'hono_admin_session=session',
+        'sec-fetch-site': 'cross-site',
+      },
+      method: 'POST',
+    }))
+    expect(blockedByFetchSite.status).toBe(403)
+
+    const sameOrigin = await api.request(new Request('http://localhost/api/admin/save', {
+      headers: {
+        cookie: 'hono_admin_session=session',
+        origin: 'http://localhost',
+      },
+      method: 'POST',
+    }))
+    expect(sameOrigin.status).toBe(200)
+
+    const proxiedSameOrigin = await api.request(new Request('http://127.0.0.1:3000/api/admin/save', {
+      headers: {
+        'cookie': 'hono_admin_session=session',
+        'origin': 'http://127.0.0.1:5173',
+        'sec-fetch-site': 'same-origin',
+      },
+      method: 'POST',
+    }))
+    expect(proxiedSameOrigin.status).toBe(200)
+
+    const noCookie = await api.request(new Request('http://localhost/api/admin/save', {
+      headers: { origin: 'https://evil.example' },
+      method: 'POST',
+    }))
+    expect(noCookie.status).toBe(200)
   })
 
   test('csrf middleware requires a signed same-origin token for form posts', async () => {

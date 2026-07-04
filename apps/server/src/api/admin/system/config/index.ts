@@ -1,4 +1,10 @@
 import type { AppEnv } from '@hono-admin/runtime'
+import type {
+  ConfigDefinition,
+  ConfigRecord,
+  ConfigType,
+  ConfigValuesInput,
+} from '../../../schema'
 import type { ResourceDefinition } from '../../../shared/resource'
 import { Hono } from 'hono'
 import {
@@ -36,15 +42,15 @@ const configResource: ResourceDefinition = {
     ['configValue', '值'],
     ['updatedAt', '更新时间'],
   ],
-  create: (c, input) => createConfig(c, input as never),
+  create: async (c, input) => maskConfigRecord(await createConfig(c, input as never)),
   createFields: configFields,
   delete: deleteConfig,
   editFields: configFields,
-  get: getConfigById,
-  list: (c) => listConfigs(c),
+  get: async (c, id) => maskConfigRecord(await getConfigById(c, id)),
+  list: async (c) => (await listConfigs(c)).map(maskConfigRecord),
   rowActions: [editAction, deleteAction],
   title: '配置管理',
-  update: (c, id, input) => updateConfig(c, id, input as never),
+  update: updateConfigResource,
 }
 
 const systemConfigApi = new Hono<AppEnv>()
@@ -57,8 +63,8 @@ const systemConfigApi = new Hono<AppEnv>()
     }),
     async (c) =>
       c.json(configPanelPayloadSchema.parse({
-        configs: await listConfigs(c),
-        definitions: builtInConfigDefinitions,
+        configs: (await listConfigs(c)).map(maskConfigRecord),
+        definitions: builtInConfigDefinitions.map(maskConfigDefinition),
         types: configTypeOptions,
       })),
   )
@@ -72,7 +78,10 @@ const systemConfigApi = new Hono<AppEnv>()
     validate('json', configValuesInputSchema),
     async (c) => {
       const input = c.req.valid('json')
-      const updateCount = await updateConfigValues(c, input)
+      const safeInput = omitBlankSecretConfigValues(input)
+      const updateCount = Object.keys(safeInput.values).length > 0
+        ? await updateConfigValues(c, safeInput)
+        : 0
 
       await createRequestOperateLog(c, {
         logMsg: `更新${getConfigTypeLabel(input.configType)}配置 ${updateCount} 项`,
@@ -102,4 +111,62 @@ function configFields() {
 function getConfigTypeLabel(type: string): string {
   const option = configTypeOptions.find((item) => item.value === type)
   return option?.label ?? '系统'
+}
+
+async function updateConfigResource(
+  c: Parameters<NonNullable<ResourceDefinition['update']>>[0],
+  id: number,
+  input: Record<string, unknown>,
+): Promise<ConfigRecord> {
+  const current = await getConfigById(c, id)
+  const nextType = getConfigType(input.configType) ?? current.configType
+  const nextKey = typeof input.configKey === 'string' ? input.configKey : current.configKey
+  const nextInput = { ...input }
+
+  if (nextInput.configValue === '' && isSecretConfig(nextType, nextKey)) {
+    delete nextInput.configValue
+  }
+
+  if (Object.keys(nextInput).length === 0) {
+    return maskConfigRecord(current)
+  }
+
+  return maskConfigRecord(await updateConfig(c, id, nextInput as never))
+}
+
+function maskConfigRecord(config: ConfigRecord): ConfigRecord {
+  return isSecretConfig(config.configType, config.configKey)
+    ? { ...config, configValue: '' }
+    : config
+}
+
+function maskConfigDefinition(definition: ConfigDefinition): ConfigDefinition {
+  return definition.inputType === 'password'
+    ? { ...definition, configValue: '' }
+    : definition
+}
+
+function omitBlankSecretConfigValues(input: ConfigValuesInput): ConfigValuesInput {
+  return {
+    ...input,
+    values: Object.fromEntries(
+      Object.entries(input.values).filter(([configKey, configValue]) =>
+        configValue !== '' || !isSecretConfig(input.configType, configKey),
+      ),
+    ),
+  }
+}
+
+function isSecretConfig(configType: ConfigType, configKey: string): boolean {
+  return builtInConfigDefinitions.some((definition) =>
+    definition.configType === configType
+    && definition.configKey === configKey
+    && definition.inputType === 'password'
+  )
+}
+
+function getConfigType(value: unknown): ConfigType | null {
+  return configTypeOptions.some((option) => option.value === value)
+    ? value as ConfigType
+    : null
 }

@@ -47,6 +47,12 @@ export const useSessionStore = defineStore('session', () => {
   async function switchRole(roleId: number): Promise<ResourceMutation> {
     const result = await apiClient.switchRole(roleId)
     clearLayout()
+    const target = typeof result.data?.target === 'string' ? result.data.target : ''
+    const nextSurface = target.startsWith('/user')
+      ? 'user'
+      : target.startsWith('/admin') ? 'admin' : activeSurface.value
+    activeSurface.value = nextSurface
+    await ensureLayout(nextSurface)
     return result
   }
 

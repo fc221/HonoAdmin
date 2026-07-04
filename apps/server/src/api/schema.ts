@@ -6,6 +6,7 @@ export { adminMenus, userMenus } from '../service/admin/system/menu/consts'
 export type { MenuItem } from '../service/admin/system/menu/consts'
 
 export * from './admin/system/config/schema'
+export * from './admin/system/update-schema'
 export * from './auth/schema'
 export * from './install/schema'
 export * from './shared/resource-schema'

@@ -4,7 +4,7 @@ import { NButton, NCheckbox, NDropdown, NForm, NFormItem, NInput, useMessage } f
 import { storeToRefs } from 'pinia'
 import { computed, h, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { apiClient } from '../api/client'
+import { apiClient, ApiClientError } from '../api/client'
 import AppIcon from '../components/AppIcon.vue'
 import { useThemeStore } from '../stores/theme'
 
@@ -65,6 +65,12 @@ async function submit() {
     await router.push(getReturnTo())
   }
   catch (error) {
+    if (error instanceof ApiClientError && error.status === 428) {
+      message.warning(error.message)
+      await router.replace('/admin/system/update')
+      return
+    }
+
     message.error(error instanceof Error ? error.message : '登录失败')
   }
   finally {

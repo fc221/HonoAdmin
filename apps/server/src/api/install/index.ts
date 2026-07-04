@@ -1,4 +1,6 @@
 import type { AppEnv } from '@hono-admin/runtime'
+import type { BootstrapConfigStatus } from '@hono-admin/runtime/bootstrap'
+import type { Context, Next } from 'hono'
 import { Hono } from 'hono'
 import { setAdminSession } from '../../service/admin/session'
 import { upsertConfig } from '../../service/admin/system/config'
@@ -14,6 +16,7 @@ import {
   isAdminInstalled,
 } from '../../service/admin/system/user'
 import { createUserSchema } from '../../service/admin/system/user/dto'
+import { ForbiddenError } from '../../utils/errors'
 import {
   installAdminInputSchema,
   installStatusSchema,
@@ -34,12 +37,12 @@ const installApi = new Hono<AppEnv>()
       const migration = c.config.bootstrap.isConfigured
         ? await getDatabaseMigrationStatus(c).catch(() => null)
         : null
-      const installed = migration?.isComplete
+      const installed = migration && !migration.isFreshDatabase
         ? await isAdminInstalled(c).catch(() => false)
         : false
 
       return c.json({
-        bootstrap: c.config.bootstrap,
+        bootstrap: redactBootstrapSecrets(c.config.bootstrap),
         installed,
         migration,
       })
@@ -55,6 +58,7 @@ const installApi = new Hono<AppEnv>()
         400: emptyResponse('当前运行时不支持'),
       },
     }),
+    requireFirstInstall,
     validate('json', runtimeConfigInputSchema),
     async (c) => {
       if (c.config.runtimeTarget !== 'bun') {
@@ -92,6 +96,7 @@ const installApi = new Hono<AppEnv>()
       summary: '执行数据库迁移',
       responses: { 200: jsonResponse(resourceMutationSchema, '迁移已完成') },
     }),
+    requireFirstInstall,
     async (c) => {
       await runDatabaseMigrations(c)
       return c.json(resourceMutationSchema.parse({
@@ -111,6 +116,7 @@ const installApi = new Hono<AppEnv>()
         400: emptyResponse('两次输入的密码不一致'),
       },
     }),
+    requireFirstInstall,
     validate('json', installAdminInputSchema),
     async (c) => {
       const input = c.req.valid('json')
@@ -144,3 +150,25 @@ const installApi = new Hono<AppEnv>()
   )
 
 export default installApi
+
+async function requireFirstInstall(c: Context<AppEnv>, next: Next): Promise<void> {
+  if (await isAdminInstalled(c).catch(() => false)) {
+    throw new ForbiddenError('系统已安装,安装入口已关闭。')
+  }
+
+  await next()
+}
+
+function redactBootstrapSecrets(bootstrap: BootstrapConfigStatus): BootstrapConfigStatus {
+  return {
+    ...bootstrap,
+    requirements: bootstrap.requirements.map((requirement) => {
+      if (!requirement.isSecret) {
+        return requirement
+      }
+
+      const { value: _value, ...safeRequirement } = requirement
+      return safeRequirement
+    }),
+  }
+}

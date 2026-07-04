@@ -2,7 +2,14 @@ import type { AppEnv } from '@hono-admin/runtime'
 import type { Context, Next } from 'hono'
 import { describe, expect, test } from 'bun:test'
 import app, { setApiRuntimeContextMiddleware } from '../apps/server/src/app'
-import { listRoles } from '../apps/server/src/service/admin/system/role'
+import {
+  getConfigValue,
+  listConfigs,
+  upsertConfig,
+} from '../apps/server/src/service/admin/system/config'
+import { siteNameConfig } from '../apps/server/src/service/admin/system/config/constants'
+import { createRole, listRoles } from '../apps/server/src/service/admin/system/role'
+import { getDatabaseMigrationStatus } from '../apps/server/src/service/admin/system/update'
 import {
   createUser,
   getUserCredentialByUsername,
@@ -12,6 +19,320 @@ import { UserStatus } from '../apps/server/src/service/admin/system/user/enum'
 import { createTestServiceContext } from './helpers/service-context'
 
 describe('API resource routes', () => {
+  test('install migration is public only before the first admin exists', async () => {
+    const testContext = await createTestServiceContext({ runMigrations: false })
+    const { ctx } = testContext
+
+    try {
+      setApiRuntimeContextMiddleware(async (c: Context<AppEnv>, next: Next) => {
+        c.runtime = ctx.runtime
+        c.db = ctx.db
+        c.cache = ctx.cache
+        c.config = ctx.config
+        c.now = ctx.now
+        await next()
+      })
+
+      const initialMigrate = await app.request('/api/install/migrate', { method: 'POST' })
+      expect(initialMigrate.status).toBe(200)
+
+      await createUser(ctx, {
+        isRoot: true,
+        password: 'secret123',
+        status: UserStatus.NORMAL,
+        username: 'install.root',
+      })
+
+      const installedMigrate = await app.request('/api/install/migrate', { method: 'POST' })
+      expect(installedMigrate.status).toBe(403)
+    } finally {
+      await testContext.cleanup()
+    }
+  })
+
+  test('install status redacts bootstrap secret values', async () => {
+    const testContext = await createTestServiceContext()
+    const { ctx } = testContext
+
+    try {
+      ctx.config.bootstrap = {
+        ...ctx.config.bootstrap,
+        requirements: [
+          {
+            description: 'database',
+            isConfigured: true,
+            key: 'DATABASE_URL',
+            label: '数据库地址',
+            value: './test.sqlite',
+          },
+          {
+            description: 'jwt',
+            isConfigured: true,
+            isSecret: true,
+            key: 'JWT_SECRET',
+            label: 'JWT Secret',
+            value: 'jwt-secret-leak',
+          },
+          {
+            description: 'session',
+            isConfigured: true,
+            isSecret: true,
+            key: 'SESSION_SECRET',
+            label: 'Session Secret',
+            value: 'session-secret-leak',
+          },
+        ],
+      }
+      setApiRuntimeContextMiddleware(async (c: Context<AppEnv>, next: Next) => {
+        c.runtime = ctx.runtime
+        c.db = ctx.db
+        c.cache = ctx.cache
+        c.config = ctx.config
+        c.now = ctx.now
+        await next()
+      })
+
+      const response = await app.request('/api/install/status')
+      const payload = await response.json()
+      const jwtRequirement = payload.bootstrap.requirements.find(
+        (requirement: { key: string }) => requirement.key === 'JWT_SECRET',
+      )
+      const sessionRequirement = payload.bootstrap.requirements.find(
+        (requirement: { key: string }) => requirement.key === 'SESSION_SECRET',
+      )
+      const databaseRequirement = payload.bootstrap.requirements.find(
+        (requirement: { key: string }) => requirement.key === 'DATABASE_URL',
+      )
+
+      expect(response.status).toBe(200)
+      expect(JSON.stringify(payload)).not.toContain('jwt-secret-leak')
+      expect(JSON.stringify(payload)).not.toContain('session-secret-leak')
+      expect(jwtRequirement.value).toBeUndefined()
+      expect(sessionRequirement.value).toBeUndefined()
+      expect(databaseRequirement.value).toBe('./test.sqlite')
+    } finally {
+      await testContext.cleanup()
+    }
+  })
+
+  test('installed systems close install write endpoints before mutating site config', async () => {
+    const testContext = await createTestServiceContext()
+    const { ctx } = testContext
+
+    try {
+      setApiRuntimeContextMiddleware(async (c: Context<AppEnv>, next: Next) => {
+        c.runtime = ctx.runtime
+        c.db = ctx.db
+        c.cache = ctx.cache
+        c.config = ctx.config
+        c.now = ctx.now
+        await next()
+      })
+      await upsertConfig(ctx, {
+        configKey: siteNameConfig.configKey,
+        configType: siteNameConfig.configType,
+        configValue: 'Original Site',
+      })
+      await createUser(ctx, {
+        isRoot: true,
+        password: 'secret123',
+        status: UserStatus.NORMAL,
+        username: 'installed.root',
+      })
+
+      const runtimeConfig = await app.request('/api/install/runtime-config', {
+        body: JSON.stringify({
+          appTimezone: 'Asia/Shanghai',
+          cacheNamespace: 'hono-admin',
+          databaseUrl: './hono-admin.sqlite',
+          jwtSecret: 'a'.repeat(32),
+          sessionSecret: 'b'.repeat(32),
+        }),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+      })
+      const migrate = await app.request('/api/install/migrate', { method: 'POST' })
+      const admin = await app.request('/api/install/admin', {
+        body: JSON.stringify({
+          confirmPassword: 'secret123',
+          password: 'secret123',
+          siteName: 'Pwned Site',
+          username: 'pwned.root',
+        }),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+      })
+
+      expect(runtimeConfig.status).toBe(403)
+      expect(migrate.status).toBe(403)
+      expect(admin.status).toBe(403)
+      expect(await getConfigValue(ctx, siteNameConfig.configType, siteNameConfig.configKey))
+        .toBe('Original Site')
+    } finally {
+      await testContext.cleanup()
+    }
+  })
+
+  test('login redirects pending installed migrations to update management with a session', async () => {
+    const testContext = await createTestServiceContext()
+    const { ctx } = testContext
+
+    try {
+      setApiRuntimeContextMiddleware(async (c: Context<AppEnv>, next: Next) => {
+        c.runtime = ctx.runtime
+        c.db = ctx.db
+        c.cache = ctx.cache
+        c.config = ctx.config
+        c.now = ctx.now
+        await next()
+      })
+
+      await createUser(ctx, {
+        isRoot: true,
+        password: 'secret123',
+        status: UserStatus.NORMAL,
+        username: 'migration.root',
+      })
+
+      const migration = await getDatabaseMigrationStatus(ctx)
+      expect(migration.latestCodeMigrationId).toBeTruthy()
+      await ctx.db.execute('DELETE FROM _migrations WHERE id = ?', [
+        migration.latestCodeMigrationId,
+      ])
+
+      const login = await app.request('/api/auth/login', {
+        body: JSON.stringify({ password: 'secret123', remember: true, username: 'migration.root' }),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+      })
+      const loginPayload = await login.json()
+
+      expect(login.status).toBe(428)
+      expect(loginPayload.message).toContain('待迁移')
+
+      const updateStatus = await app.request('/api/admin/system/update/status', {
+        headers: { Cookie: getCookieHeader(login) },
+      })
+      expect(updateStatus.status).toBe(200)
+    } finally {
+      await testContext.cleanup()
+    }
+  })
+
+  test('login rate limit counts failures and successful login clears the counters', async () => {
+    const testContext = await createTestServiceContext()
+    const { ctx } = testContext
+
+    try {
+      ctx.config.security = {
+        ...ctx.config.security,
+        loginRateLimitAccountMax: 2,
+        loginRateLimitIpMax: 20,
+        loginRateLimitWindowSeconds: 60,
+      }
+      setApiRuntimeContextMiddleware(async (c: Context<AppEnv>, next: Next) => {
+        c.runtime = ctx.runtime
+        c.db = ctx.db
+        c.cache = ctx.cache
+        c.config = ctx.config
+        c.now = ctx.now
+        await next()
+      })
+
+      await createUser(ctx, {
+        isRoot: true,
+        password: 'secret123',
+        status: UserStatus.NORMAL,
+        username: 'limit.root',
+      })
+      const roles = await listRoles(ctx)
+      const userRoleId = roles.find((role) => role.code === 'user')?.id
+      expect(userRoleId).toBeDefined()
+      if (!userRoleId) {
+        throw new Error('Expected default user role to exist.')
+      }
+      await createUser(ctx, {
+        isRoot: false,
+        password: 'secret123',
+        roleIds: [userRoleId],
+        status: UserStatus.NORMAL,
+        username: 'clear.user',
+      })
+
+      expect((await loginRequest('limit.root', 'bad-secret')).status).toBe(401)
+      expect((await loginRequest('LIMIT.ROOT', 'bad-secret')).status).toBe(401)
+      expect((await loginRequest('limit.root', 'bad-secret')).status).toBe(429)
+
+      expect((await loginRequest('clear.user', 'bad-secret')).status).toBe(401)
+      expect((await loginRequest('clear.user', 'secret123')).status).toBe(200)
+      expect((await loginRequest('clear.user', 'bad-secret')).status).toBe(401)
+    } finally {
+      await testContext.cleanup()
+    }
+  })
+
+  test('update management migration uses admin permissions', async () => {
+    const testContext = await createTestServiceContext()
+    const { ctx } = testContext
+
+    try {
+      setApiRuntimeContextMiddleware(async (c: Context<AppEnv>, next: Next) => {
+        c.runtime = ctx.runtime
+        c.db = ctx.db
+        c.cache = ctx.cache
+        c.config = ctx.config
+        c.now = ctx.now
+        await next()
+      })
+
+      await createUser(ctx, {
+        isRoot: true,
+        password: 'secret123',
+        status: UserStatus.NORMAL,
+        username: 'update.root',
+      })
+
+      const role = await createRole(ctx, {
+        code: 'update-viewer-api',
+        description: 'Update status only',
+        menuNames: ['admin.system.update'],
+        name: '更新状态查看员',
+        permissionCodes: [
+          'admin.system.update.view',
+          'admin.system.update.status',
+        ],
+      })
+      await createUser(ctx, {
+        isRoot: false,
+        password: 'secret123',
+        roleId: role.id,
+        status: UserStatus.NORMAL,
+        username: 'update.viewer',
+      })
+
+      const login = await app.request('/api/auth/login', {
+        body: JSON.stringify({ password: 'secret123', remember: true, username: 'update.viewer' }),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+      })
+      expect(login.status).toBe(200)
+      const cookie = getCookieHeader(login)
+
+      const status = await app.request('/api/admin/system/update/status', {
+        headers: { Cookie: cookie },
+      })
+      expect(status.status).toBe(200)
+
+      const migrate = await app.request('/api/admin/system/update/migrate', {
+        headers: { Cookie: cookie },
+        method: 'POST',
+      })
+      expect(migrate.status).toBe(403)
+    } finally {
+      await testContext.cleanup()
+    }
+  })
+
   test('user layout marks the user-side role active after login', async () => {
     const testContext = await createTestServiceContext()
     const { ctx } = testContext
@@ -130,6 +451,109 @@ describe('API resource routes', () => {
     }
   })
 
+  test('config APIs redact password values and keep existing secrets on blank save', async () => {
+    const testContext = await createTestServiceContext()
+    const { ctx } = testContext
+
+    try {
+      setApiRuntimeContextMiddleware(async (c: Context<AppEnv>, next: Next) => {
+        c.runtime = ctx.runtime
+        c.db = ctx.db
+        c.cache = ctx.cache
+        c.config = ctx.config
+        c.now = ctx.now
+        await next()
+      })
+      await createUser(ctx, {
+        isRoot: true,
+        password: 'secret123',
+        status: UserStatus.NORMAL,
+        username: 'config.root',
+      })
+      await upsertConfig(ctx, {
+        configKey: 'file_s3_secret_access_key',
+        configType: 'file',
+        configValue: 'super-secret',
+      })
+      await upsertConfig(ctx, {
+        configKey: 'file_s3_bucket',
+        configType: 'file',
+        configValue: 'bucket-a',
+      })
+
+      const login = await loginRequest('config.root', 'secret123')
+      expect(login.status).toBe(200)
+      const cookie = getCookieHeader(login)
+
+      const panel = await app.request('/api/admin/system/config/panel', {
+        headers: { Cookie: cookie },
+      })
+      const panelText = await panel.text()
+      const panelPayload = JSON.parse(panelText)
+      const panelSecret = panelPayload.configs.find(
+        (config: { configKey: string }) => config.configKey === 'file_s3_secret_access_key',
+      )
+
+      expect(panel.status).toBe(200)
+      expect(panelText).not.toContain('super-secret')
+      expect(panelSecret.configValue).toBe('')
+
+      const secretConfig = (await listConfigs(ctx)).find(
+        (config) => config.configKey === 'file_s3_secret_access_key',
+      )
+      expect(secretConfig).toBeDefined()
+      if (!secretConfig) {
+        throw new Error('Expected secret config to exist.')
+      }
+
+      const detail = await app.request(`/api/admin/system/config/${secretConfig.id}`, {
+        headers: { Cookie: cookie },
+      })
+      const detailText = await detail.text()
+      const detailPayload = JSON.parse(detailText)
+
+      expect(detail.status).toBe(200)
+      expect(detailText).not.toContain('super-secret')
+      expect(detailPayload.data.configValue).toBe('')
+
+      const blankSave = await app.request('/api/admin/system/config/values', {
+        body: JSON.stringify({
+          configType: 'file',
+          values: {
+            file_s3_bucket: 'bucket-b',
+            file_s3_secret_access_key: '',
+          },
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Cookie': cookie,
+          'Origin': 'http://127.0.0.1:5173',
+          'Sec-Fetch-Site': 'same-origin',
+        },
+        method: 'POST',
+      })
+      expect(blankSave.status).toBe(200)
+      expect(await getConfigValue(ctx, 'file', 'file_s3_bucket')).toBe('bucket-b')
+      expect(await getConfigValue(ctx, 'file', 'file_s3_secret_access_key')).toBe('super-secret')
+
+      const secretSave = await app.request('/api/admin/system/config/values', {
+        body: JSON.stringify({
+          configType: 'file',
+          values: { file_s3_secret_access_key: 'next-secret' },
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Cookie': cookie,
+        },
+        method: 'POST',
+      })
+      expect(secretSave.status).toBe(200)
+      expect(await getConfigValue(ctx, 'file', 'file_s3_secret_access_key')).toBe('next-secret')
+    } finally {
+      await testContext.cleanup()
+    }
+  })
+
   test('admin user update accepts blank optional fields without returning 500', async () => {
     const testContext = await createTestServiceContext()
     const { ctx } = testContext
@@ -234,6 +658,17 @@ function getCookieHeader(response: Response): string {
   const setCookie = response.headers.get('set-cookie')
   expect(setCookie).toBeTruthy()
   return setCookie?.split(';')[0] ?? ''
+}
+
+function loginRequest(username: string, password: string): Promise<Response> {
+  return app.request('/api/auth/login', {
+    body: JSON.stringify({ password, remember: true, username }),
+    headers: {
+      'Content-Type': 'application/json',
+      'x-real-ip': '127.0.0.10',
+    },
+    method: 'POST',
+  })
 }
 
 function pngBytes(): Uint8Array {

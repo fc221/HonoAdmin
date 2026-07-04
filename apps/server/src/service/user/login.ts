@@ -18,9 +18,14 @@ export const userLoginSchema = z.object({
 
 export type UserLoginInput = z.input<typeof userLoginSchema>
 
+interface LoginUserOptions {
+  writeOperateLog?: boolean
+}
+
 export async function loginUser(
   c: ServiceRequestContext,
   input: UserLoginInput,
+  options: LoginUserOptions = {},
 ): Promise<boolean> {
   const loginInput = userLoginSchema.parse(input)
   const user = await getUserCredentialByUsername(c, loginInput.username)
@@ -35,12 +40,14 @@ export async function loginUser(
     loginInput.password,
   )
   await setAdminSession(c, sessionUser, loginInput.remember)
-  await createRequestOperateLog(c, {
-    logMsg: `用户登录 ${user.username}`,
-    logType: 'login',
-    method: 'user.login',
-    userId: user.id,
-  })
+  if (options.writeOperateLog !== false) {
+    await createRequestOperateLog(c, {
+      logMsg: `用户登录 ${user.username}`,
+      logType: 'login',
+      method: 'user.login',
+      userId: user.id,
+    })
+  }
 
   return true
 }

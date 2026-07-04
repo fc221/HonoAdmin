@@ -10,6 +10,7 @@ import { timing } from 'hono/timing'
 import api from './api'
 import { openApiDocumentation } from './api/openapi'
 import { getFileAccess } from './service/admin/system/file'
+import { apiSameOrigin } from './service/middleware/api-same-origin'
 import { headers, requestBodyLimit } from './service/middleware/security'
 import { toErrorShape } from './utils/errors'
 
@@ -22,6 +23,7 @@ export function setApiRuntimeContextMiddleware(middleware: MiddlewareHandler<App
 const app = new Hono<AppEnv>()
 
 app.use('*', headers as MiddlewareHandler<AppEnv>)
+app.use('/api/*', apiSameOrigin as MiddlewareHandler<AppEnv>)
 app.use('*', async (c, next) => {
   if (!runtimeContextMiddleware) {
     throw new Error('HonoAdmin API runtime context middleware is not configured.')

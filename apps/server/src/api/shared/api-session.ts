@@ -101,17 +101,21 @@ function getAdminFeatureTarget(c: Context<AppEnv>): {
     const detail = c.req.path.slice(feature.apiPrefix.length).replace(/^\/+/, '')
     const isConfigPanelAction = feature.adminPath === '/admin/system/config'
       && (detail === 'panel' || detail === 'values')
+    const isUpdateMigrateAction = feature.adminPath === '/admin/system/update'
+      && detail === 'migrate'
 
     return {
       actionOverride: isConfigPanelAction
         ? '*'
-        : detail === 'upload'
-          ? 'upload'
-          : detail === 'clear'
-            ? 'clear'
-            : detail.endsWith('/run')
-              ? 'run'
-              : undefined,
+        : isUpdateMigrateAction
+          ? 'migrate'
+          : detail === 'upload'
+            ? 'upload'
+            : detail === 'clear'
+              ? 'clear'
+              : detail.endsWith('/run')
+                ? 'run'
+                : undefined,
       adminPath: feature.adminPath,
       detail,
     }

@@ -113,10 +113,22 @@ async function saveRuntime() {
 }
 
 async function migrate() {
+  if (status.value?.installed) {
+    await goUpdateManagement()
+    return
+  }
+
   await submit(async () => {
     const result = await apiClient.runMigrations()
     message.success(result.message)
     await load()
+  })
+}
+
+async function goUpdateManagement() {
+  await router.push({
+    path: '/admin/login',
+    query: { returnTo: '/admin/system/update' },
   })
 }
 
@@ -215,11 +227,17 @@ onMounted(load)
         </NForm>
 
         <div v-else-if="currentStep === 2" class="space-y-4">
-          <NAlert type="info">
+          <NAlert v-if="status?.installed" type="warning">
+            系统已安装,待执行迁移请登录后台更新管理处理。
+          </NAlert>
+          <NAlert v-else type="info">
             待执行迁移 {{ status?.migration?.pendingCount ?? 0 }} 个。
           </NAlert>
           <NSpace justify="end">
-            <NButton type="primary" :loading="loading" @click="migrate">
+            <NButton v-if="status?.installed" type="primary" @click="goUpdateManagement">
+              前往更新管理
+            </NButton>
+            <NButton v-else type="primary" :loading="loading" @click="migrate">
               执行迁移
             </NButton>
           </NSpace>
