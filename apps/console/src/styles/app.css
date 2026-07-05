@@ -108,3 +108,102 @@ body {
     'Segoe UI',
     sans-serif;
 }
+
+.rich-text-editor {
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: var(--input-color);
+}
+
+.rich-text-editor--disabled {
+  opacity: 0.72;
+}
+
+.rich-text-editor__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  padding: 6px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--table-header-color);
+}
+
+.rich-text-editor__button {
+  width: 30px;
+  min-width: 30px;
+  height: 28px;
+  padding: 0;
+  font-weight: 600;
+}
+
+.rich-text-editor__divider {
+  width: 1px;
+  height: 20px;
+  margin: 0 2px;
+  background: var(--border-color);
+}
+
+.rich-text-editor__link-panel {
+  display: grid;
+  gap: 8px;
+  width: 260px;
+}
+
+.rich-text-editor__link-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.rich-text-editor__content .ProseMirror {
+  min-height: 240px;
+  padding: 12px;
+  line-height: 1.7;
+  outline: none;
+}
+
+.rich-text-editor__content .ProseMirror p {
+  margin: 0 0 0.75em;
+}
+
+.rich-text-editor__content .ProseMirror h2,
+.rich-text-editor__content .ProseMirror h3 {
+  margin: 1em 0 0.5em;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.rich-text-editor__content .ProseMirror h2 {
+  font-size: 1.25rem;
+}
+
+.rich-text-editor__content .ProseMirror h3 {
+  font-size: 1.1rem;
+}
+
+.rich-text-editor__content .ProseMirror ul,
+.rich-text-editor__content .ProseMirror ol {
+  margin: 0 0 0.75em;
+  padding-left: 1.4rem;
+}
+
+.rich-text-editor__content .ProseMirror blockquote {
+  padding-left: 12px;
+  margin: 0 0 0.75em;
+  color: var(--text-color-2);
+  border-left: 3px solid var(--primary-color);
+}
+
+.rich-text-editor__content .ProseMirror a {
+  color: var(--primary-color);
+  text-decoration: underline;
+}
+
+.rich-text-editor__content .ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--border-radius-small);
+}

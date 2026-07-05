@@ -1,11 +1,8 @@
 import { z } from 'zod'
+import { createAliasSchema } from '../../../common/alias'
 import { paginationSchema } from '../../../common/pagination'
 
-export const pageAliasSchema = z.string()
-  .trim()
-  .min(1, '请输入页面别名。')
-  .max(255, '页面别名不能超过 255 个字符。')
-  .regex(/^[\w.-]+$/, '页面别名只能包含字母、数字、下划线、点和横线。')
+export const pageAliasSchema = createAliasSchema('页面别名')
 
 export const webPageRecordSchema = z.object({
   alias: z.string(),

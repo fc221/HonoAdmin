@@ -7,6 +7,7 @@ import {
   listWebNotifications,
   updateWebNotification,
 } from '../../../service/admin/web/notification'
+import { aliasPattern } from '../../../service/common/alias'
 import {
   createAction,
   deleteAction,
@@ -42,7 +43,15 @@ export default webNotificationApi
 function notificationFields(): ResourceField[] {
   return [
     { key: 'title', label: '公告标题', required: true, type: 'text' },
-    { key: 'alias', label: '公告别名', required: true, type: 'text' },
+    {
+      help: '仅支持英文字母、数字、下划线和横线。',
+      key: 'alias',
+      label: '公告别名',
+      pattern: aliasPattern.source,
+      patternMessage: '公告别名只能包含英文字母、数字、下划线和横线。',
+      required: true,
+      type: 'text',
+    },
     { key: 'content', label: '内容', required: true, type: 'richtext' },
     { key: 'isTop', label: '置顶', type: 'switch' },
     { key: 'isImportant', label: '重要', type: 'switch' },

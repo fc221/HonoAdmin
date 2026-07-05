@@ -22,7 +22,7 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{
   'closeMobile': []
-  'navigate': [href: string]
+  'navigate': [href: string, activeKey?: string | number]
   'selectTheme': [key: string | number]
   'update:expandedKeys': [keys: Array<string | number>]
 }>()
@@ -38,7 +38,7 @@ const selectedMenuKey = computed({
     if (!href)
       return
     emit('closeMobile')
-    emit('navigate', href)
+    emit('navigate', href, key)
   },
 })
 const mobileSiderClass = computed(() =>

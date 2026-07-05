@@ -15,8 +15,12 @@ export interface StaticDecision {
   policy: CachePolicy
 }
 
-export function isApiOrUpload(pathname: string): boolean {
-  return pathname.startsWith('/api/') || pathname.startsWith('/uploads/')
+export function isAppHandledPath(pathname: string): boolean {
+  return (
+    pathname.startsWith('/api/')
+    || pathname.startsWith('/uploads/')
+    || pathname.startsWith('/page/')
+  )
 }
 
 export function classifyStaticPath(pathname: string): StaticDecision {

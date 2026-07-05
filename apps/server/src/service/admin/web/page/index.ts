@@ -19,7 +19,7 @@ import {
   buildKeywordCondition,
   buildWhereClause,
 } from '../../../common/query'
-import { listWebPageSchema } from './dto'
+import { createWebPageSchema, listWebPageSchema, updateWebPageSchema } from './dto'
 
 const webPageColumns = `
   id,
@@ -70,10 +70,11 @@ export async function createWebPage(
   ctx: ServiceContext,
   input: CreateWebPageInput,
 ): Promise<WebPageRecord> {
-  await assertPageAliasAvailable(ctx, input.alias)
+  const parsedInput = createWebPageSchema.parse(input)
+  await assertPageAliasAvailable(ctx, parsedInput.alias)
 
   const now = ctx.now()
-  const content = sanitizeRichTextHtml(input.content)
+  const content = sanitizeRichTextHtml(parsedInput.content)
   const pageId = await ctx.db.insertAndGetId(
     `
       INSERT INTO web_page (
@@ -88,10 +89,10 @@ export async function createWebPage(
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `,
     [
-      input.title,
-      input.alias,
-      input.category ?? null,
-      input.summary ?? null,
+      parsedInput.title,
+      parsedInput.alias,
+      parsedInput.category ?? null,
+      parsedInput.summary ?? null,
       content,
       now,
       now,
@@ -106,11 +107,12 @@ export async function updateWebPage(
   id: number,
   input: UpdateWebPageInput,
 ): Promise<WebPageRecord> {
+  const parsedInput = updateWebPageSchema.parse(input)
   const current = await requireWebPage(ctx, id)
-  const nextAlias = input.alias ?? current.alias
-  const nextContent = input.content === undefined
+  const nextAlias = parsedInput.alias ?? current.alias
+  const nextContent = parsedInput.content === undefined
     ? current.content
-    : sanitizeRichTextHtml(input.content)
+    : sanitizeRichTextHtml(parsedInput.content)
 
   if (nextAlias !== current.alias) {
     await assertPageAliasAvailable(ctx, nextAlias, id)
@@ -128,10 +130,10 @@ export async function updateWebPage(
       WHERE id = ?
     `,
     [
-      input.title ?? current.title,
+      parsedInput.title ?? current.title,
       nextAlias,
-      hasField(input, 'category') ? input.category ?? null : current.category,
-      hasField(input, 'summary') ? input.summary ?? null : current.summary,
+      hasField(parsedInput, 'category') ? parsedInput.category ?? null : current.category,
+      hasField(parsedInput, 'summary') ? parsedInput.summary ?? null : current.summary,
       nextContent,
       ctx.now(),
       id,

@@ -8,7 +8,7 @@ import {
   buildCacheControl,
   buildEtag,
   classifyStaticPath,
-  isApiOrUpload,
+  isAppHandledPath,
   normalizeRelativePath,
 } from './static'
 
@@ -32,7 +32,7 @@ const server = Bun.serve({
   async fetch(request, server) {
     const url = new URL(request.url)
 
-    if (isApiOrUpload(url.pathname)) {
+    if (isAppHandledPath(url.pathname)) {
       return app.fetch(request, server)
     }
 

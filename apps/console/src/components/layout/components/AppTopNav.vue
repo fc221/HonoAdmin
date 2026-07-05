@@ -26,7 +26,7 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
-  navigate: [href: string]
+  navigate: [href: string, activeKey?: string | number]
   refresh: []
   roleSwitch: [key: string | number]
   selectTheme: [key: string | number]
@@ -43,7 +43,7 @@ const selectedMenuKeyModel = computed({
   set: (key) => {
     const href = findMenuHref(props.menuOptions, key)
     if (href) {
-      emit('navigate', href)
+      emit('navigate', href, key)
     }
   },
 })

@@ -279,7 +279,7 @@ function removeTagBlock(value: string, tagName: string): string {
   return value.replace(pattern, '')
 }
 
-function escapeHtml(value: string | undefined): string {
+export function escapeHtml(value: string | undefined): string {
   return escapeAttribute(value ?? '')
 }
 

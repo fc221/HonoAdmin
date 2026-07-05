@@ -48,7 +48,7 @@ describe('service schemas', () => {
         path: issue.path.join('.'),
       }))
       expect(issues).toContainEqual({
-        message: '页面别名只能包含字母、数字、下划线、点和横线。',
+        message: '页面别名只能包含英文字母、数字、下划线和横线。',
         path: 'alias',
       })
       expect(issues).toContainEqual({
@@ -76,7 +76,7 @@ describe('service schemas', () => {
       )
 
       expect(issueByPath.get('alias')).toBe(
-        '公告别名只能包含字母、数字、下划线、点和横线。',
+        '公告别名只能包含英文字母、数字、下划线和横线。',
       )
       expect(issueByPath.get('content')).toBe('请输入公告内容。')
       expect(issueByPath.get('title')).toBe('请输入公告标题。')
@@ -134,6 +134,32 @@ describe('service schemas', () => {
       expect(result.error.issues[0]?.message).toBe(
         'At least one user field is required.',
       )
+    }
+  })
+
+  test('web page and notification aliases only allow ascii letters numbers hyphen and underscore', () => {
+    expect(createWebPageSchema.safeParse({
+      alias: 'page_2026-release',
+      content: '<p>content</p>',
+      title: 'Page',
+    }).success).toBe(true)
+    expect(createWebNotificationSchema.safeParse({
+      alias: 'notice_2026-release',
+      content: '<p>content</p>',
+      title: 'Notice',
+    }).success).toBe(true)
+
+    for (const alias of ['中文', 'has space', 'has.dot', 'has&symbol']) {
+      expect(createWebPageSchema.safeParse({
+        alias,
+        content: '<p>content</p>',
+        title: 'Page',
+      }).success).toBe(false)
+      expect(createWebNotificationSchema.safeParse({
+        alias,
+        content: '<p>content</p>',
+        title: 'Notice',
+      }).success).toBe(false)
     }
   })
 })

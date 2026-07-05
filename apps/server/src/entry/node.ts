@@ -11,7 +11,7 @@ import {
   buildCacheControl,
   buildEtag,
   classifyStaticPath,
-  isApiOrUpload,
+  isAppHandledPath,
   normalizeRelativePath,
 } from './static'
 
@@ -27,7 +27,7 @@ setApiRuntimeContextMiddleware(createAttachRuntime(createNodeRuntime))
 // Node 入口:Hono app 在 `app.route('/api', api)` 之后再补一段静态资源中间件;
 // `*` 通配在最末,/api/* 仍走子应用,不会被吞。
 app.use('*', async (c, next) => {
-  if (isApiOrUpload(new URL(c.req.url).pathname)) {
+  if (isAppHandledPath(new URL(c.req.url).pathname)) {
     return next()
   }
 

@@ -1,11 +1,8 @@
 import { z } from 'zod'
+import { createAliasSchema } from '../../../common/alias'
 import { paginationSchema } from '../../../common/pagination'
 
-export const notificationAliasSchema = z.string()
-  .trim()
-  .min(1, '请输入公告别名。')
-  .max(255, '公告别名不能超过 255 个字符。')
-  .regex(/^[\w.-]+$/, '公告别名只能包含字母、数字、下划线、点和横线。')
+export const notificationAliasSchema = createAliasSchema('公告别名')
 
 export const webNotificationRecordSchema = z.object({
   alias: z.string(),
@@ -18,19 +15,25 @@ export const webNotificationRecordSchema = z.object({
   updatedAt: z.number().int().nonnegative(),
 })
 
-export const createWebNotificationSchema = z.object({
+const webNotificationBaseSchema = z.object({
   alias: notificationAliasSchema,
   content: z.string().trim().min(1, '请输入公告内容。'),
-  isImportant: z.boolean().default(false),
-  isTop: z.boolean().default(false),
   title: z.string()
     .trim()
     .min(1, '请输入公告标题。')
     .max(255, '公告标题不能超过 255 个字符。'),
 })
 
+export const createWebNotificationSchema = webNotificationBaseSchema.extend({
+  isImportant: z.boolean().default(false),
+  isTop: z.boolean().default(false),
+})
+
 export const updateWebNotificationSchema
-  = createWebNotificationSchema.partial().refine(
+  = webNotificationBaseSchema.extend({
+    isImportant: z.boolean(),
+    isTop: z.boolean(),
+  }).partial().refine(
     (value) => Object.keys(value).length > 0,
     { message: 'At least one notification field is required.' },
   )

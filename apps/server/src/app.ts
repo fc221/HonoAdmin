@@ -9,6 +9,7 @@ import { requestId } from 'hono/request-id'
 import { timing } from 'hono/timing'
 import api from './api'
 import { openApiDocumentation } from './api/openapi'
+import publicPageApp from './public/page'
 import { getFileAccess } from './service/admin/system/file'
 import { apiSameOrigin } from './service/middleware/api-same-origin'
 import { headers, requestBodyLimit } from './service/middleware/security'
@@ -67,6 +68,7 @@ app.get('/uploads/*', async (c) => {
 
 app.get('/api/openapi.json', openAPIRouteHandler(app, { documentation: openApiDocumentation }))
 app.route('/api', api)
+app.route('/page', publicPageApp)
 app.notFound((c) => c.json({ message: 'Not Found' }, 404))
 
 export default app

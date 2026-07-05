@@ -218,6 +218,7 @@ onMounted(load)
     v-model:show="formOpen"
     :fields="formFields"
     :initial="formInitial"
+    rich-text-upload-type="page"
     :submitting="submitting"
     :title="modalTitle"
     @cancel="formOpen = false"

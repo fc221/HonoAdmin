@@ -12,17 +12,19 @@ import {
   NSpace,
   NSwitch,
 } from 'naive-ui'
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, reactive, ref, watch } from 'vue'
 
 const props = withDefaults(defineProps<{
   fields?: ResourceField[]
   initial?: Record<string, unknown>
+  richTextUploadType?: string
   show: boolean
   submitting?: boolean
   title: string
 }>(), {
   fields: () => [],
   initial: () => ({}),
+  richTextUploadType: '',
   submitting: false,
 })
 
@@ -31,6 +33,8 @@ const emit = defineEmits<{
   'submit': [value: Record<string, unknown>]
   'update:show': [value: boolean]
 }>()
+
+const RichTextEditor = defineAsyncComponent(() => import('./RichTextEditor.vue'))
 
 const form = reactive<Record<string, any>>({})
 const formRef = ref<FormInst | null>(null)
@@ -43,18 +47,33 @@ const rules = computed<FormRules>(() => {
   const nextRules: FormRules = {}
 
   for (const field of props.fields) {
-    if (!field.required)
-      continue
+    const fieldRules = []
 
-    nextRules[field.key] = [{
-      message: field.type === 'select' ? `请选择${field.label}` : `请填写${field.label}`,
-      trigger: ['blur', 'change', 'input'],
-      validator: (_rule, value) => hasRequiredValue(value),
-    }]
+    if (field.required) {
+      fieldRules.push({
+        message: field.type === 'select' ? `请选择${field.label}` : `请填写${field.label}`,
+        trigger: ['blur', 'change', 'input'],
+        validator: (_rule: unknown, value: unknown) => hasRequiredValue(value),
+      })
+    }
+
+    const pattern = field.pattern
+    if (pattern) {
+      fieldRules.push({
+        message: field.patternMessage ?? `${field.label}格式不正确`,
+        trigger: ['blur', 'change', 'input'],
+        validator: (_rule: unknown, value: unknown) => matchesPattern(value, pattern),
+      })
+    }
+
+    if (fieldRules.length) {
+      nextRules[field.key] = fieldRules
+    }
   }
 
   return nextRules
 })
+const hasRichText = computed(() => props.fields.some(field => field.type === 'richtext'))
 
 watch(
   () => [props.show, props.fields, props.initial] as const,
@@ -91,6 +110,14 @@ function hasRequiredValue(value: unknown) {
   return value !== null && value !== undefined && value !== ''
 }
 
+function matchesPattern(value: unknown, pattern: string) {
+  if (value === null || value === undefined || value === '')
+    return true
+  if (typeof value !== 'string')
+    return false
+  return new RegExp(pattern).test(value.trim())
+}
+
 async function submit() {
   try {
     await formRef.value?.validate()
@@ -107,7 +134,7 @@ async function submit() {
     v-model:show="modalShow"
     preset="card"
     :title="title"
-    class="max-w-180"
+    :class="hasRichText ? 'max-w-[56rem]' : 'max-w-180'"
     :auto-focus="false"
     :mask-closable="!submitting"
     :closable="!submitting"
@@ -130,11 +157,18 @@ async function submit() {
             :type="field.type === 'password' ? 'password' : 'text'"
           />
           <NInput
-            v-else-if="field.type === 'textarea' || field.type === 'richtext'"
+            v-else-if="field.type === 'textarea'"
             v-model:value="form[field.key]"
             :placeholder="field.placeholder"
             type="textarea"
-            :autosize="{ minRows: field.type === 'richtext' ? 8 : 4, maxRows: 14 }"
+            :autosize="{ minRows: 4, maxRows: 14 }"
+          />
+          <RichTextEditor
+            v-else-if="field.type === 'richtext'"
+            v-model="form[field.key]"
+            class="w-full"
+            :placeholder="field.placeholder"
+            :upload-type="richTextUploadType"
           />
           <NSelect
             v-else-if="field.type === 'select'"

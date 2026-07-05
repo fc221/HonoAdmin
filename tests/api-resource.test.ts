@@ -16,9 +16,142 @@ import {
   verifyUserPassword,
 } from '../apps/server/src/service/admin/system/user'
 import { UserStatus } from '../apps/server/src/service/admin/system/user/enum'
+import { createWebNotification } from '../apps/server/src/service/admin/web/notification'
+import { createWebPage } from '../apps/server/src/service/admin/web/page'
 import { createTestServiceContext } from './helpers/service-context'
 
 describe('API resource routes', () => {
+  test('public page route renders a page by alias', async () => {
+    const testContext = await createTestServiceContext()
+    const { ctx } = testContext
+
+    try {
+      setApiRuntimeContextMiddleware(async (c: Context<AppEnv>, next: Next) => {
+        c.runtime = ctx.runtime
+        c.db = ctx.db
+        c.cache = ctx.cache
+        c.config = ctx.config
+        c.now = ctx.now
+        await next()
+      })
+
+      await createWebPage(ctx, {
+        alias: 'about-us',
+        content: '<p>Hello <strong>world</strong></p><script>alert(1)</script>',
+        summary: 'About <HonoAdmin>',
+        title: 'About <Us>',
+      })
+
+      const response = await app.request('/page/about-us')
+      const html = await response.text()
+      const missing = await app.request('/page/missing-page')
+
+      expect(response.status).toBe(200)
+      expect(response.headers.get('content-type')).toContain('text/html')
+      expect(html).toContain('About &lt;Us&gt;')
+      expect(html).toContain('About &lt;HonoAdmin&gt;')
+      expect(html).toContain('<p>Hello <strong>world</strong></p>')
+      expect(html).not.toContain('<script')
+      expect(missing.status).toBe(404)
+    } finally {
+      await testContext.cleanup()
+    }
+  })
+
+  test('web page and notification APIs reject invalid aliases on create and update', async () => {
+    const testContext = await createTestServiceContext()
+    const { ctx } = testContext
+
+    try {
+      setApiRuntimeContextMiddleware(async (c: Context<AppEnv>, next: Next) => {
+        c.runtime = ctx.runtime
+        c.db = ctx.db
+        c.cache = ctx.cache
+        c.config = ctx.config
+        c.now = ctx.now
+        await next()
+      })
+      await createUser(ctx, {
+        isRoot: true,
+        password: 'secret123',
+        status: UserStatus.NORMAL,
+        username: 'alias.root',
+      })
+      const login = await loginRequest('alias.root', 'secret123')
+      expect(login.status).toBe(200)
+      const cookie = getCookieHeader(login)
+
+      const pageList = await app.request('/api/admin/web/page', {
+        headers: { Cookie: cookie },
+      })
+      const pageListPayload = await pageList.json()
+      const pageAliasField = pageListPayload.createFields.find(
+        (field: { key: string }) => field.key === 'alias',
+      )
+      expect(pageAliasField).toMatchObject({
+        pattern: '^[\\w-]+$',
+        patternMessage: '页面别名只能包含英文字母、数字、下划线和横线。',
+      })
+
+      const pageCreate = await app.request('/api/admin/web/page', {
+        body: JSON.stringify({ alias: '中文', content: '<p>content</p>', title: 'Page' }),
+        headers: { 'Content-Type': 'application/json', 'Cookie': cookie },
+        method: 'POST',
+      })
+      const page = await createWebPage(ctx, {
+        alias: 'valid-page',
+        content: '<p>content</p>',
+        title: 'Page',
+      })
+      const pageDetail = await app.request(`/api/admin/web/page/${page.id}`, {
+        headers: { Cookie: cookie },
+      })
+      const pageDetailPayload = await pageDetail.json()
+      const pageEditAliasField = pageDetailPayload.fields.find(
+        (field: { key: string }) => field.key === 'alias',
+      )
+      const pageUpdate = await app.request(`/api/admin/web/page/${page.id}`, {
+        body: JSON.stringify({ alias: 'has.dot', content: '<p>content</p>', title: 'Page' }),
+        headers: { 'Content-Type': 'application/json', 'Cookie': cookie },
+        method: 'PUT',
+      })
+
+      const notificationCreate = await app.request('/api/admin/web/notification', {
+        body: JSON.stringify({ alias: '中文', content: '<p>content</p>', title: 'Notice' }),
+        headers: { 'Content-Type': 'application/json', 'Cookie': cookie },
+        method: 'POST',
+      })
+      const notification = await createWebNotification(ctx, {
+        alias: 'valid-notice',
+        content: '<p>content</p>',
+        title: 'Notice',
+      })
+      const notificationUpdate = await app.request(
+        `/api/admin/web/notification/${notification.id}`,
+        {
+          body: JSON.stringify({
+            alias: 'has&symbol',
+            content: '<p>content</p>',
+            title: 'Notice',
+          }),
+          headers: { 'Content-Type': 'application/json', 'Cookie': cookie },
+          method: 'PUT',
+        },
+      )
+
+      expect(pageCreate.status).toBe(400)
+      expect(pageEditAliasField).toMatchObject({
+        pattern: '^[\\w-]+$',
+        patternMessage: '页面别名只能包含英文字母、数字、下划线和横线。',
+      })
+      expect(pageUpdate.status).toBe(400)
+      expect(notificationCreate.status).toBe(400)
+      expect(notificationUpdate.status).toBe(400)
+    } finally {
+      await testContext.cleanup()
+    }
+  })
+
   test('install migration is public only before the first admin exists', async () => {
     const testContext = await createTestServiceContext({ runMigrations: false })
     const { ctx } = testContext
@@ -45,6 +178,35 @@ describe('API resource routes', () => {
 
       const installedMigrate = await app.request('/api/install/migrate', { method: 'POST' })
       expect(installedMigrate.status).toBe(403)
+    } finally {
+      await testContext.cleanup()
+    }
+  })
+
+  test('install status reports pending migrations before first install', async () => {
+    const testContext = await createTestServiceContext({ runMigrations: false })
+    const { ctx } = testContext
+
+    try {
+      setApiRuntimeContextMiddleware(async (c: Context<AppEnv>, next: Next) => {
+        c.runtime = ctx.runtime
+        c.db = ctx.db
+        c.cache = ctx.cache
+        c.config = ctx.config
+        c.now = ctx.now
+        await next()
+      })
+
+      const response = await app.request('/api/install/status')
+      const payload = await response.json()
+
+      expect(response.status).toBe(200)
+      expect(payload.installed).toBe(false)
+      expect(payload.migration).toMatchObject({
+        isComplete: false,
+        isFreshDatabase: true,
+      })
+      expect(payload.migration.pendingCount).toBeGreaterThan(0)
     } finally {
       await testContext.cleanup()
     }

@@ -48,6 +48,10 @@ const {
 const mobileOpen = ref(false)
 const menuExpandedKeys = ref<Array<string | number>>([])
 const routeRefreshKey = ref(0)
+const layoutReady = ref(false)
+const pendingActiveMenuName = ref<string | null>(null)
+const routeNavigating = ref(false)
+let routeNavigationId = 0
 
 // surface(admin/user)由当前路由所在的布局父路由决定,不再靠 AppShell 透传。
 const surface = computed<'admin' | 'user'>(() => route.path.startsWith('/user') ? 'user' : 'admin')
@@ -55,9 +59,10 @@ const loginPath = computed(() => surface.value === 'user' ? '/user/login' : '/ad
 const activeMenuName = computed(() =>
   String(route.meta.activeMenuName ?? (surface.value === 'user' ? 'user.dashboard' : 'admin.dashboard')),
 )
+const visibleActiveMenuName = computed(() => pendingActiveMenuName.value ?? activeMenuName.value)
 const routeViewKey = computed(() => `${route.path}:${routeRefreshKey.value}`)
 
-const activePath = computed(() => getActivePath(menus.value, activeMenuName.value) ?? [])
+const activePath = computed(() => getActivePath(menus.value, visibleActiveMenuName.value) ?? [])
 const activeRoot = computed(() => activePath.value[0] ?? menus.value[0])
 const breadcrumbs = computed(() => activePath.value.map(item => ({
   href: item.href,
@@ -114,7 +119,7 @@ const mobileMenuOptions = computed(() => mobileSidebarMenuOptions.value ?? menuO
 const topMenuOptions = computed(() =>
   hybridLayout.value ? rootMenuOptions.value : menuOptions.value,
 )
-const topSelectedMenuKey = computed(() => activeRoot.value?.name ?? activeMenuName.value)
+const topSelectedMenuKey = computed(() => activeRoot.value?.name ?? visibleActiveMenuName.value)
 const desktopSidebarLogoVisible = computed(() => !hybridLayout.value)
 const userLabel = computed(() => user.value?.nickname || user.value?.username || '用户')
 const themeDropdownOptions = computed<DropdownOption[]>(() =>
@@ -148,11 +153,11 @@ const userDropdownOptions = computed<DropdownOption[]>(() => [
 ])
 
 watch(
-  () => [menus.value, activeMenuName.value] as const,
+  () => [menus.value, visibleActiveMenuName.value] as const,
   () => {
     const validKeys = expandableMenuKeys.value
     const nextKeys = new Set(menuExpandedKeys.value.filter(key => validKeys.has(key)))
-    for (const key of getExpandedMenuKeys(menus.value, activeMenuName.value, activePath.value)) {
+    for (const key of getExpandedMenuKeys(menus.value, visibleActiveMenuName.value, activePath.value)) {
       nextKeys.add(key)
     }
     menuExpandedKeys.value = [...nextKeys]
@@ -165,11 +170,13 @@ watch(
 watch(
   surface,
   async (nextSurface) => {
+    layoutReady.value = false
     sessionStore.setActiveSurface(nextSurface)
     const requestedPath = route.fullPath
     loadingBar.start()
     try {
       await sessionStore.ensureLayout(nextSurface)
+      layoutReady.value = true
       loadingBar.finish()
     }
     catch (reason) {
@@ -199,8 +206,19 @@ function closeMobile() {
   mobileOpen.value = false
 }
 
-function navigate(href: string) {
-  router.push(href)
+function navigate(href: string, activeKey?: string | number) {
+  if (href === route.fullPath)
+    return
+
+  const navigationId = ++routeNavigationId
+  pendingActiveMenuName.value = activeKey === undefined ? null : String(activeKey)
+  routeNavigating.value = true
+  void router.push(href).finally(() => {
+    if (navigationId !== routeNavigationId)
+      return
+    pendingActiveMenuName.value = null
+    routeNavigating.value = false
+  })
 }
 
 function refreshPage() {
@@ -274,7 +292,7 @@ async function switchRole(roleId: number) {
     <AppSidebar
       v-if="!topNavLayout"
       v-model:expanded-keys="menuExpandedKeys"
-      :active-menu-name="activeMenuName"
+      :active-menu-name="visibleActiveMenuName"
       :below-header="hybridLayout"
       :collapsed="sidebarCollapsed"
       :desktop-logo-visible="desktopSidebarLogoVisible"
@@ -292,7 +310,7 @@ async function switchRole(roleId: number) {
     <AppMobileSidebar
       v-if="mobileOpen"
       v-model:expanded-keys="menuExpandedKeys"
-      :active-menu-name="activeMenuName"
+      :active-menu-name="visibleActiveMenuName"
       :flush="flushLayout"
       :logo-text="logoText"
       :menu-options="mobileMenuOptions"
@@ -355,7 +373,7 @@ async function switchRole(roleId: number) {
         <AppTopNav
           v-if="topNavLayout || hybridLayout"
           class="hidden lg:flex"
-          :active-menu-name="activeMenuName"
+          :active-menu-name="visibleActiveMenuName"
           :flush="flushLayout"
           :logo-text="logoText"
           :menu-options="topMenuOptions"
@@ -384,7 +402,7 @@ async function switchRole(roleId: number) {
         <main class="ha-main min-w-0 overflow-x-clip flex-1">
           <div :class="contentWidthClass">
             <div
-              v-if="loading"
+              v-if="loading || !layoutReady || routeNavigating"
               class="rounded-naive border border-base-border bg-base-card p-4 text-sm text-base-muted"
             >
               页面加载中...

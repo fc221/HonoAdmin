@@ -7,6 +7,7 @@ import {
   listWebPages,
   updateWebPage,
 } from '../../../service/admin/web/page'
+import { aliasPattern } from '../../../service/common/alias'
 import {
   createAction,
   deleteAction,
@@ -42,7 +43,15 @@ export default webPageApi
 function pageFields(): ResourceField[] {
   return [
     { key: 'title', label: '页面标题', required: true, type: 'text' },
-    { key: 'alias', label: '页面别名', required: true, type: 'text' },
+    {
+      help: '仅支持英文字母、数字、下划线和横线。',
+      key: 'alias',
+      label: '页面别名',
+      pattern: aliasPattern.source,
+      patternMessage: '页面别名只能包含英文字母、数字、下划线和横线。',
+      required: true,
+      type: 'text',
+    },
     { key: 'category', label: '分类', type: 'text' },
     { key: 'summary', label: '摘要', type: 'textarea' },
     { key: 'content', label: '内容', required: true, type: 'richtext' },

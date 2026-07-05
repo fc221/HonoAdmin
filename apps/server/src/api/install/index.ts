@@ -35,7 +35,7 @@ const installApi = new Hono<AppEnv>()
     }),
     async (c) => {
       const migration = c.config.bootstrap.isConfigured
-        ? await getDatabaseMigrationStatus(c).catch(() => null)
+        ? await getDatabaseMigrationStatus(c)
         : null
       const installed = migration && !migration.isFreshDatabase
         ? await isAdminInstalled(c).catch(() => false)

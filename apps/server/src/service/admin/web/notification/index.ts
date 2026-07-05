@@ -19,7 +19,11 @@ import {
   buildKeywordCondition,
   buildWhereClause,
 } from '../../../common/query'
-import { listWebNotificationSchema } from './dto'
+import {
+  createWebNotificationSchema,
+  listWebNotificationSchema,
+  updateWebNotificationSchema,
+} from './dto'
 
 const webNotificationColumns = `
   id,
@@ -72,10 +76,11 @@ export async function createWebNotification(
   ctx: ServiceContext,
   input: CreateWebNotificationInput,
 ): Promise<WebNotificationRecord> {
-  await assertNotificationAliasAvailable(ctx, input.alias)
+  const parsedInput = createWebNotificationSchema.parse(input)
+  await assertNotificationAliasAvailable(ctx, parsedInput.alias)
 
   const now = ctx.now()
-  const content = sanitizeRichTextHtml(input.content)
+  const content = sanitizeRichTextHtml(parsedInput.content)
   const notificationId = await ctx.db.insertAndGetId(
     `
       INSERT INTO web_notification (
@@ -90,11 +95,11 @@ export async function createWebNotification(
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `,
     [
-      input.alias,
-      input.title,
+      parsedInput.alias,
+      parsedInput.title,
       content,
-      input.isTop ? 1 : 0,
-      input.isImportant ? 1 : 0,
+      parsedInput.isTop ? 1 : 0,
+      parsedInput.isImportant ? 1 : 0,
       now,
       now,
     ],
@@ -108,11 +113,12 @@ export async function updateWebNotification(
   id: number,
   input: UpdateWebNotificationInput,
 ): Promise<WebNotificationRecord> {
+  const parsedInput = updateWebNotificationSchema.parse(input)
   const current = await requireWebNotification(ctx, id)
-  const nextAlias = input.alias ?? current.alias
-  const nextContent = input.content === undefined
+  const nextAlias = parsedInput.alias ?? current.alias
+  const nextContent = parsedInput.content === undefined
     ? current.content
-    : sanitizeRichTextHtml(input.content)
+    : sanitizeRichTextHtml(parsedInput.content)
 
   if (nextAlias !== current.alias) {
     await assertNotificationAliasAvailable(ctx, nextAlias, id)
@@ -131,11 +137,11 @@ export async function updateWebNotification(
     `,
     [
       nextAlias,
-      input.title ?? current.title,
+      parsedInput.title ?? current.title,
       nextContent,
-      hasField(input, 'isTop') ? input.isTop ? 1 : 0 : current.is_top,
-      hasField(input, 'isImportant')
-        ? input.isImportant ? 1 : 0
+      hasField(parsedInput, 'isTop') ? parsedInput.isTop ? 1 : 0 : current.is_top,
+      hasField(parsedInput, 'isImportant')
+        ? parsedInput.isImportant ? 1 : 0
         : current.is_important,
       ctx.now(),
       id,

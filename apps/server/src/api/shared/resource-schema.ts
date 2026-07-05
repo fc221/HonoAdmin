@@ -40,6 +40,8 @@ export const resourceFieldSchema = z.object({
   label: z.string(),
   multiple: z.boolean().optional(),
   options: z.array(resourceFieldOptionSchema).optional(),
+  pattern: z.string().optional(),
+  patternMessage: z.string().optional(),
   placeholder: z.string().optional(),
   required: z.boolean().optional(),
   type: z.enum([

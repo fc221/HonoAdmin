@@ -69,7 +69,7 @@ const currentStep = computed(() => {
     return 1
   if (!status.value.bootstrap.isConfigured)
     return 1
-  if (!status.value.migration?.isComplete)
+  if (status.value.migration && !status.value.migration.isComplete)
     return 2
   if (!status.value.installed)
     return 3
@@ -77,17 +77,26 @@ const currentStep = computed(() => {
 })
 
 async function load() {
-  runtimeForm.jwtSecret ||= generateSecret()
-  runtimeForm.sessionSecret ||= generateSecret()
-  status.value = await apiClient.installStatus()
+  try {
+    runtimeForm.jwtSecret ||= generateSecret()
+    runtimeForm.sessionSecret ||= generateSecret()
+    status.value = await apiClient.installStatus()
 
-  for (const requirement of status.value.bootstrap.requirements) {
-    if (requirement.key === 'DATABASE_URL' && requirement.value)
-      runtimeForm.databaseUrl = requirement.value
-    if (requirement.key === 'APP_TIMEZONE' && requirement.value)
-      runtimeForm.appTimezone = requirement.value
-    if (requirement.key === 'CACHE_NAMESPACE' && requirement.value)
-      runtimeForm.cacheNamespace = requirement.value
+    for (const requirement of status.value.bootstrap.requirements) {
+      if (requirement.key === 'DATABASE_URL' && requirement.value)
+        runtimeForm.databaseUrl = requirement.value
+      if (requirement.key === 'APP_TIMEZONE' && requirement.value)
+        runtimeForm.appTimezone = requirement.value
+      if (requirement.key === 'CACHE_NAMESPACE' && requirement.value)
+        runtimeForm.cacheNamespace = requirement.value
+    }
+  }
+  catch (reason) {
+    notification.error({
+      content: reason instanceof Error ? reason.message : '安装状态加载失败。',
+      duration: 4500,
+      title: '安装状态加载失败',
+    })
   }
 }
 

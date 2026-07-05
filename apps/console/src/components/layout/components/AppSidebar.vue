@@ -26,7 +26,7 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
-  'navigate': [href: string]
+  'navigate': [href: string, activeKey?: string | number]
   'selectTheme': [key: string | number]
   'update:collapsed': [collapsed: boolean]
   'update:expandedKeys': [keys: Array<string | number>]
@@ -42,7 +42,7 @@ const selectedMenuKey = computed({
     const href = findMenuHref(props.menuOptions, key)
     if (!href)
       return
-    emit('navigate', href)
+    emit('navigate', href, key)
   },
 })
 const logoClass = computed(() =>
