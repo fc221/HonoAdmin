@@ -2,6 +2,8 @@ import type { AppEnv } from '@hono-admin/runtime'
 import type { Context, Next } from 'hono'
 import { describe, expect, test } from 'bun:test'
 import app, { setApiRuntimeContextMiddleware } from '../apps/server/src/app'
+import { runMigrations } from '../apps/server/src/migrations/migrator'
+import { migration0001AdminCore } from '../apps/server/src/migrations/sqlite/0001_admin_core'
 import {
   getConfigValue,
   listConfigs,
@@ -13,6 +15,7 @@ import { getDatabaseMigrationStatus } from '../apps/server/src/service/admin/sys
 import {
   createUser,
   getUserCredentialByUsername,
+  isAdminInstalled,
   verifyUserPassword,
 } from '../apps/server/src/service/admin/system/user'
 import { UserStatus } from '../apps/server/src/service/admin/system/user/enum'
@@ -207,6 +210,52 @@ describe('API resource routes', () => {
         isFreshDatabase: true,
       })
       expect(payload.migration.pendingCount).toBeGreaterThan(0)
+    } finally {
+      await testContext.cleanup()
+    }
+  })
+
+  test('install status treats an older migrated root database as installed', async () => {
+    const testContext = await createTestServiceContext({ runMigrations: false })
+    const { ctx } = testContext
+
+    try {
+      setApiRuntimeContextMiddleware(async (c: Context<AppEnv>, next: Next) => {
+        c.runtime = ctx.runtime
+        c.db = ctx.db
+        c.cache = ctx.cache
+        c.config = ctx.config
+        c.now = ctx.now
+        await next()
+      })
+
+      await runMigrations(ctx.db, [migration0001AdminCore])
+      await ctx.db.execute(
+        `
+          INSERT INTO sys_user (
+            username,
+            password,
+            nickname,
+            avatar,
+            is_root,
+            created_at,
+            updated_at
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+        `,
+        ['legacy.root', 'hash', null, null, 1, ctx.now(), ctx.now()],
+      )
+
+      const response = await app.request('/api/install/status')
+      const payload = await response.json()
+
+      expect(await isAdminInstalled(ctx)).toBe(true)
+      expect(response.status).toBe(200)
+      expect(payload.installed).toBe(true)
+      expect(payload.migration).toMatchObject({
+        isComplete: false,
+        isFreshDatabase: false,
+      })
     } finally {
       await testContext.cleanup()
     }

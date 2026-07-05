@@ -144,6 +144,10 @@ export async function isAdminInstalled(ctx: ServiceContext): Promise<boolean> {
   const row = await ctx.db.first<{ installed: number }>(
     'SELECT 1 AS installed FROM sys_user WHERE is_root = 1 AND status = ? LIMIT 1',
     [UserStatus.NORMAL],
+  ).catch(() =>
+    ctx.db.first<{ installed: number }>(
+      'SELECT 1 AS installed FROM sys_user WHERE is_root = 1 LIMIT 1',
+    ),
   )
   const installed = !!row
   if (installed) {

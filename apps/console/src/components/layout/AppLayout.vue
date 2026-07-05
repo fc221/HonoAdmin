@@ -4,7 +4,7 @@ import { NLayout, NLayoutContent, NLayoutHeader, useLoadingBar, useNotification 
 import { storeToRefs } from 'pinia'
 import { computed, h, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ApiClientError } from '../../api/client'
+import { apiClient, ApiClientError } from '../../api/client'
 import { useLayoutStore } from '../../stores/layout'
 import { useSessionStore } from '../../stores/session'
 import { useThemeStore } from '../../stores/theme'
@@ -187,7 +187,7 @@ watch(
       }
       if (reason instanceof ApiClientError && reason.status === 428) {
         loadingBar.finish()
-        await router.replace('/install')
+        await redirectAfterInstallStateError()
         return
       }
 
@@ -204,6 +204,11 @@ watch(
 
 function closeMobile() {
   mobileOpen.value = false
+}
+
+async function redirectAfterInstallStateError() {
+  const status = await apiClient.installStatus().catch(() => null)
+  await router.replace(status?.installed ? '/admin/system/update' : '/install')
 }
 
 function navigate(href: string, activeKey?: string | number) {

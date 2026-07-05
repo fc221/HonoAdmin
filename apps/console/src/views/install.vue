@@ -81,6 +81,14 @@ async function load() {
     runtimeForm.jwtSecret ||= generateSecret()
     runtimeForm.sessionSecret ||= generateSecret()
     status.value = await apiClient.installStatus()
+    if (status.value.installed) {
+      await router.replace(
+        status.value.migration && !status.value.migration.isComplete
+          ? '/admin/system/update'
+          : '/admin/dashboard',
+      )
+      return
+    }
 
     for (const requirement of status.value.bootstrap.requirements) {
       if (requirement.key === 'DATABASE_URL' && requirement.value)
