@@ -1,4 +1,5 @@
 import type { ConfigType } from './enum'
+import { defaultSecurityRuntimeConfig } from '@hono-admin/runtime/security-config'
 
 export interface ConfigTypeOption {
   label: string
@@ -36,6 +37,10 @@ export const configTypeOptions: ConfigTypeOption[] = [
   {
     label: '文件配置',
     value: 'file',
+  },
+  {
+    label: '安全配置',
+    value: 'security',
   },
 ]
 
@@ -162,6 +167,60 @@ export const builtInConfigDefinitions: BuiltInConfigDefinition[] = [
     inputType: 'number',
     label: 'S3 临时地址有效期',
     visibleWhen: { equals: 's3', key: 'file_storage_driver' },
+  },
+  {
+    configKey: 'api_rate_limit_enabled',
+    configType: 'security',
+    configValue: 'true',
+    description: '开启后按客户端 IP 限制 /api/* 的请求频率,超限返回 429。',
+    inputType: 'select',
+    label: 'API 限流',
+    options: [
+      { label: '开启', value: 'true' },
+      { label: '关闭', value: 'false' },
+    ],
+  },
+  {
+    configKey: 'api_rate_limit_max',
+    configType: 'security',
+    configValue: String(defaultSecurityRuntimeConfig.apiRateLimitMax),
+    description: '单个 IP 在一个时间窗内允许的 API 请求数。留空则回落到环境变量 API_RATE_LIMIT_MAX。',
+    inputType: 'number',
+    label: 'API 限流阈值',
+    visibleWhen: { equals: 'true', key: 'api_rate_limit_enabled' },
+  },
+  {
+    configKey: 'api_rate_limit_window_seconds',
+    configType: 'security',
+    configValue: String(defaultSecurityRuntimeConfig.apiRateLimitWindowSeconds),
+    description: 'API 限流的时间窗长度(秒)。',
+    inputType: 'number',
+    label: 'API 限流时间窗',
+    visibleWhen: { equals: 'true', key: 'api_rate_limit_enabled' },
+  },
+  {
+    configKey: 'login_rate_limit_ip_max',
+    configType: 'security',
+    configValue: String(defaultSecurityRuntimeConfig.loginRateLimitIpMax),
+    description: '单个 IP 在一个时间窗内允许的登录失败次数。',
+    inputType: 'number',
+    label: '登录限流(按 IP)',
+  },
+  {
+    configKey: 'login_rate_limit_account_max',
+    configType: 'security',
+    configValue: String(defaultSecurityRuntimeConfig.loginRateLimitAccountMax),
+    description: '单个账号在一个时间窗内允许的登录失败次数。',
+    inputType: 'number',
+    label: '登录限流(按账号)',
+  },
+  {
+    configKey: 'login_rate_limit_window_seconds',
+    configType: 'security',
+    configValue: String(defaultSecurityRuntimeConfig.loginRateLimitWindowSeconds),
+    description: '登录限流的时间窗长度(秒),默认 900。',
+    inputType: 'number',
+    label: '登录限流时间窗',
   },
 ]
 

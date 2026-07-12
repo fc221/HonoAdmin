@@ -1,5 +1,6 @@
 import type { AppEnv } from '@hono-admin/runtime'
 import type { Context, Next } from 'hono'
+import type { ResourceField } from '../apps/server/src/api/schema'
 import { describe, expect, test } from 'bun:test'
 import app, { setApiRuntimeContextMiddleware } from '../apps/server/src/app'
 import { runMigrations } from '../apps/server/src/migrations/migrator'
@@ -7,6 +8,7 @@ import { migration0001AdminCore } from '../apps/server/src/migrations/sqlite/000
 import {
   getConfigValue,
   listConfigs,
+  updateConfigValues,
   upsertConfig,
 } from '../apps/server/src/service/admin/system/config'
 import { siteNameConfig } from '../apps/server/src/service/admin/system/config/constants'
@@ -435,12 +437,15 @@ describe('API resource routes', () => {
     const { ctx } = testContext
 
     try {
-      ctx.config.security = {
-        ...ctx.config.security,
-        loginRateLimitAccountMax: 2,
-        loginRateLimitIpMax: 20,
-        loginRateLimitWindowSeconds: 60,
-      }
+      // 阈值现在以后台「安全配置」为准,不再读环境变量。
+      await updateConfigValues(ctx, {
+        configType: 'security',
+        values: {
+          login_rate_limit_account_max: '2',
+          login_rate_limit_ip_max: '20',
+          login_rate_limit_window_seconds: '60',
+        },
+      })
       setApiRuntimeContextMiddleware(async (c: Context<AppEnv>, next: Next) => {
         c.runtime = ctx.runtime
         c.db = ctx.db
@@ -859,6 +864,50 @@ describe('API resource routes', () => {
         },
         ok: true,
       })
+    } finally {
+      await testContext.cleanup()
+    }
+  })
+
+  test('role form exposes menus and permissions as grouped trees', async () => {
+    const testContext = await createTestServiceContext()
+    const { ctx } = testContext
+
+    try {
+      setApiRuntimeContextMiddleware(async (c: Context<AppEnv>, next: Next) => {
+        c.runtime = ctx.runtime
+        c.db = ctx.db
+        c.cache = ctx.cache
+        c.config = ctx.config
+        c.now = ctx.now
+        await next()
+      })
+
+      await createUser(ctx, {
+        isRoot: true,
+        password: 'secret123',
+        status: UserStatus.NORMAL,
+        username: 'admin',
+      })
+      const login = await loginRequest('admin', 'secret123')
+      expect(login.status).toBe(200)
+
+      const list = await app.request('/api/admin/system/role', {
+        headers: { Cookie: getCookieHeader(login) },
+      })
+      const payload = await list.json()
+      const fields: ResourceField[] = payload.editFields
+      const menuField = fields.find((field) => field.key === 'menuNames')
+      const permissionField = fields.find((field) => field.key === 'permissionCodes')
+
+      expect(list.status).toBe(200)
+      expect(menuField?.type).toBe('tree')
+      expect(permissionField?.type).toBe('tree')
+      // 系统管理这类父菜单必须带子节点,勾选分组才能一次性授权。
+      expect(menuField?.options?.some((option) => (option.children?.length ?? 0) > 0)).toBe(true)
+      expect(permissionField?.options?.every((option) => (option.children?.length ?? 0) > 0)).toBe(true)
+      expect(permissionField?.options?.flatMap((option) => option.children ?? []).length)
+        .toBeGreaterThan(10)
     } finally {
       await testContext.cleanup()
     }

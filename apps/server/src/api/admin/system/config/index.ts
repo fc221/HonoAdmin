@@ -19,6 +19,7 @@ import {
   builtInConfigDefinitions,
   configTypeOptions,
 } from '../../../../service/admin/system/config/constants'
+import { configTypes } from '../../../../service/admin/system/config/enum'
 import { createRequestOperateLog } from '../../../../service/admin/system/operate-log'
 import {
   configPanelPayloadSchema,
@@ -102,7 +103,7 @@ export default systemConfigApi
 
 function configFields() {
   return [
-    { key: 'configType', label: '配置类型', options: ['site', 'system', 'file'].map((value) => ({ label: value, value })), required: true, type: 'select' as const },
+    { key: 'configType', label: '配置类型', options: configTypes.map((value) => ({ label: value, value })), required: true, type: 'select' as const },
     { key: 'configKey', label: '配置键', required: true, type: 'text' as const },
     { key: 'configValue', label: '配置值', required: true, type: 'textarea' as const },
   ]

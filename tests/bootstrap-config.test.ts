@@ -180,13 +180,16 @@ describe('bootstrap runtime config', () => {
     ])
   })
 
-  test('does not cache Cloudflare Workers runtime objects', async () => {
+  test('rebuilds Cloudflare Workers runtime objects but shares the no-KV fallback cache', async () => {
     const firstRuntime = await createCloudflareWorkersRuntime({})
     const secondRuntime = await createCloudflareWorkersRuntime({})
 
     expect(secondRuntime).not.toBe(firstRuntime)
-    expect(secondRuntime.cache).not.toBe(firstRuntime.cache)
     expect(secondRuntime.config.runtimeTarget).toBe('cloudflare-workers')
+    // runtime 每请求重建,但没绑 KV 时的内存兜底缓存必须跨请求存活,否则缓存永远不命中。
+    expect(secondRuntime.cache).toBe(firstRuntime.cache)
+    await firstRuntime.cache.set('probe', 'kept', { ttlSeconds: 60 })
+    expect(await secondRuntime.cache.get('probe')).toBe('kept')
   })
 })
 

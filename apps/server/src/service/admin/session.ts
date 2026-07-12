@@ -1,17 +1,25 @@
 import type { ServiceRequestContext } from '../types'
 import type { UserCredential } from './system/user'
+import { buildCacheKey } from '@hono-admin/cache'
 import { constantTimeEqual, toHex } from '@hono-admin/utils/crypto'
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie'
+import { getAdminLayoutCacheVersion } from './layout-cache'
 import {
   getUserCredentialById,
   listUserSessionRoles,
 } from './system/user'
+
+interface SessionUserCacheEntry {
+  roles: Array<{ code: string, id: number }>
+  user: UserCredential
+}
 
 const adminSessionCookieName = 'hono_admin_session'
 const adminSessionRoleModeCookieName = 'hono_admin_role_mode'
 const adminSessionActiveRoleCookieName = 'hono_admin_active_role_id'
 const adminSessionMaxAgeSeconds = 60 * 60 * 24 * 7
 const adminSessionCookiePath = '/'
+const sessionUserCacheTtlSeconds = 60
 const sessionUserRequestCache = new WeakMap<
   ServiceRequestContext,
   Promise<UserCredential | null>
@@ -115,8 +123,9 @@ async function loadAdminSessionUser(
     return null
   }
 
-  const user = await getUserCredentialById(c, Number(userId))
-  if (!user) {
+  // 这几项零成本,放在查库前面:伪造 cookie 打不出数据库查询。
+  const id = Number(userId)
+  if (!Number.isInteger(id) || id <= 0) {
     return null
   }
 
@@ -129,13 +138,65 @@ async function loadAdminSessionUser(
     return null
   }
 
+  const entry = await loadSessionUserEntry(c, session, id, issuedAt, signature)
+  if (!entry) {
+    return null
+  }
+
+  return withSessionActiveRole(c, entry.user, entry.roles)
+}
+
+/**
+ * 每个受保护请求原本都要查两次库(用户凭证 + 用户角色)。这里按「cookie 哈希 + 布局缓存版本号」
+ * 缓存已验签的结果:只有出示了完整有效 cookie 的人才够得到该条目,任何用户/角色/密码变更都会
+ * bump 版本号从而立刻失效。缓存值不含密码哈希——命中时无需再验签,自然也不需要签名密钥。
+ */
+async function loadSessionUserEntry(
+  c: ServiceRequestContext,
+  session: string,
+  id: number,
+  issuedAt: string,
+  signature: string,
+): Promise<SessionUserCacheEntry | null> {
+  const cacheKey = await getSessionUserCacheKey(c, session)
+  const cached = await c.cache.get<SessionUserCacheEntry>(cacheKey).catch(() => null)
+  if (cached?.user) {
+    return cached
+  }
+
+  const user = await getUserCredentialById(c, id)
+  if (!user) {
+    return null
+  }
+
   const expectedSession = await signAdminSession(c, user, issuedAt)
   const expectedSignature = expectedSession.split('.')[2]
   if (!constantTimeEqual(signature, expectedSignature ?? '')) {
     return null
   }
 
-  return withSessionActiveRole(c, user)
+  const entry: SessionUserCacheEntry = {
+    roles: await listUserSessionRoles(c, user.id),
+    user: { ...user, password: '' },
+  }
+  await c.cache
+    .set(cacheKey, entry, { ttlSeconds: sessionUserCacheTtlSeconds })
+    .catch(() => {})
+
+  return entry
+}
+
+async function getSessionUserCacheKey(
+  c: ServiceRequestContext,
+  session: string,
+): Promise<string> {
+  const version = await getAdminLayoutCacheVersion(c)
+  const digest = await crypto.subtle.digest(
+    'SHA-256',
+    new TextEncoder().encode(session),
+  )
+
+  return buildCacheKey('session', 'user', version, toHex(new Uint8Array(digest)))
 }
 
 export function clearAdminSession(c: ServiceRequestContext): void {
@@ -175,11 +236,11 @@ async function signAdminSession(
   return `${user.id}.${issuedAt}.${toHex(new Uint8Array(signature))}`
 }
 
-async function withSessionActiveRole(
+function withSessionActiveRole(
   c: ServiceRequestContext,
   user: UserCredential,
-): Promise<UserCredential> {
-  const roles = await listUserSessionRoles(c, user.id)
+  roles: Array<{ code: string, id: number }>,
+): UserCredential {
   const activeRoleId = resolveSessionActiveRoleId(c, user, roles)
   const activeRole = roles.find((role) => role.id === activeRoleId)
 

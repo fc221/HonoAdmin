@@ -1,7 +1,8 @@
 import { z } from 'zod'
+import { configTypes } from '../../../../service/admin/system/config/enum'
 import { resourceFieldOptionSchema } from '../../../shared/resource-schema'
 
-export const configTypeSchema = z.enum(['site', 'system', 'file'])
+export const configTypeSchema = z.enum(configTypes)
 
 export const configTypeOptionSchema = z.object({
   label: z.string(),

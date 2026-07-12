@@ -4,6 +4,7 @@ import type {
   ConfigType,
   ConfigTypeOption,
 } from '@hono-admin/server/api/schema'
+import { configTypeSchema } from '@hono-admin/server/api/schema'
 import {
   NCard,
   NSpin,
@@ -18,12 +19,14 @@ import { useRoute, useRouter } from 'vue-router'
 import { apiClient } from '../../../api/client'
 import ConfigTypeForm from '../../../components/ConfigTypeForm.vue'
 
+// 面板加载前的占位 tab;真正的列表和白名单都以服务端为准,别在这儿维护第二份。
 const defaultConfigTypes: ConfigTypeOption[] = [
   { label: '站点配置', value: 'site' },
   { label: '系统配置', value: 'system' },
   { label: '文件配置', value: 'file' },
+  { label: '安全配置', value: 'security' },
 ]
-const configTypes = defaultConfigTypes.map(option => option.value)
+const configTypes = configTypeSchema.options
 
 const route = useRoute()
 const router = useRouter()

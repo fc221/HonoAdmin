@@ -1,3 +1,3 @@
-export const configTypes = ['site', 'system', 'file'] as const
+export const configTypes = ['site', 'system', 'file', 'security'] as const
 
 export type ConfigType = (typeof configTypes)[number]

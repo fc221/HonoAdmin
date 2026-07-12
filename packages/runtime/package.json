@@ -9,7 +9,9 @@
     "./cloudflare-workers": "./src/target/cloudflare-workers.ts",
     "./factory": "./src/factory.ts",
     "./node": "./src/target/node.ts",
+    "./local-metrics": "./src/target/local-metrics.ts",
     "./local-sqlite": "./src/target/local-sqlite.ts",
+    "./rate-limit-cache": "./src/rate-limit-cache.ts",
     "./security-config": "./src/security-config.ts"
   },
   "scripts": {

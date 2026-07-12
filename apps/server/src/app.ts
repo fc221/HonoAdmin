@@ -11,6 +11,7 @@ import api from './api'
 import { openApiDocumentation } from './api/openapi'
 import publicPageApp from './public/page'
 import { getFileAccess } from './service/admin/system/file'
+import { apiRateLimit } from './service/middleware/api-rate-limit'
 import { apiSameOrigin } from './service/middleware/api-same-origin'
 import { headers, requestBodyLimit } from './service/middleware/security'
 import { toErrorShape } from './utils/errors'
@@ -33,6 +34,8 @@ app.use('*', async (c, next) => {
   await runtimeContextMiddleware(c, next)
 })
 
+// 挂在 runtime 之后(要读配置/缓存),挂在业务路由之前:超限的请求碰不到数据库。
+app.use('/api/*', apiRateLimit as MiddlewareHandler<AppEnv>)
 app.use('*', requestBodyLimit as MiddlewareHandler<AppEnv>)
 app.use('*', requestId())
 // hono/logger 每个请求都 console.log。Bun 下,当 stdout 的 sink 停止消费(断开的 pty、

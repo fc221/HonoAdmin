@@ -5,6 +5,7 @@ import { clearAdminSession } from '../../service/admin/session'
 import { canAccessAdminPath } from '../../service/admin/system/role'
 import { getDatabaseMigrationStatus } from '../../service/admin/system/update'
 import { getUserCredentialByUsername, isAdminInstalled } from '../../service/admin/system/user'
+import { resolveSecurityLimits } from '../../service/security/limits'
 import {
   clearRateLimit,
   consumeRateLimit,
@@ -120,16 +121,17 @@ async function consumeLoginRateLimit(
 ): Promise<LoginRateLimitKeys> {
   const ipKey = await createRateLimitKey('auth-login-ip', getClientIp(c))
   const accountKey = await createRateLimitKey('auth-login-account', normalizeLoginName(username))
-  const windowSeconds = c.config.security.loginRateLimitWindowSeconds
+  const limits = await resolveSecurityLimits(c)
+  const windowSeconds = limits.loginRateLimitWindowSeconds
 
   await consumeRateLimit(c, {
     key: ipKey,
-    limit: c.config.security.loginRateLimitIpMax,
+    limit: limits.loginRateLimitIpMax,
     windowSeconds,
   })
   await consumeRateLimit(c, {
     key: accountKey,
-    limit: c.config.security.loginRateLimitAccountMax,
+    limit: limits.loginRateLimitAccountMax,
     windowSeconds,
   })
 
