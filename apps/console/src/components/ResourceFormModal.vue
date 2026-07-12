@@ -11,6 +11,7 @@ import {
   NSelect,
   NSpace,
   NSwitch,
+  NTree,
 } from 'naive-ui'
 import { computed, defineAsyncComponent, reactive, ref, watch } from 'vue'
 
@@ -178,6 +179,21 @@ async function submit() {
             :placeholder="field.placeholder ?? '请选择'"
             clearable
             filterable
+          />
+          <NTree
+            v-else-if="field.type === 'tree'"
+            v-model:checked-keys="form[field.key]"
+            block-line
+            cascade
+            checkable
+            check-strategy="child"
+            children-field="children"
+            class="max-h-64 w-full overflow-auto rounded-naive border border-base-border p-2"
+            :data="field.options ?? []"
+            default-expand-all
+            key-field="value"
+            label-field="label"
+            :selectable="false"
           />
           <NSwitch
             v-else-if="field.type === 'switch'"

@@ -1,5 +1,6 @@
 import type { AppEnv } from '@hono-admin/runtime'
 import type { Context } from 'hono'
+import type { PermissionRecord } from '../../../../service/admin/system/permission/dto'
 import type { ResourceField } from '../../../schema'
 import type { ResourceDefinition } from '../../../shared/resource'
 import { adminMenus } from '../../../../service/admin/system/menu/consts'
@@ -49,15 +50,35 @@ async function roleFields(c: Context<AppEnv>): Promise<ResourceField[]> {
     { key: 'code', label: '角色编码', required: true, type: 'text' },
     { key: 'name', label: '角色名称', required: true, type: 'text' },
     { key: 'description', label: '说明', type: 'textarea' },
-    { key: 'menuNames', label: '菜单权限', multiple: true, options: flattenMenuOptions(), type: 'select' },
-    { key: 'permissionCodes', label: '接口权限', multiple: true, options: permissions.map((permission) => ({ label: permission.name, value: permission.code })), type: 'select' },
+    { help: '勾选分组可一次性授权整组菜单', key: 'menuNames', label: '菜单权限', multiple: true, options: menuTreeOptions(), type: 'tree' },
+    { help: '按功能模块分组,勾选分组即授权该模块全部接口', key: 'permissionCodes', label: '接口权限', multiple: true, options: permissionTreeOptions(permissions), type: 'tree' },
   ]
 }
 
-function flattenMenuOptions() {
-  return adminMenus.flatMap((menu) =>
+function menuTreeOptions() {
+  return adminMenus.map((menu) =>
     menu.children?.length
-      ? menu.children.map((child) => ({ label: `${menu.label} / ${child.label}`, value: child.name }))
-      : [{ label: menu.label, value: menu.name }],
+      ? {
+          children: menu.children.map((child) => ({ label: child.label, value: child.name })),
+          label: menu.label,
+          value: menu.name,
+        }
+      : { label: menu.label, value: menu.name },
   )
+}
+
+function permissionTreeOptions(permissions: PermissionRecord[]) {
+  const groups = new Map<string, { label: string, value: string }[]>()
+  for (const permission of permissions) {
+    const items = groups.get(permission.groupName) ?? []
+    items.push({ label: permission.name, value: permission.code })
+    groups.set(permission.groupName, items)
+  }
+
+  return [...groups].map(([groupName, children]) => ({
+    children,
+    label: groupName,
+    // 分组节点仅用于勾选,不会被提交(树选择只回传叶子节点)。
+    value: `group:${groupName}`,
+  }))
 }

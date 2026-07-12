@@ -28,9 +28,14 @@ export const resourceColumnSchema = z.object({
   width: z.number().optional(),
 })
 
-export const resourceFieldOptionSchema = z.object({
+const resourceFieldLeafOptionSchema = z.object({
   label: z.string(),
   value: z.union([z.string(), z.number()]),
+})
+
+// 只支持两层:分组 + 叶子,够菜单树和权限分组用,不做递归。
+export const resourceFieldOptionSchema = resourceFieldLeafOptionSchema.extend({
+  children: z.array(resourceFieldLeafOptionSchema).optional(),
 })
 
 export const resourceFieldSchema = z.object({
@@ -49,6 +54,7 @@ export const resourceFieldSchema = z.object({
     'password',
     'textarea',
     'select',
+    'tree',
     'switch',
     'number',
     'richtext',
