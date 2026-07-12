@@ -45,10 +45,12 @@ const selectedMenuKey = computed({
     emit('navigate', href, key)
   },
 })
+// 折叠态外层(渐变底)必须和内层方块同尺寸:两层叠成一枚徽标。
+// 外层留着 w-full 的话会比内层宽,两侧露出一圈渐变边。
 const logoClass = computed(() =>
   [
     props.desktopLogoVisible ? '' : 'lg:hidden',
-    props.collapsed ? 'grid place-items-center gap-0! p-0!' : '',
+    props.collapsed ? 'grid size-10 w-10! place-items-center gap-0! p-0!' : 'w-full',
   ].filter(Boolean).join(' '),
 )
 const menuShellClass = computed(() =>
@@ -56,8 +58,10 @@ const menuShellClass = computed(() =>
     ? 'bg-transparent px-0'
     : 'p-2',
 )
+// 简洁模式展开时 logo 与菜单是连成一片的(无间距);折叠后菜单缩成图标,
+// 贴着 logo 会糊在一起,所以折叠态统一用卡片模式的 gap-3。
 const siderContentClass = computed(() =>
-  props.sidebarStyle === 'plain'
+  props.sidebarStyle === 'plain' && !props.collapsed
     ? 'flex h-full min-w-0 flex-col items-center p-4'
     : 'flex h-full min-w-0 flex-col items-center gap-3 p-4',
 )
@@ -114,13 +118,16 @@ const siderClass = computed(() => [
     @update:collapsed="value => emit('update:collapsed', value)"
   >
     <div
-      class="flex w-full min-w-0 items-center gap-3 overflow-hidden p-4"
+      class="flex min-w-0 items-center gap-3 overflow-hidden p-4"
       :class="[logoClass, sidebarStyle === 'card' ? 'bg-linear-to-br from-primary to-primary/30' : '']"
       :style="logoStyle"
     >
       <div
-        class="grid size-12 shrink-0 place-items-center rounded-naive text-lg font-bold text-white"
-        :class="sidebarStyle === 'card' ? 'bg-white/20' : 'bg-primary'"
+        class="grid shrink-0 place-items-center rounded-naive font-bold text-white"
+        :class="[
+          collapsed ? 'size-10 text-base' : 'size-12 text-lg',
+          sidebarStyle === 'card' ? 'bg-white/20' : 'bg-primary',
+        ]"
       >
         {{ logoText }}
       </div>
