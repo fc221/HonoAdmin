@@ -1,6 +1,8 @@
 import type { SystemMetrics } from '@hono-admin/runtime'
 import type { ServiceRequestContext } from '../../types'
 import { formatDateTime, getRecentDayBuckets } from '@hono-admin/utils/datetime'
+import { getAdminSessionUser } from '../session'
+import { canAccessAdminPath } from '../system/role'
 import { getDatabaseMigrationStatus } from '../system/update'
 
 const activityDays = 7
@@ -37,12 +39,17 @@ export interface DashboardSystem {
 
 export async function getAdminDashboardData(c: ServiceRequestContext): Promise<{
   activity: DashboardActivityPoint[]
+  canViewSystemPanels: boolean
   feedbacks: DashboardFeedback[]
   load: SystemMetrics | null
   logs: DashboardLog[]
   stats: Array<{ label: string, tone: 'default' | 'primary' | 'success' | 'warning', value: string }>
-  system: DashboardSystem
+  system: DashboardSystem | null
 }> {
+  // 敏感面板(操作日志明细 / 待处理反馈明细 / 系统信息 / 服务器负载 / 操作趋势)只给能进操作日志页的
+  // 后台管理员;默认 user 角色虽持 admin.dashboard.view 能读本接口,但拿不到这些。root 直接放行。
+  const canViewSystemPanels = await currentUserCanViewSystemPanels(c)
+
   const [
     users,
     roles,
@@ -66,15 +73,16 @@ export async function getAdminDashboardData(c: ServiceRequestContext): Promise<{
     countRows(c, 'SELECT COUNT(*) AS count FROM sys_file'),
     countRows(c, 'SELECT COUNT(*) AS count FROM sys_scheduled_job'),
     countRows(c, 'SELECT COUNT(*) AS count FROM sys_operate_log'),
-    getActivity(c),
-    getRecentLogs(c),
-    getPendingFeedbacks(c),
-    getSystemInfo(c),
-    c.runtime.systemMetrics?.().catch(() => null) ?? null,
+    canViewSystemPanels ? getActivity(c) : Promise.resolve([]),
+    canViewSystemPanels ? getRecentLogs(c) : Promise.resolve([]),
+    canViewSystemPanels ? getPendingFeedbacks(c) : Promise.resolve([]),
+    canViewSystemPanels ? getSystemInfo(c) : Promise.resolve(null),
+    canViewSystemPanels ? (c.runtime.systemMetrics?.().catch(() => null) ?? null) : null,
   ])
 
   return {
     activity,
+    canViewSystemPanels,
     feedbacks,
     load,
     logs,
@@ -90,6 +98,18 @@ export async function getAdminDashboardData(c: ServiceRequestContext): Promise<{
     ],
     system,
   }
+}
+
+// 用「能否访问操作日志列表页」作为「是否后台管理员」的判据,与 requireApiSession 对该路由的判定一致。
+async function currentUserCanViewSystemPanels(
+  c: ServiceRequestContext,
+): Promise<boolean> {
+  const user = await getAdminSessionUser(c)
+  if (!user) {
+    return false
+  }
+
+  return canAccessAdminPath(c, user, '/admin/system/operate-log', 'GET', '*').catch(() => false)
 }
 
 /**

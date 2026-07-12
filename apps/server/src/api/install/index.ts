@@ -42,7 +42,7 @@ const installApi = new Hono<AppEnv>()
         : false
 
       return c.json({
-        bootstrap: redactBootstrapSecrets(c.config.bootstrap),
+        bootstrap: redactBootstrapSecrets(c.config.bootstrap, installed),
         installed,
         migration,
       })
@@ -159,11 +159,19 @@ async function requireFirstInstall(c: Context<AppEnv>, next: Next): Promise<void
   await next()
 }
 
-function redactBootstrapSecrets(bootstrap: BootstrapConfigStatus): BootstrapConfigStatus {
+// 未安装时安装向导要用 DATABASE_URL/configPath 预填,且系统尚无数据,故只脱敏 JWT/SESSION;
+// 安装完成后 /status 仍匿名可读,必须一并脱敏数据库连接串(含库凭据)与 .env 绝对路径。
+function redactBootstrapSecrets(
+  bootstrap: BootstrapConfigStatus,
+  installed = false,
+): BootstrapConfigStatus {
   return {
     ...bootstrap,
+    configPath: installed ? undefined : bootstrap.configPath,
     requirements: bootstrap.requirements.map((requirement) => {
-      if (!requirement.isSecret) {
+      const shouldRedact = requirement.isSecret
+        || (installed && requirement.key === 'DATABASE_URL')
+      if (!shouldRedact) {
         return requirement
       }
 

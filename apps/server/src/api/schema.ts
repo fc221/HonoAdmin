@@ -83,6 +83,9 @@ export const dashboardSystemSchema = z.object({
 // 后台仪表盘独有的板块给默认值,这样用户仪表盘只回 stats/title 也照样通过校验。
 export const dashboardPayloadSchema = z.object({
   activity: z.array(dashboardActivityPointSchema).default([]),
+  // 跨用户操作日志、待处理反馈、系统信息、服务器负载属于管理员专属;非管理员(如默认 user 角色)
+  // 只拿基础 stats,这个标志让前端据此显隐敏感面板。
+  canViewSystemPanels: z.boolean().default(false),
   feedbacks: z.array(dashboardFeedbackSchema).default([]),
   load: dashboardLoadSchema.nullable().default(null),
   logs: z.array(dashboardLogSchema).default([]),

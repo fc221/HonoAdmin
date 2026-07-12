@@ -114,7 +114,7 @@ function formatUptime(seconds: number): string {
 <template>
   <StatGrid :stats="dashboard?.stats ?? []" />
 
-  <div class="mt-4 grid gap-4 lg:grid-cols-3">
+  <div v-if="dashboard?.canViewSystemPanels" class="mt-4 grid gap-4 lg:grid-cols-3">
     <NCard class="lg:col-span-2" content-class="flex flex-col">
       <template #header>
         <div class="flex items-baseline justify-between gap-2">
@@ -184,7 +184,7 @@ function formatUptime(seconds: number): string {
     </NCard>
   </div>
 
-  <div class="mt-4 grid gap-4 lg:grid-cols-2">
+  <div v-if="dashboard?.canViewSystemPanels" class="mt-4 grid gap-4 lg:grid-cols-2">
     <NCard title="最近操作日志">
       <template #header-extra>
         <button class="text-sm text-primary" type="button" @click="router.push('/admin/system/operate-log')">

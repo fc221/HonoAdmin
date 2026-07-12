@@ -1,5 +1,6 @@
 import type { AppEnv } from '@hono-admin/runtime'
 import type { Context } from 'hono'
+import { getRateLimitCache } from '@hono-admin/runtime/rate-limit-cache'
 import { Hono } from 'hono'
 import { clearAdminSession } from '../../service/admin/session'
 import { canAccessAdminPath } from '../../service/admin/system/role'
@@ -123,13 +124,15 @@ async function consumeLoginRateLimit(
   const accountKey = await createRateLimitKey('auth-login-account', normalizeLoginName(username))
   const limits = await resolveSecurityLimits(c)
   const windowSeconds = limits.loginRateLimitWindowSeconds
+  // 和 API 限流一样走独立的限流缓存,不写共享会话缓存(见 rate-limit-cache 注释)。
+  const limiter = { cache: getRateLimitCache(c.cache) }
 
-  await consumeRateLimit(c, {
+  await consumeRateLimit(limiter, {
     key: ipKey,
     limit: limits.loginRateLimitIpMax,
     windowSeconds,
   })
-  await consumeRateLimit(c, {
+  await consumeRateLimit(limiter, {
     key: accountKey,
     limit: limits.loginRateLimitAccountMax,
     windowSeconds,
@@ -142,9 +145,10 @@ async function clearLoginRateLimit(
   c: Context<AppEnv>,
   keys: LoginRateLimitKeys,
 ): Promise<void> {
+  const limiter = { cache: getRateLimitCache(c.cache) }
   await Promise.all([
-    clearRateLimit(c, keys.ipKey),
-    clearRateLimit(c, keys.accountKey),
+    clearRateLimit(limiter, keys.ipKey),
+    clearRateLimit(limiter, keys.accountKey),
   ])
 }
 
