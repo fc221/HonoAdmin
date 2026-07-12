@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { ResourceAction, ResourceList } from '@hono-admin/server/api/schema'
 import { NButton, NCard, NDataTable, NEmpty, NPopconfirm, NSpace } from 'naive-ui'
-import { computed, h } from 'vue'
+import { computed, h, useSlots } from 'vue'
 
 const props = withDefaults(defineProps<{
   data?: ResourceList | null
@@ -19,13 +19,20 @@ const emit = defineEmits<{
   rowAction: [action: ResourceAction, row: Record<string, unknown>]
 }>()
 
+// 调用方可为任意列提供 `#cell-<key>` 作用域插槽自定义单元格渲染(拿到 row);没提供就用默认文本。
+const slots = useSlots()
+
 const columns = computed(() =>
   [
-    ...(props.data?.columns.map(column => ({
-      key: column.key,
-      title: column.title,
-      width: column.width,
-    })) ?? []),
+    ...(props.data?.columns.map((column) => {
+      const cellSlot = slots[`cell-${column.key}`]
+      return {
+        key: column.key,
+        title: column.title,
+        width: column.width,
+        ...(cellSlot ? { render: (row: Record<string, unknown>) => cellSlot({ row }) } : {}),
+      }
+    }) ?? []),
     ...(props.rowActions.length
       ? [{
           fixed: 'right' as const,

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ResourceAction, ResourceField, ResourceList } from '@hono-admin/server/api/schema'
-import { NButton, NCard, NInput, NPagination, useLoadingBar, useMessage, useNotification } from 'naive-ui'
+import { NButton, NCard, NInput, NPagination, NTag, useLoadingBar, useMessage, useNotification } from 'naive-ui'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { apiClient } from '../../../api/client'
@@ -200,7 +200,13 @@ onMounted(load)
         :loading="loading"
         :row-actions="data?.rowActions ?? []"
         @row-action="handleRowAction"
-      />
+      >
+        <template #cell-status="{ row }">
+          <NTag :bordered="false" round size="small" :type="String(row.status) === 'normal' ? 'success' : 'error'">
+            {{ String(row.status) === 'normal' ? '正常' : '禁用' }}
+          </NTag>
+        </template>
+      </DataTable>
       <div class="mt-4 flex justify-end">
         <NPagination
           v-model:page="page"
