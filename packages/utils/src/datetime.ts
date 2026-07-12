@@ -1,6 +1,7 @@
-import dayjs from 'dayjs/esm'
-import timezone from 'dayjs/esm/plugin/timezone'
-import utc from 'dayjs/esm/plugin/utc'
+// 用主入口而不是 dayjs/esm:后者内部是无扩展名相对导入,打包器能解析,服务端 ESM 运行时解析不了。
+import dayjs from 'dayjs'
+import timezone from 'dayjs/plugin/timezone'
+import utc from 'dayjs/plugin/utc'
 
 dayjs.extend(utc)
 dayjs.extend(timezone)
@@ -41,4 +42,32 @@ export function formatDateTime(
 
   setDefaultTimezone(timezoneValue)
   return date.tz().format(format)
+}
+
+export interface DayBucket {
+  end: number
+  label: string
+  start: number
+}
+
+/**
+ * 最近 days 天的日边界(含今天),按给定时区切分,不是按 UTC。
+ * 用于「近 N 天」这类按天聚合:边界在这里算好,SQL 只做区间计数,跨方言无需日期函数。
+ */
+export function getRecentDayBuckets(
+  now: number,
+  timezoneValue: string,
+  days: number,
+): DayBucket[] {
+  setDefaultTimezone(normalizeTimezone(timezoneValue))
+  const today = dayjs(now).tz().startOf('day')
+
+  return Array.from({ length: days }, (_, index) => {
+    const start = today.subtract(days - 1 - index, 'day')
+    return {
+      end: start.add(1, 'day').valueOf(),
+      label: start.format('MM-DD'),
+      start: start.valueOf(),
+    }
+  })
 }

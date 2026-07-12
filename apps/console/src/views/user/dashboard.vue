@@ -3,7 +3,6 @@ import type { DashboardPayload } from '@hono-admin/server/api/schema'
 import { useLoadingBar, useNotification } from 'naive-ui'
 import { onMounted, ref } from 'vue'
 import { apiClient } from '../../api/client'
-import PageHeader from '../../components/PageHeader.vue'
 import StatGrid from '../../components/StatGrid.vue'
 
 const dashboard = ref<DashboardPayload | null>(null)
@@ -28,6 +27,5 @@ onMounted(async () => {
 </script>
 
 <template>
-  <PageHeader title="用户仪表盘" description="账户状态和近期行为概览" />
   <StatGrid :stats="dashboard?.stats ?? []" />
 </template>

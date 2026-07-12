@@ -7,4 +7,5 @@ export type {
   AppRuntimeConfig,
   RuntimeBindings,
   RuntimeTarget,
+  SystemMetrics,
 } from './types'

@@ -9,6 +9,7 @@ import { resolveSecurityRuntimeConfig } from '../security-config'
 import { getAppName, getAppVersion } from '../utils/app-meta'
 import { normalizeTimezone } from '../utils/datetime'
 import { createServerCacheAdapter } from './local-cache'
+import { readLocalSystemMetrics } from './local-metrics'
 import { createLocalDatabaseAdapter } from './local-sqlite'
 
 type LocalRuntimeTarget = 'bun' | 'node'
@@ -91,6 +92,7 @@ export async function createLocalRuntime(
       timezone,
     },
     db,
+    systemMetrics: readLocalSystemMetrics,
   }
 }
 

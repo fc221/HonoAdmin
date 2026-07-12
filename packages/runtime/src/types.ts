@@ -36,11 +36,27 @@ export type AppRuntimeConfig = {
   timezone: string
 }
 
+export type SystemMetrics = {
+  cpuCores: number
+  cpuLoad: number
+  cpuLoadPercent: number
+  memoryTotal: number
+  memoryUsed: number
+  memoryUsedPercent: number
+  processMemory: number
+  storageTotal: number
+  storageUsed: number
+  storageUsedPercent: number
+  uptimeSeconds: number
+}
+
 export type AppRuntime = {
   cache: CacheAdapter
   close?: () => Promise<void> | void
   config: AppRuntimeConfig
   db: DBAdapter
+  // 只有能读到宿主机指标的运行时才实现(Bun / Node);Workers 上没有 os/fs,直接不提供。
+  systemMetrics?: () => Promise<SystemMetrics | null>
 }
 
 export type AppContext = {
