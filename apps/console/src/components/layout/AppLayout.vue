@@ -50,7 +50,6 @@ const menuExpandedKeys = ref<Array<string | number>>([])
 const routeRefreshKey = ref(0)
 const layoutReady = ref(false)
 const pendingActiveMenuName = ref<string | null>(null)
-const routeNavigating = ref(false)
 let routeNavigationId = 0
 
 // surface(admin/user)由当前路由所在的布局父路由决定,不再靠 AppShell 透传。
@@ -217,12 +216,10 @@ function navigate(href: string, activeKey?: string | number) {
 
   const navigationId = ++routeNavigationId
   pendingActiveMenuName.value = activeKey === undefined ? null : String(activeKey)
-  routeNavigating.value = true
   void router.push(href).finally(() => {
     if (navigationId !== routeNavigationId)
       return
     pendingActiveMenuName.value = null
-    routeNavigating.value = false
   })
 }
 
@@ -313,12 +310,12 @@ async function switchRole(roleId: number) {
       @update:collapsed="updateSidebarCollapsed"
     />
     <AppMobileSidebar
-      v-if="mobileOpen"
       v-model:expanded-keys="menuExpandedKeys"
       :active-menu-name="visibleActiveMenuName"
       :flush="flushLayout"
       :logo-text="logoText"
       :menu-options="mobileMenuOptions"
+      :open="mobileOpen"
       :sidebar-style="sidebarStyle"
       :site-title="siteTitle"
       :theme-dropdown-options="themeDropdownOptions"
@@ -407,12 +404,23 @@ async function switchRole(roleId: number) {
         <main class="ha-main min-w-0 overflow-x-clip flex-1">
           <div :class="contentWidthClass">
             <div
-              v-if="loading || !layoutReady || routeNavigating"
+              v-if="loading || !layoutReady"
               class="rounded-naive border border-base-border bg-base-card p-4 text-sm text-base-muted"
             >
               页面加载中...
             </div>
-            <RouterView v-else :key="routeViewKey" />
+            <!--
+              导航期间保留旧页面(顶部 loading bar 已在提示),新页面就绪后淡入,不再闪一块占位。
+              页面组件是多根节点,Transition 只认单根元素:必须套一层 div 承载过渡,
+              否则 out-in 的 leave 永远结束不了,新页面根本不挂载(表现为 main 空白,要刷新才出来)。
+            -->
+            <RouterView v-else v-slot="{ Component }">
+              <Transition mode="out-in" name="ha-page">
+                <div :key="routeViewKey">
+                  <component :is="Component" />
+                </div>
+              </Transition>
+            </RouterView>
           </div>
         </main>
         <footer class="mt-2 p-4 text-center text-xs text-base-muted">
@@ -431,5 +439,32 @@ async function switchRole(roleId: number) {
 
 .ha-layout--hybrid .ha-main {
   padding: 1rem 0 0;
+}
+
+/* 页面切换:out-in,旧页面先退场再进新页面,避免两页并排导致的高度跳动。 */
+.ha-page-enter-active {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.ha-page-leave-active {
+  transition: opacity 0.12s ease;
+}
+
+.ha-page-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.ha-page-leave-to {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ha-page-enter-active,
+  .ha-page-leave-active {
+    transition: none;
+  }
 }
 </style>

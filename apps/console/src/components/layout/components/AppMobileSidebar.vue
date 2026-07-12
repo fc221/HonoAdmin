@@ -12,6 +12,7 @@ const props = withDefaults(defineProps<{
   flush?: boolean
   logoText: string
   menuOptions: MenuOption[]
+  open: boolean
   selectedTheme: string
   sidebarStyle: LayoutSidebarStyle
   siteTitle: string
@@ -79,73 +80,115 @@ const menuShellStyle = computed(() => ({
 </script>
 
 <template>
-  <div
-    class="fixed inset-0 z-40 bg-black/35 lg:hidden"
-    @click="emit('closeMobile')"
-  />
+  <Transition name="ha-mask">
+    <div
+      v-if="open"
+      class="fixed inset-0 z-40 bg-black/35 lg:hidden"
+      @click="emit('closeMobile')"
+    />
+  </Transition>
 
-  <NLayoutSider
-    collapse-mode="width"
-    :collapsed="false"
-    :collapsed-width="80"
-    :content-class="siderContentClass"
-    :native-scrollbar="false"
-    :style="{
-      background: 'var(--card-color)',
-      borderRadius: flush ? '0' : 'var(--border-radius)',
-      color: 'var(--text-color-1)',
-      position: 'fixed',
-      zIndex: 50,
-    }"
-    :width="256"
-    class="min-w-0 overflow-hidden shadow-xl shadow-black/10 transition-transform duration-300 ease-out lg:hidden!"
-    :class="mobileSiderClass"
-  >
-    <div class="flex w-full min-w-0 items-center gap-3 overflow-hidden p-4" :style="logoStyle">
-      <div class="grid size-12 shrink-0 place-items-center text-lg font-bold" :style="logoMarkStyle">
-        {{ logoText }}
-      </div>
-      <div class="min-w-0">
-        <div class="max-w-40 truncate text-lg font-bold">
-          {{ siteTitle }}
+  <Transition name="ha-drawer">
+    <NLayoutSider
+      v-if="open"
+      collapse-mode="width"
+      :collapsed="false"
+      :collapsed-width="80"
+      :content-class="siderContentClass"
+      :native-scrollbar="false"
+      :style="{
+        background: 'var(--card-color)',
+        borderRadius: flush ? '0' : 'var(--border-radius)',
+        color: 'var(--text-color-1)',
+        position: 'fixed',
+        zIndex: 50,
+      }"
+      :width="256"
+      class="min-w-0 overflow-hidden shadow-xl shadow-black/10 lg:hidden!"
+      :class="mobileSiderClass"
+    >
+      <div class="flex w-full min-w-0 items-center gap-3 overflow-hidden p-4" :style="logoStyle">
+        <div class="grid size-12 shrink-0 place-items-center text-lg font-bold" :style="logoMarkStyle">
+          {{ logoText }}
+        </div>
+        <div class="min-w-0">
+          <div class="max-w-40 truncate text-lg font-bold">
+            {{ siteTitle }}
+          </div>
         </div>
       </div>
-    </div>
 
-    <nav
-      class="ha-sidebar-menu w-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden"
-      :class="menuShellClass"
-      :style="menuShellStyle"
-    >
-      <NMenu
-        v-model:value="selectedMenuKey"
-        v-model:expanded-keys="expandedKeysModel"
-        :collapsed="false"
-        :collapsed-icon-size="16"
-        :collapsed-width="48"
-        :icon-size="18"
-        :indent="18"
-        :options="menuOptions"
-        :root-indent="18"
-      />
-    </nav>
+      <nav
+        class="ha-sidebar-menu w-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden"
+        :class="menuShellClass"
+        :style="menuShellStyle"
+      >
+        <NMenu
+          v-model:value="selectedMenuKey"
+          v-model:expanded-keys="expandedKeysModel"
+          :collapsed="false"
+          :collapsed-icon-size="16"
+          :collapsed-width="48"
+          :icon-size="18"
+          :indent="18"
+          :options="menuOptions"
+          :root-indent="18"
+        />
+      </nav>
 
-    <div
-      class="flex w-full min-w-0 items-center justify-between gap-2 border-t border-base-border pt-2"
-    >
-      <NDropdown :options="themeDropdownOptions" trigger="click" :width="176" @select="key => emit('selectTheme', key)">
-        <NButton quaternary circle :title="`当前主题：${selectedTheme}`">
+      <div
+        class="flex w-full min-w-0 items-center justify-between gap-2 border-t border-base-border pt-2"
+      >
+        <NDropdown :options="themeDropdownOptions" trigger="click" :width="176" @select="key => emit('selectTheme', key)">
+          <NButton quaternary circle :title="`当前主题：${selectedTheme}`">
+            <template #icon>
+              <AppIcon name="ri:palette-line" />
+            </template>
+          </NButton>
+        </NDropdown>
+        <NButton quaternary @click="emit('closeMobile')">
           <template #icon>
-            <AppIcon name="ri:palette-line" />
+            <AppIcon name="ri:close-line" />
           </template>
+          <span>关闭导航</span>
         </NButton>
-      </NDropdown>
-      <NButton quaternary @click="emit('closeMobile')">
-        <template #icon>
-          <AppIcon name="ri:close-line" />
-        </template>
-        <span>关闭导航</span>
-      </NButton>
-    </div>
-  </NLayoutSider>
+      </div>
+    </NLayoutSider>
+  </Transition>
 </template>
+
+<!--
+  非 scoped:过渡类要落在 NLayoutSider 的根元素上,scoped 选择器带 data-v 属性时匹配不到它。
+  类名带 ha- 前缀,不会撞到别的样式。
+-->
+<style>
+/* 抽屉从屏幕左侧滑入,遮罩淡入;之前是 v-if 直接挂载,transition-transform 从没生效过。 */
+.ha-drawer-enter-active,
+.ha-drawer-leave-active {
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ha-drawer-enter-from,
+.ha-drawer-leave-to {
+  transform: translateX(-110%);
+}
+
+.ha-mask-enter-active,
+.ha-mask-leave-active {
+  transition: opacity 0.28s ease;
+}
+
+.ha-mask-enter-from,
+.ha-mask-leave-to {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ha-drawer-enter-active,
+  .ha-drawer-leave-active,
+  .ha-mask-enter-active,
+  .ha-mask-leave-active {
+    transition: none;
+  }
+}
+</style>
