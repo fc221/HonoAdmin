@@ -62,12 +62,15 @@ async function listUserRows(c: Context<AppEnv>) {
   }
 }
 
+// 密码放在 status 右侧填补空位,简介(占两列)收尾。
+const bioField: ResourceField = { key: 'bio', label: '简介', type: 'textarea' }
+
 async function userCreateFields(c: Context<AppEnv>): Promise<ResourceField[]> {
-  return [...await userBaseFields(c), { key: 'password', label: '密码', required: true, type: 'password' }]
+  return [...await userBaseFields(c), { key: 'password', label: '密码', required: true, type: 'password' }, bioField]
 }
 
 async function userEditFields(c: Context<AppEnv>): Promise<ResourceField[]> {
-  return [...await userBaseFields(c), { help: '留空则不修改密码。', key: 'password', label: '密码', type: 'password' }]
+  return [...await userBaseFields(c), { key: 'password', label: '密码', placeholder: '留空则不修改密码', type: 'password' }, bioField]
 }
 
 async function userBaseFields(c: Context<AppEnv>): Promise<ResourceField[]> {
@@ -80,7 +83,6 @@ async function userBaseFields(c: Context<AppEnv>): Promise<ResourceField[]> {
     { key: 'phone', label: '手机', type: 'text' },
     { key: 'gender', label: '性别', options: userGenderOptions, type: 'select' },
     { key: 'status', label: '状态', options: userStatusOptions, required: true, type: 'select' },
-    { key: 'bio', label: '简介', type: 'textarea' },
   ]
 }
 

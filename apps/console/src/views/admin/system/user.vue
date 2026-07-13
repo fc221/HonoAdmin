@@ -154,6 +154,16 @@ function notifyError(title: string, reason: unknown, fallback: string) {
   })
 }
 
+// 按角色名稳定分配 tag 颜色:同一角色跨行同色,不同角色不同色。
+const roleTagTypes = ['info', 'success', 'warning', 'error', 'primary'] as const
+function roleTagType(name: string): (typeof roleTagTypes)[number] {
+  let hash = 0
+  for (let i = 0; i < name.length; i += 1) {
+    hash = (hash * 31 + name.charCodeAt(i)) >>> 0
+  }
+  return roleTagTypes[hash % roleTagTypes.length]
+}
+
 // 角色筛选下拉的选项:取一次角色列表。角色数量少,一次拉够。
 async function loadRoleOptions() {
   const roles = await apiClient.getResource('admin', 'system-role', { page: 1, pageSize: 100 }).catch(() => null)
@@ -228,7 +238,7 @@ onMounted(() => {
         <template #cell-id="{ row }">
           <div class="flex flex-col items-start gap-1">
             <div v-if="((row.roleNames as string[] | undefined) ?? []).length" class="flex flex-wrap gap-1">
-              <NTag v-for="name in (row.roleNames as string[])" :key="name" :bordered="false" round size="small">
+              <NTag v-for="name in (row.roleNames as string[])" :key="name" :bordered="false" round size="small" :type="roleTagType(name)">
                 {{ name }}
               </NTag>
             </div>

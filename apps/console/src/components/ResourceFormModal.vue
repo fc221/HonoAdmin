@@ -128,6 +128,22 @@ async function submit() {
   }
   emit('submit', { ...form })
 }
+
+// 输入框优先用字段自定义 placeholder,其次把 help 当提示放进去(如「留空则不修改密码」),
+// 最后兜底「请输入{标签}」,取代 naive 默认的英文 Please Input。
+function inputPlaceholder(field: ResourceField): string {
+  return field.placeholder ?? field.help ?? `请输入${field.label}`
+}
+
+// 输入类字段没有自定义 placeholder 时,help 已经进了 placeholder,底部不再重复;
+// 其它类型(select/tree/switch)无法用 placeholder 承载,help 仍显示在底部。
+function bottomHelp(field: ResourceField): string | undefined {
+  const inputTypes = ['text', 'password', 'textarea', 'richtext', 'number']
+  if (inputTypes.includes(field.type) && !field.placeholder) {
+    return undefined
+  }
+  return field.help
+}
 </script>
 
 <template>
@@ -149,18 +165,18 @@ async function submit() {
           :path="field.key"
           :class="field.type === 'textarea' || field.type === 'richtext' ? 'sm:col-span-2' : ''"
           :required="field.required"
-          :feedback="field.help"
+          :feedback="bottomHelp(field)"
         >
           <NInput
             v-if="field.type === 'text' || field.type === 'password'"
             v-model:value="form[field.key]"
-            :placeholder="field.placeholder"
+            :placeholder="inputPlaceholder(field)"
             :type="field.type === 'password' ? 'password' : 'text'"
           />
           <NInput
             v-else-if="field.type === 'textarea'"
             v-model:value="form[field.key]"
-            :placeholder="field.placeholder"
+            :placeholder="inputPlaceholder(field)"
             type="textarea"
             :autosize="{ minRows: 4, maxRows: 14 }"
           />
@@ -168,7 +184,7 @@ async function submit() {
             v-else-if="field.type === 'richtext'"
             v-model="form[field.key]"
             class="w-full"
-            :placeholder="field.placeholder"
+            :placeholder="inputPlaceholder(field)"
             :upload-type="richTextUploadType"
           />
           <NSelect
@@ -203,7 +219,7 @@ async function submit() {
             v-else-if="field.type === 'number'"
             v-model:value="form[field.key]"
             class="w-full"
-            :placeholder="field.placeholder"
+            :placeholder="inputPlaceholder(field)"
           />
           <NInput
             v-else
