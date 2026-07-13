@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ResourceAction, ResourceField, ResourceList } from '@hono-admin/server/api/schema'
-import { NButton, NCard, NInput, NPagination, NTag, useLoadingBar, useMessage, useNotification } from 'naive-ui'
+import { NButton, NCard, NInput, NPagination, NSelect, NTag, useLoadingBar, useMessage, useNotification } from 'naive-ui'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { apiClient } from '../../../api/client'
@@ -22,6 +22,8 @@ const loading = ref(false)
 const page = ref(1)
 const pageSize = ref(10)
 const selectedId = ref<number | null>(null)
+const selectedRoleId = ref<number | null>(null)
+const roleOptions = ref<Array<{ label: string, value: number }>>([])
 const submitting = ref(false)
 
 const modalTitle = computed(() =>
@@ -38,6 +40,7 @@ async function load() {
       keyword: keyword.value,
       page: page.value,
       pageSize: pageSize.value,
+      roleId: selectedRoleId.value ?? undefined,
     })
     loadingBar.finish()
   }
@@ -151,8 +154,20 @@ function notifyError(title: string, reason: unknown, fallback: string) {
   })
 }
 
+// 角色筛选下拉的选项:取一次角色列表。角色数量少,一次拉够。
+async function loadRoleOptions() {
+  const roles = await apiClient.getResource('admin', 'system-role', { page: 1, pageSize: 100 }).catch(() => null)
+  roleOptions.value = (roles?.rows ?? []).map(role => ({
+    label: String(role.name ?? role.code ?? role.id),
+    value: Number(role.id),
+  }))
+}
+
 watch(() => route.fullPath, load)
-onMounted(load)
+onMounted(() => {
+  void loadRoleOptions()
+  void load()
+})
 </script>
 
 <template>
@@ -175,13 +190,22 @@ onMounted(load)
           </NButton>
         </div>
 
-        <div class="ml-auto flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto" style="width: min(20rem, 100%)">
+        <div class="ml-auto flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto" style="width: min(28rem, 100%)">
+          <NSelect
+            v-model:value="selectedRoleId"
+            clearable
+            :options="roleOptions"
+            placeholder="全部角色"
+            size="small"
+            style="width: min(9rem, 100%)"
+            @update:value="resetAndLoad"
+          />
           <NInput
             v-model:value="keyword"
             clearable
             :placeholder="String(route.meta.searchPlaceholder ?? '关键词搜索')"
             size="small"
-            style="width: min(16rem, 100%)"
+            style="width: min(14rem, 100%)"
             @keyup.enter="resetAndLoad"
           >
             <template #prefix>
@@ -201,6 +225,16 @@ onMounted(load)
         :row-actions="data?.rowActions ?? []"
         @row-action="handleRowAction"
       >
+        <template #cell-id="{ row }">
+          <div class="flex flex-col items-start gap-1">
+            <div v-if="((row.roleNames as string[] | undefined) ?? []).length" class="flex flex-wrap gap-1">
+              <NTag v-for="name in (row.roleNames as string[])" :key="name" :bordered="false" round size="small">
+                {{ name }}
+              </NTag>
+            </div>
+            <span class="text-sm">{{ row.id }}</span>
+          </div>
+        </template>
         <template #cell-status="{ row }">
           <NTag :bordered="false" round size="small" :type="String(row.status) === 'normal' ? 'success' : 'error'">
             {{ String(row.status) === 'normal' ? '正常' : '禁用' }}

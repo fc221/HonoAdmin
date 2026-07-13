@@ -47,7 +47,7 @@ async function unwrap<T>(response: FetchLike): Promise<T> {
 }
 
 type Surface = 'admin' | 'user'
-type ResourceQuery = { keyword?: string, page?: number, pageSize?: number, uploadType?: string }
+type ResourceQuery = { keyword?: string, page?: number, pageSize?: number, roleId?: number, uploadType?: string }
 
 /** 通用 CRUD 的资源 → URL 路径映射。值是 `/api` 之后的部分。 */
 const resourcePaths: Record<Surface, Record<string, string>> = {

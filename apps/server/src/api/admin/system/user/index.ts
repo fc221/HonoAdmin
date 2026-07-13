@@ -16,7 +16,6 @@ import {
   createAction,
   deleteAction,
   editAction,
-  listInput,
 } from '../../../shared/resource'
 import { buildResourceApp } from '../../../shared/resource-routes'
 
@@ -29,15 +28,38 @@ const userResource: ResourceDefinition = {
     ['status', '状态'],
     ['updatedAt', '更新时间'],
   ],
+  // 角色名不单独占列,带给前端在 ID 单元格里渲染成 tag。
+  extraRowKeys: ['roleNames'],
   create: (c, input) => createUser(c, createUserSchema.parse(normalizeUserInput(input, 'create'))),
   createFields: userCreateFields,
   delete: deleteUser,
   editFields: userEditFields,
   get: getUserById,
-  list: (c) => listUsers(c, listInput(c)),
+  list: listUserRows,
   rowActions: [editAction, deleteAction],
   title: '用户管理',
   update: (c, id, input) => updateUser(c, id, updateUserSchema.parse(normalizeUserInput(input, 'update'))),
+}
+
+// 列表额外带出角色名(供前端渲染角色 tag),并支持按 roleId 过滤。角色名走 role catalog 缓存,不额外打库。
+async function listUserRows(c: Context<AppEnv>) {
+  const result = await listUsers(c, {
+    keyword: c.req.query('keyword') ?? '',
+    page: Number(c.req.query('page') ?? 1),
+    pageSize: Number(c.req.query('pageSize') ?? 10),
+    roleId: c.req.query('roleId') || undefined,
+  })
+  const roleNameById = new Map(
+    (await listRoleOptions(c).catch(() => [])).map((role) => [role.id, role.name]),
+  )
+
+  return {
+    ...result,
+    items: result.items.map((user) => ({
+      ...user,
+      roleNames: user.roleIds.map((id) => roleNameById.get(id) ?? `#${id}`),
+    })),
+  }
 }
 
 async function userCreateFields(c: Context<AppEnv>): Promise<ResourceField[]> {

@@ -17,6 +17,8 @@ import {
 export type ResourceDefinition = {
   actions?: ResourceAction[]
   columns: Array<[string, string]>
+  // 额外带给前端但不作为独立列的数据字段(如供插槽渲染的角色名);formatRow 会一并保留。
+  extraRowKeys?: string[]
   create?: (c: Context<AppEnv>, input: Record<string, unknown>) => Promise<Record<string, unknown>>
   createFields?: FieldSource
   delete?: (c: Context<AppEnv>, id: number) => Promise<void>
@@ -120,7 +122,10 @@ async function toResourceList(
       totalPages: paginated.totalPages,
     },
     rowActions: definition.rowActions ?? [],
-    rows: paginated.items.map((item) => formatRow(item, definition.columns.map(([key]) => key))),
+    rows: paginated.items.map((item) => formatRow(item, [
+      ...definition.columns.map(([key]) => key),
+      ...(definition.extraRowKeys ?? []),
+    ])),
     title: definition.title,
   })
 }

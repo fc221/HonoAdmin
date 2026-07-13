@@ -82,6 +82,7 @@ export const updateUserSchema = z.object({
 
 export const listUserSchema = paginationSchema.extend({
   keyword: z.string().trim().default(''),
+  roleId: z.coerce.number().int().positive().optional(),
 })
 
 export const userListResultSchema = paginationResultSchema.extend({

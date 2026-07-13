@@ -96,6 +96,12 @@ export async function listUsers(
       'mail',
       'phone',
     ]),
+    listInput.roleId
+      ? {
+          params: [listInput.roleId],
+          sql: 'EXISTS (SELECT 1 FROM sys_user_role WHERE user_id = sys_user.id AND role_id = ?)',
+        }
+      : null,
   ])
   const total = await countUsers(ctx, whereClause.sql, whereClause.params)
   const pagination = resolvePagination(listInput, total)
