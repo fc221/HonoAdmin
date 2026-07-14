@@ -206,6 +206,41 @@ describe('system metric collectors', () => {
     }
   })
 
+  test('compact skips already-finalized hours but backfills missing gap hours', async () => {
+    const { ctx, cleanup } = await createTestServiceContext()
+    try {
+      const now = ctx.now()
+      const currentHour = Math.floor(now / HOUR) * HOUR
+      const finalizedHour = currentHour - 10 * HOUR // 已存在且超出重算尾部窗口 → 应跳过,不重复统计
+      const gapHour = currentHour - 8 * HOUR // 缺失但有日志 → 应补齐
+
+      // 已定稿小时:写一个哨兵值 777 的桶,但该小时没有任何操作日志。
+      await replaceMetricBuckets(ctx, [
+        { bucketStart: finalizedHour, grain: 'hour', metricKey: OPERATE_COUNT_METRIC, namespace: SYSTEM_METRIC_NAMESPACE, ownerType: 'global', value: 777 },
+      ])
+      // 缺口小时:插 2 条操作日志,但不写桶(模拟那段时间没写桶)。
+      await insertOperateLogs(ctx, [gapHour, gapHour + 60_000])
+
+      await compactSystemMetrics(ctx)
+
+      const series = await queryMetricSeries(ctx, {
+        end: currentHour,
+        grain: 'hour',
+        metricKey: OPERATE_COUNT_METRIC,
+        namespace: SYSTEM_METRIC_NAMESPACE,
+        ownerType: 'global',
+        start: currentHour - 12 * HOUR,
+      })
+      const byStart = new Map(series.map((p) => [p.bucketStart, p.value]))
+      // 已定稿的小时未被重算(仍是哨兵 777)→ 不重复统计。
+      expect(byStart.get(finalizedHour)).toBe(777)
+      // 缺失小时按源精确补齐 = 2 → 缺口自愈。
+      expect(byStart.get(gapHour)).toBe(2)
+    } finally {
+      await cleanup()
+    }
+  })
+
   test('compact deletes 5m buckets older than 48 hours', async () => {
     const { ctx, cleanup } = await createTestServiceContext()
     try {

@@ -16,10 +16,13 @@ const GLOBAL_OWNER = 'global'
 
 const FIVE_MINUTES_MS = 5 * 60 * 1000
 const HOUR_MS = 60 * 60 * 1000
-// compact 每小时从源重算最近 N 个已结束小时。窗口越宽,越长的调度中断也能自愈;
-// 25 小时覆盖整天中断,每次只是 N 次带索引的范围 COUNT,成本可忽略。
-// ponytail: 中断超过该窗口的小时需调大此值或手动重跑;operate_log 保留 30 天,上限可到 7 天。
-const COMPACT_BACKFILL_HOURS = 25
+// compact 不重复统计已定稿的小时:只重算「最近 N 个已结束小时」(定稿刚结束小时的尾部数据,
+// 并容忍 compact 少跑几次),外加「窗口内缺失的小时」(补调度中断的缺口)。
+// 已存在的旧 hour 桶直接跳过 —— 稳态每小时只做 N 次带索引 COUNT,开销不随历史增长。
+const HOUR_RECOMPUTE_TRAIL = 3
+// 只维护仪表盘要看的 7 天窗口;更早的缺口无人读,且按天聚合时缺失即读作 0。
+// ponytail: 若只有 rollup 静默失败(进程活着但不写桶)超过 7 天,更早的欠账不再自动补。
+const HOUR_BACKFILL_WINDOW = 24 * 7
 // 5m 桶保留 48 小时;它是细粒度层,当前仪表盘只读 hour 桶。
 const FIVE_MINUTE_RETENTION_MS = 48 * HOUR_MS
 
@@ -41,26 +44,42 @@ export async function rollupSystemMetrics(ctx: ServiceContext): Promise<string> 
   return '已更新 2 个 5m 桶和当前小时桶'
 }
 
-// compact-system-metrics:直接从 operate_log 重算最近 N 个已结束 hour 桶(而非求和 5m 桶),
-// 再删除超过 48h 的 5m 桶。从源重算意味着即便某段时间调度中断、5m 桶有缺口,hour 桶仍精确且能自愈。
+// compact-system-metrics:维护已结束的 hour 桶,再删除超过 48h 的 5m 桶。
+// hour 桶直接从 operate_log 重算(不求和 5m 桶),所以即便 5m 桶有缺口也精确;
+// 且只重算「最近 N 个小时 + 窗口内缺失小时」,不重复统计已定稿的旧小时。
 export async function compactSystemMetrics(ctx: ServiceContext): Promise<string> {
-  const currentHour = floorTo(ctx.now(), HOUR_MS)
+  const now = ctx.now()
+  const lastFinishedHour = floorTo(now, HOUR_MS) - HOUR_MS
+  const windowStart = lastFinishedHour - (HOUR_BACKFILL_WINDOW - 1) * HOUR_MS
+  const trailStart = lastFinishedHour - (HOUR_RECOMPUTE_TRAIL - 1) * HOUR_MS
+
+  // 一次带索引的读:窗口内已存在的 hour 桶起点。存在即已统计过,据此跳过、只补缺口。
+  const existing = await ctx.db.query<{ bucket_start: number }>(
+    `SELECT bucket_start FROM sys_metric_bucket
+     WHERE namespace = ? AND metric_key = ? AND owner_type = ? AND owner_id = ''
+       AND grain = 'hour' AND bucket_start >= ? AND bucket_start <= ?`,
+    [SYSTEM_METRIC_NAMESPACE, OPERATE_COUNT_METRIC, GLOBAL_OWNER, windowStart, lastFinishedHour],
+  )
+  const present = new Set(existing.map((row) => Number(row.bucket_start)))
 
   const buckets: MetricBucketInput[] = []
-  for (let offset = COMPACT_BACKFILL_HOURS; offset >= 1; offset -= 1) {
-    const hourStart = currentHour - offset * HOUR_MS
-    buckets.push(operateBucket('hour', hourStart, await countOperateLogsInRange(ctx, hourStart, hourStart + HOUR_MS)))
+  for (let hourStart = windowStart; hourStart <= lastFinishedHour; hourStart += HOUR_MS) {
+    // 最近 N 个小时始终重算(定稿尾部数据);更早的只在缺失时补,已存在则跳过。
+    if (hourStart >= trailStart || !present.has(hourStart)) {
+      buckets.push(operateBucket('hour', hourStart, await countOperateLogsInRange(ctx, hourStart, hourStart + HOUR_MS)))
+    }
+  }
+  if (buckets.length > 0) {
+    await replaceMetricBuckets(ctx, buckets)
   }
 
-  await replaceMetricBuckets(ctx, buckets)
-
-  const cutoff = floorTo(ctx.now(), FIVE_MINUTES_MS) - FIVE_MINUTE_RETENTION_MS
+  const cutoff = floorTo(now, FIVE_MINUTES_MS) - FIVE_MINUTE_RETENTION_MS
   const deleted = await ctx.db.execute(
     'DELETE FROM sys_metric_bucket WHERE namespace = ? AND grain = ? AND bucket_start < ?',
     [SYSTEM_METRIC_NAMESPACE, '5m', cutoff],
   )
 
-  return `已汇总 ${buckets.length} 个 hour 桶,清理 ${deleted.rowsAffected} 个过期 5m 桶`
+  return `已定稿 ${buckets.length} 个 hour 桶,清理 ${deleted.rowsAffected} 个过期 5m 桶`
 }
 
 // 供仪表盘读取「更新于」时间。
