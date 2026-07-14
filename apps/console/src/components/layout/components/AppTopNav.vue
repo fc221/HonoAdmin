@@ -11,7 +11,6 @@ const props = withDefaults(defineProps<{
   flush?: boolean
   logoText: string
   menuOptions: MenuOption[]
-  roleDropdownOptions?: DropdownOption[]
   selectedMenuKey: string
   siteTitle: string
   themeDropdownOptions: DropdownOption[]
@@ -21,7 +20,6 @@ const props = withDefaults(defineProps<{
   userLabel: string
 }>(), {
   flush: false,
-  roleDropdownOptions: () => [],
   topMenuCentered: false,
 })
 
@@ -37,6 +35,20 @@ const canEditInterface = import.meta.env.DEV
 const SettingsDrawer = canEditInterface
   ? defineAsyncComponent(() => import('./SettingsDrawer.vue'))
   : null
+
+// 角色一键切换:显示当前角色,点击切到下一个(多角色则循环),不必展开下拉。
+const roles = computed(() => props.user?.roles ?? [])
+const currentRole = computed(() =>
+  roles.value.find(role => role.id === props.user?.activeRoleId) ?? roles.value[0] ?? null,
+)
+const nextRole = computed(() => {
+  if (roles.value.length < 2) {
+    return null
+  }
+  const index = roles.value.findIndex(role => role.id === currentRole.value?.id)
+  return roles.value[(index + 1) % roles.value.length]
+})
+
 const homeHref = computed(() => findFirstMenuHref(props.menuOptions) || '/')
 const selectedMenuKeyModel = computed({
   get: () => props.selectedMenuKey || props.activeMenuName,
@@ -114,14 +126,19 @@ function findFirstMenuHref(options: MenuOption[]): string {
         <NDropdown :options="themeDropdownOptions" trigger="hover" :width="176" @select="key => emit('selectTheme', key)">
           <AppIcon name="ri:palette-line" />
         </NDropdown>
-        <NDropdown
-          v-if="roleDropdownOptions.length > 1"
-          trigger="hover"
-          :options="roleDropdownOptions"
-          @select="key => emit('roleSwitch', key)"
+        <NButton
+          v-if="nextRole"
+          quaternary
+          size="small"
+          class="gap-1! px-2!"
+          :title="`当前角色：${currentRole?.name} · 点击切换到 ${nextRole.name}`"
+          @click="emit('roleSwitch', nextRole.id)"
         >
-          <AppIcon name="ri:shield-check-line" />
-        </NDropdown>
+          <template #icon>
+            <AppIcon name="ri:user-shared-2-line" />
+          </template>
+          <span class="hidden text-sm xl:inline">{{ currentRole?.name }}</span>
+        </NButton>
         <component :is="SettingsDrawer" v-if="canEditInterface && SettingsDrawer" />
         <NDropdown
           trigger="hover"
@@ -133,7 +150,7 @@ function findFirstMenuHref(options: MenuOption[]): string {
               {{ getLogoText(userLabel) }}
             </NAvatar>
             <span class="ml-2 hidden max-w-28 truncate text-sm xl:inline">{{ userLabel }}</span>
-            <AppIcon class="hidden xl:inline-block" name="ri:arrow-down-s-line" />
+            <AppIcon name="ri:arrow-down-s-line" />
           </NButton>
         </NDropdown>
       </div>

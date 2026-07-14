@@ -133,21 +133,26 @@ const themeDropdownOptions = computed<DropdownOption[]>(() =>
     ]),
   })),
 )
-const roleOptions = computed<DropdownOption[]>(() =>
-  user.value?.roles.map(role => ({
-    disabled: user.value?.activeRoleId === role.id,
-    key: role.id,
-    label: role.name,
-  })) ?? [],
-)
 const userDropdownOptions = computed<DropdownOption[]>(() => [
   {
+    key: 'user-info',
+    props: { class: 'pointer-events-none' },
+    render: () => h('div', { class: 'flex flex-col px-3 py-2' }, [
+      h('div', { class: 'truncate text-sm font-medium text-base-content' }, user.value?.nickname || user.value?.username || '用户'),
+      h('div', { class: 'truncate text-xs text-base-muted' }, user.value?.username ?? ''),
+    ]),
+    type: 'render',
+  },
+  { key: 'user-info-divider', type: 'divider' },
+  {
+    icon: () => h(AppIcon, { name: 'ri:user-line' }),
     key: 'profile',
     label: '个人中心',
   },
   {
+    icon: () => h(AppIcon, { class: 'text-error', name: 'ri:logout-box-r-line' }),
     key: 'logout',
-    label: '退出登录',
+    label: () => h('span', { class: 'text-error' }, '退出登录'),
   },
 ])
 
@@ -341,7 +346,6 @@ async function switchRole(roleId: number) {
           v-model:mobile-open="mobileOpen"
           :breadcrumbs="breadcrumbs"
           :flush="flushLayout"
-          :role-dropdown-options="roleOptions"
           :show-theme-switch="false"
           :theme-dropdown-options="themeDropdownOptions"
           :user="user"
@@ -360,7 +364,6 @@ async function switchRole(roleId: number) {
           class="lg:hidden"
           :breadcrumbs="breadcrumbs"
           :flush="flushLayout"
-          :role-dropdown-options="roleOptions"
           :show-theme-switch="false"
           :theme-dropdown-options="themeDropdownOptions"
           :user="user"
@@ -379,7 +382,6 @@ async function switchRole(roleId: number) {
           :flush="flushLayout"
           :logo-text="logoText"
           :menu-options="topMenuOptions"
-          :role-dropdown-options="roleOptions"
           :selected-menu-key="topSelectedMenuKey"
           :site-title="siteTitle"
           :theme-dropdown-options="themeDropdownOptions"

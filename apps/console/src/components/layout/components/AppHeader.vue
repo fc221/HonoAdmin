@@ -3,15 +3,14 @@ import type { UserProfile } from '@hono-admin/server/api/schema'
 import type { DropdownOption } from 'naive-ui'
 import type { BreadcrumbItem } from '../helpers'
 import { NAvatar, NBreadcrumb, NBreadcrumbItem, NButton, NDropdown } from 'naive-ui'
-import { defineAsyncComponent } from 'vue'
+import { computed, defineAsyncComponent } from 'vue'
 import AppIcon from '../../AppIcon.vue'
 import { getLogoText } from '../helpers'
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   breadcrumbs: BreadcrumbItem[]
   collapsed: boolean
   flush?: boolean
-  roleDropdownOptions?: DropdownOption[]
   showThemeSwitch?: boolean
   themeDropdownOptions?: DropdownOption[]
   user: UserProfile | null
@@ -19,7 +18,6 @@ withDefaults(defineProps<{
   userLabel: string
 }>(), {
   flush: false,
-  roleDropdownOptions: () => [],
   showThemeSwitch: false,
   themeDropdownOptions: () => [],
 })
@@ -38,6 +36,19 @@ const canEditInterface = import.meta.env.DEV
 const SettingsDrawer = canEditInterface
   ? defineAsyncComponent(() => import('./SettingsDrawer.vue'))
   : null
+
+// 角色一键切换:显示当前角色,点击切到下一个(多角色则循环),不必展开下拉。
+const roles = computed(() => props.user?.roles ?? [])
+const currentRole = computed(() =>
+  roles.value.find(role => role.id === props.user?.activeRoleId) ?? roles.value[0] ?? null,
+)
+const nextRole = computed(() => {
+  if (roles.value.length < 2) {
+    return null
+  }
+  const index = roles.value.findIndex(role => role.id === currentRole.value?.id)
+  return roles.value[(index + 1) % roles.value.length]
+})
 
 function handleBreadcrumbClick(event: MouseEvent, href: string | undefined, isCurrent: boolean): void {
   if (!href || isCurrent) {
@@ -92,14 +103,19 @@ function handleBreadcrumbClick(event: MouseEvent, href: string | undefined, isCu
       <NDropdown v-if="showThemeSwitch" :options="themeDropdownOptions" trigger="hover" :width="176" @select="key => emit('selectTheme', key)">
         <AppIcon name="ri:palette-line" />
       </NDropdown>
-      <NDropdown
-        v-if="roleDropdownOptions.length > 1"
-        trigger="hover"
-        :options="roleDropdownOptions"
-        @select="key => emit('roleSwitch', key)"
+      <NButton
+        v-if="nextRole"
+        quaternary
+        size="small"
+        class="gap-1! px-2!"
+        :title="`当前角色：${currentRole?.name} · 点击切换到 ${nextRole.name}`"
+        @click="emit('roleSwitch', nextRole.id)"
       >
-        <AppIcon name="ri:shield-check-line" />
-      </NDropdown>
+        <template #icon>
+          <AppIcon name="ri:user-shared-2-line" />
+        </template>
+        <span class="hidden text-sm lg:inline">{{ currentRole?.name }}</span>
+      </NButton>
       <component :is="SettingsDrawer" v-if="canEditInterface && SettingsDrawer" />
       <NDropdown
         trigger="hover"
@@ -111,7 +127,7 @@ function handleBreadcrumbClick(event: MouseEvent, href: string | undefined, isCu
             {{ getLogoText(userLabel) }}
           </NAvatar>
           <span class="ml-2 hidden max-w-28 truncate text-sm lg:inline">{{ userLabel }}</span>
-          <AppIcon class="hidden lg:inline-block" name="ri:arrow-down-s-line" />
+          <AppIcon name="ri:arrow-down-s-line" />
         </NButton>
       </NDropdown>
     </div>
