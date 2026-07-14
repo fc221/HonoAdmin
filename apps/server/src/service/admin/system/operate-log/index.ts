@@ -156,6 +156,37 @@ export async function clearOperateLogs(ctx: ServiceContext): Promise<number> {
   return result.rowsAffected
 }
 
+// 分批删除保留期外的操作日志。一次删百万行会长时间独占写锁、撑大 WAL;
+// 每批一条独立语句、尽快释放锁,让其它写插空。batchSize 可按库/负载调。
+export async function purgeOperateLogs(
+  ctx: ServiceContext,
+  retainDays: number,
+  batchSize = 5000,
+): Promise<number> {
+  const cutoff = ctx.now() - retainDays * 24 * 60 * 60 * 1000
+  let total = 0
+
+  for (;;) {
+    // 派生表(AS t)包一层:MySQL 不允许 DELETE 的子查询直接引用同表(error 1093),
+    // 先物化即可绕过,SQLite/PG 也兼容。按 created_at 索引取最旧一批 id,再按主键删。
+    const result = await ctx.db.execute(
+      `DELETE FROM sys_operate_log WHERE id IN (
+        SELECT id FROM (
+          SELECT id FROM sys_operate_log WHERE created_at < ? LIMIT ?
+        ) AS t
+      )`,
+      [cutoff, batchSize],
+    )
+    const affected = result.rowsAffected ?? 0
+    total += affected
+    if (affected < batchSize) {
+      break
+    }
+  }
+
+  return total
+}
+
 async function countOperateLogs(
   ctx: ServiceContext,
   whereSql: string,
