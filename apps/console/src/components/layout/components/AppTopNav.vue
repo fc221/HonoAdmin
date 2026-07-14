@@ -26,7 +26,6 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{
   navigate: [href: string, activeKey?: string | number]
   refresh: []
-  roleSwitch: [key: string | number]
   selectTheme: [key: string | number]
   userAction: [key: string | number]
 }>()
@@ -35,19 +34,6 @@ const canEditInterface = import.meta.env.DEV
 const SettingsDrawer = canEditInterface
   ? defineAsyncComponent(() => import('./SettingsDrawer.vue'))
   : null
-
-// 角色一键切换:显示当前角色,点击切到下一个(多角色则循环),不必展开下拉。
-const roles = computed(() => props.user?.roles ?? [])
-const currentRole = computed(() =>
-  roles.value.find(role => role.id === props.user?.activeRoleId) ?? roles.value[0] ?? null,
-)
-const nextRole = computed(() => {
-  if (roles.value.length < 2) {
-    return null
-  }
-  const index = roles.value.findIndex(role => role.id === currentRole.value?.id)
-  return roles.value[(index + 1) % roles.value.length]
-})
 
 const homeHref = computed(() => findFirstMenuHref(props.menuOptions) || '/')
 const selectedMenuKeyModel = computed({
@@ -126,23 +112,11 @@ function findFirstMenuHref(options: MenuOption[]): string {
         <NDropdown :options="themeDropdownOptions" trigger="hover" :width="176" @select="key => emit('selectTheme', key)">
           <AppIcon name="ri:palette-line" />
         </NDropdown>
-        <NButton
-          v-if="nextRole"
-          quaternary
-          size="small"
-          class="gap-1! px-2!"
-          :title="`当前角色：${currentRole?.name} · 点击切换到 ${nextRole.name}`"
-          @click="emit('roleSwitch', nextRole.id)"
-        >
-          <template #icon>
-            <AppIcon name="ri:user-shared-2-line" />
-          </template>
-          <span class="hidden text-sm xl:inline">{{ currentRole?.name }}</span>
-        </NButton>
         <component :is="SettingsDrawer" v-if="canEditInterface && SettingsDrawer" />
         <NDropdown
           trigger="hover"
           :options="userDropdownOptions"
+          :width="220"
           @select="key => emit('userAction', key)"
         >
           <NButton quaternary class="h-9! gap-2! px-2!" title="用户菜单">
@@ -150,7 +124,7 @@ function findFirstMenuHref(options: MenuOption[]): string {
               {{ getLogoText(userLabel) }}
             </NAvatar>
             <span class="ml-2 hidden max-w-28 truncate text-sm xl:inline">{{ userLabel }}</span>
-            <AppIcon name="ri:arrow-down-s-line" />
+            <AppIcon class="hidden xl:inline-block" name="ri:arrow-down-s-line" />
           </NButton>
         </NDropdown>
       </div>

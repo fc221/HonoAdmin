@@ -133,28 +133,60 @@ const themeDropdownOptions = computed<DropdownOption[]>(() =>
     ]),
   })),
 )
-const userDropdownOptions = computed<DropdownOption[]>(() => [
-  {
-    key: 'user-info',
-    props: { class: 'pointer-events-none' },
-    render: () => h('div', { class: 'flex flex-col px-3 py-2' }, [
-      h('div', { class: 'truncate text-sm font-medium text-base-content' }, user.value?.nickname || user.value?.username || '用户'),
-      h('div', { class: 'truncate text-xs text-base-muted' }, user.value?.username ?? ''),
-    ]),
-    type: 'render',
-  },
-  { key: 'user-info-divider', type: 'divider' },
-  {
-    icon: () => h(AppIcon, { name: 'ri:user-line' }),
-    key: 'profile',
-    label: '个人中心',
-  },
-  {
-    icon: () => h(AppIcon, { class: 'text-error', name: 'ri:logout-box-r-line' }),
-    key: 'logout',
-    label: () => h('span', { class: 'text-error' }, '退出登录'),
-  },
-])
+const userDropdownOptions = computed<DropdownOption[]>(() => {
+  const roles = user.value?.roles ?? []
+  const activeRoleId = user.value?.activeRoleId
+  const options: DropdownOption[] = [
+    {
+      key: 'user-info',
+      props: { class: 'pointer-events-none' },
+      render: () => h('div', { class: 'flex flex-col px-3 py-2' }, [
+        h('div', { class: 'truncate text-sm font-medium text-base-content' }, user.value?.nickname || user.value?.username || '用户'),
+        h('div', { class: 'truncate text-xs text-base-muted' }, user.value?.username ?? ''),
+      ]),
+      type: 'render',
+    },
+    { key: 'user-info-divider', type: 'divider' },
+    {
+      icon: () => h(AppIcon, { name: 'ri:user-line' }),
+      key: 'profile',
+      label: '个人中心',
+    },
+  ]
+
+  // 个人中心之下再列出角色切换,当前角色打勾且禁用。
+  if (roles.length > 1) {
+    options.push({
+      key: 'role-title',
+      props: { class: 'pointer-events-none' },
+      render: () => h('div', { class: 'px-3 pt-1 text-xs text-base-muted' }, '切换角色'),
+      type: 'render',
+    })
+    for (const role of roles) {
+      const active = role.id === activeRoleId
+      options.push({
+        disabled: active,
+        icon: () => h(AppIcon, {
+          class: active ? 'text-primary' : '',
+          name: active ? 'ri:check-line' : 'ri:user-shared-2-line',
+        }),
+        key: `role:${role.id}`,
+        label: role.name,
+      })
+    }
+  }
+
+  options.push(
+    { key: 'logout-divider', type: 'divider' },
+    {
+      icon: () => h(AppIcon, { class: 'text-error', name: 'ri:logout-box-r-line' }),
+      key: 'logout',
+      label: () => h('span', { class: 'text-error' }, '退出登录'),
+    },
+  )
+
+  return options
+})
 
 watch(
   () => [menus.value, visibleActiveMenuName.value] as const,
@@ -241,18 +273,16 @@ function updateSidebarCollapsed(collapsed: boolean) {
 }
 
 function selectUserAction(key: string | number) {
+  const raw = String(key)
+  if (raw.startsWith('role:')) {
+    switchRole(Number(raw.slice('role:'.length)))
+    return
+  }
   if (key === 'profile') {
     navigate('/user/profile')
   }
   if (key === 'logout') {
     logout()
-  }
-}
-
-function selectRole(key: string | number) {
-  const roleId = Number(key)
-  if (Number.isInteger(roleId) && roleId > 0) {
-    switchRole(roleId)
   }
 }
 
@@ -353,7 +383,6 @@ async function switchRole(roleId: number) {
           :user-label="userLabel"
           @navigate="navigate"
           @refresh="refreshPage"
-          @role-switch="selectRole"
           @select-theme="selectTheme"
           @user-action="selectUserAction"
         />
@@ -371,7 +400,6 @@ async function switchRole(roleId: number) {
           :user-label="userLabel"
           @navigate="navigate"
           @refresh="refreshPage"
-          @role-switch="selectRole"
           @select-theme="selectTheme"
           @user-action="selectUserAction"
         />
@@ -391,7 +419,6 @@ async function switchRole(roleId: number) {
           :user-label="userLabel"
           @navigate="navigate"
           @refresh="refreshPage"
-          @role-switch="selectRole"
           @select-theme="selectTheme"
           @user-action="selectUserAction"
         />
