@@ -1,3 +1,7 @@
+import {
+  compactSystemMetrics,
+  rollupSystemMetrics,
+} from '../../../system/statistics/system-collector'
 import { registerJobHandler } from './registry'
 
 /**
@@ -16,3 +20,7 @@ registerJobHandler('purge-operate-log', async (ctx, params) => {
   )
   return `已清理 ${result.rowsAffected} 条 ${retainDays} 天前的操作日志`
 })
+
+// 每 5 分钟把操作日志汇总进统计桶;每小时汇总 5m 桶为 hour 桶并清理过期 5m 桶。
+registerJobHandler('rollup-system-metrics', (ctx) => rollupSystemMetrics(ctx))
+registerJobHandler('compact-system-metrics', (ctx) => compactSystemMetrics(ctx))

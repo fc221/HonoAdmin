@@ -42,6 +42,7 @@ const scheduledJobResource: ResourceDefinition = {
   createFields: scheduledJobFields,
   delete: deleteScheduledJob,
   editFields: scheduledJobFields,
+  extraRowKeys: ['description'],
   get: getScheduledJobForEdit,
   list: (c) => listScheduledJobs(c, listInput(c)),
   rowActions: [{ key: 'run', label: '执行' }, editAction, deleteAction],

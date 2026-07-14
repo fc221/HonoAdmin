@@ -90,6 +90,8 @@ export const dashboardPayloadSchema = z.object({
   load: dashboardLoadSchema.nullable().default(null),
   logs: z.array(dashboardLogSchema).default([]),
   stats: z.array(dashboardStatSchema),
+  // 区间统计(sys_metric_bucket)最新更新时间的毫秒时间戳,用于「更新于」展示;无数据为 null。
+  statsUpdatedAt: z.number().nullable().default(null),
   system: dashboardSystemSchema.nullable().default(null),
   title: z.string(),
 })

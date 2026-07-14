@@ -232,7 +232,14 @@ onMounted(load)
         :loading="loading"
         :row-actions="data?.rowActions ?? []"
         @row-action="handleRowAction"
-      />
+      >
+        <template #cell-name="{ row }">
+          <div class="flex flex-col items-start gap-0.5">
+            <span class="text-sm">{{ row.name }}</span>
+            <span v-if="row.description" class="text-xs text-base-muted">{{ row.description }}</span>
+          </div>
+        </template>
+      </DataTable>
       <div class="mt-4 flex justify-end">
         <NPagination
           v-model:page="page"

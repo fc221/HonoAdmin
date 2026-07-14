@@ -1,6 +1,14 @@
 import type { SystemMetrics } from '@hono-admin/runtime'
+import type { DayBucket } from '@hono-admin/utils/datetime'
+import type { MetricSeriesPoint } from '../../system/statistics'
 import type { ServiceRequestContext } from '../../types'
 import { formatDateTime, getRecentDayBuckets } from '@hono-admin/utils/datetime'
+import { queryMetricSeries } from '../../system/statistics'
+import {
+  getSystemMetricsUpdatedAt,
+  OPERATE_COUNT_METRIC,
+  SYSTEM_METRIC_NAMESPACE,
+} from '../../system/statistics/system-collector'
 import { getAdminSessionUser } from '../session'
 import { canAccessAdminPath } from '../system/role'
 import { getDatabaseMigrationStatus } from '../system/update'
@@ -44,12 +52,16 @@ export async function getAdminDashboardData(c: ServiceRequestContext): Promise<{
   load: SystemMetrics | null
   logs: DashboardLog[]
   stats: Array<{ label: string, tone: 'default' | 'primary' | 'success' | 'warning', value: string }>
+  statsUpdatedAt: number | null
   system: DashboardSystem | null
 }> {
   // 敏感面板(操作日志明细 / 待处理反馈明细 / 系统信息 / 服务器负载 / 操作趋势)只给能进操作日志页的
   // 后台管理员;默认 user 角色虽持 admin.dashboard.view 能读本接口,但拿不到这些。root 直接放行。
   const canViewSystemPanels = await currentUserCanViewSystemPanels(c)
+  const days = getRecentDayBuckets(c.now(), c.config.timezone, activityDays)
 
+  // 操作趋势与「操作日志」区间统计读 sys_metric_bucket(由 rollup Cron 维护),不再对日志大表做
+  // 全表 COUNT / GROUP BY;统计不可用时返回空,不回退全表扫描。其余卡片是小表 COUNT,继续直查。
   const [
     users,
     roles,
@@ -58,8 +70,8 @@ export async function getAdminDashboardData(c: ServiceRequestContext): Promise<{
     openFeedbacks,
     files,
     jobs,
-    logCount,
-    activity,
+    operatePoints,
+    statsUpdatedAt,
     logs,
     feedbacks,
     system,
@@ -72,13 +84,16 @@ export async function getAdminDashboardData(c: ServiceRequestContext): Promise<{
     countRows(c, `SELECT COUNT(*) AS count FROM web_feedback WHERE status = 'open'`),
     countRows(c, 'SELECT COUNT(*) AS count FROM sys_file'),
     countRows(c, 'SELECT COUNT(*) AS count FROM sys_scheduled_job'),
-    countRows(c, 'SELECT COUNT(*) AS count FROM sys_operate_log'),
-    canViewSystemPanels ? getActivity(c) : Promise.resolve([]),
+    getOperateMetricPoints(c, days),
+    getSystemMetricsUpdatedAt(c).catch(() => null),
     canViewSystemPanels ? getRecentLogs(c) : Promise.resolve([]),
     canViewSystemPanels ? getPendingFeedbacks(c) : Promise.resolve([]),
     canViewSystemPanels ? getSystemInfo(c) : Promise.resolve(null),
     canViewSystemPanels ? (c.runtime.systemMetrics?.().catch(() => null) ?? null) : null,
   ])
+
+  const operateCount = operatePoints.reduce((total, point) => total + point.value, 0)
+  const activity = canViewSystemPanels ? aggregateByDay(operatePoints, days) : []
 
   return {
     activity,
@@ -94,8 +109,9 @@ export async function getAdminDashboardData(c: ServiceRequestContext): Promise<{
       { label: '待处理反馈', tone: openFeedbacks > 0 ? 'warning' : 'default', value: String(openFeedbacks) },
       { label: '文件', tone: 'default', value: String(files) },
       { label: '定时任务', tone: 'default', value: String(jobs) },
-      { label: '操作日志', tone: 'default', value: String(logCount) },
+      { label: '操作日志(7天)', tone: 'default', value: String(operateCount) },
     ],
+    statsUpdatedAt,
     system,
   }
 }
@@ -112,35 +128,37 @@ async function currentUserCanViewSystemPanels(
   return canAccessAdminPath(c, user, '/admin/system/operate-log', 'GET', '*').catch(() => false)
 }
 
-/**
- * 近 N 天的操作日志计数。日边界按配置时区在 JS 里算好,SQL 只做区间求和,
- * 免得各方言写一套日期函数;一条查询出全部桶。
- */
-async function getActivity(
+// 读近 N 天的 hour 统计桶(有界查询)。统计不可用时返回空,由调用方按空数据处理,不回退全表扫描。
+async function getOperateMetricPoints(
   c: ServiceRequestContext,
-): Promise<DashboardActivityPoint[]> {
-  const buckets = getRecentDayBuckets(c.now(), c.config.timezone, activityDays)
-  const sums = buckets
-    .map((_, index) =>
-      `SUM(CASE WHEN created_at >= ? AND created_at < ? THEN 1 ELSE 0 END) AS d${index}`)
-    .join(',\n      ')
-  const params = buckets.flatMap((bucket) => [bucket.start, bucket.end])
+  days: DayBucket[],
+): Promise<MetricSeriesPoint[]> {
+  const start = days[0]?.start
+  const end = days[days.length - 1]?.end
+  if (start === undefined || end === undefined) {
+    return []
+  }
 
-  const row = await c.db
-    .first<Record<string, number>>(
-      `
-        SELECT
-          ${sums}
-        FROM sys_operate_log
-        WHERE created_at >= ?
-      `,
-      [...params, buckets[0]?.start ?? 0],
-    )
-    .catch(() => null)
+  return queryMetricSeries(c, {
+    end,
+    grain: 'hour',
+    metricKey: OPERATE_COUNT_METRIC,
+    namespace: SYSTEM_METRIC_NAMESPACE,
+    ownerType: 'global',
+    start,
+  }).catch(() => [])
+}
 
-  return buckets.map((bucket, index) => ({
-    label: bucket.label,
-    total: Number(row?.[`d${index}`] ?? 0),
+// 把 hour 桶按配置时区的自然日聚合成趋势点(桶时间戳落在哪一天就归到那天)。
+function aggregateByDay(
+  points: MetricSeriesPoint[],
+  days: DayBucket[],
+): DashboardActivityPoint[] {
+  return days.map((day) => ({
+    label: day.label,
+    total: points
+      .filter((point) => point.bucketStart >= day.start && point.bucketStart < day.end)
+      .reduce((total, point) => total + point.value, 0),
   }))
 }
 

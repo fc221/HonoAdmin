@@ -19,6 +19,13 @@ const activityMax = computed(() =>
 const activityTotal = computed(() =>
   activity.value.reduce((total, point) => total + point.total, 0),
 )
+// 区间统计由后台 rollup 任务维护,最多约 5 分钟延迟;展示更新时间,不实时补扫日志。
+const statsUpdatedLabel = computed(() => {
+  const updatedAt = dashboard.value?.statsUpdatedAt
+  return updatedAt
+    ? new Date(updatedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+    : ''
+})
 const load = computed(() => dashboard.value?.load ?? null)
 const loadGauges = computed(() => {
   const metrics = load.value
@@ -119,7 +126,9 @@ function formatUptime(seconds: number): string {
       <template #header>
         <div class="flex items-baseline justify-between gap-2">
           <span>近 7 天操作趋势</span>
-          <span class="text-sm text-base-muted">共 {{ activityTotal }} 次</span>
+          <span class="text-sm text-base-muted">
+            共 {{ activityTotal }} 次<template v-if="statsUpdatedLabel"> · 更新于 {{ statsUpdatedLabel }}</template>
+          </span>
         </div>
       </template>
       <div class="flex min-h-40 flex-1 items-stretch gap-2">
