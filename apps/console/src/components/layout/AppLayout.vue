@@ -118,7 +118,13 @@ const mobileMenuOptions = computed(() => mobileSidebarMenuOptions.value ?? menuO
 const topMenuOptions = computed(() =>
   hybridLayout.value ? rootMenuOptions.value : menuOptions.value,
 )
-const topSelectedMenuKey = computed(() => activeRoot.value?.name ?? visibleActiveMenuName.value)
+// 顶栏菜单:hybrid 顶部只放一级菜单,选中键用一级(root);top-nav 顶部是完整菜单树,
+// 选中键必须用当前叶子,下拉里的子菜单项才会高亮当前页。
+const topSelectedMenuKey = computed(() =>
+  hybridLayout.value
+    ? (activeRoot.value?.name ?? visibleActiveMenuName.value)
+    : visibleActiveMenuName.value,
+)
 const desktopSidebarLogoVisible = computed(() => !hybridLayout.value)
 const userLabel = computed(() => user.value?.nickname || user.value?.username || '用户')
 const themeDropdownOptions = computed<DropdownOption[]>(() =>
