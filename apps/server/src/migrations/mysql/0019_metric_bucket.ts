@@ -34,13 +34,13 @@ export const migration0019MetricBucket: Migration = {
     `,
     createJobSeed(
       'rollup-system-metrics',
-      '每 5 分钟汇总操作日志到统计桶',
+      '每 5 分钟重算 5m 与当前小时统计桶',
       '*/5 * * * *',
       'rollup-system-metrics',
     ),
     createJobSeed(
       'compact-system-metrics',
-      '每小时汇总 5m 桶为 hour 桶并清理过期 5m 桶',
+      '每小时从操作日志重算 hour 桶并清理过期 5m 桶',
       '0 * * * *',
       'compact-system-metrics',
     ),

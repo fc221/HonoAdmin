@@ -147,18 +147,19 @@ describe('system metric collectors', () => {
     }
   })
 
-  test('compact aggregates finished 5m buckets into an hour bucket', async () => {
+  test('compact recomputes finished hour buckets from source and heals 5m gaps', async () => {
     const { ctx, cleanup } = await createTestServiceContext()
     try {
       const now = ctx.now()
       const currentHour = Math.floor(now / HOUR) * HOUR
-      const targetHour = currentHour - HOUR // 已结束的上一小时,在 compact 的处理范围内
+      const targetHour = currentHour - HOUR // 已结束的上一小时,在 compact 窗口内
 
-      // 该小时内放三个 5m 桶:2 + 5 + 3 = 10。
-      await replaceMetricBuckets(ctx, [
-        { bucketStart: targetHour, grain: '5m', metricKey: OPERATE_COUNT_METRIC, namespace: SYSTEM_METRIC_NAMESPACE, ownerType: 'global', value: 2 },
-        { bucketStart: targetHour + FIVE_MIN, grain: '5m', metricKey: OPERATE_COUNT_METRIC, namespace: SYSTEM_METRIC_NAMESPACE, ownerType: 'global', value: 5 },
-        { bucketStart: targetHour + 2 * FIVE_MIN, grain: '5m', metricKey: OPERATE_COUNT_METRIC, namespace: SYSTEM_METRIC_NAMESPACE, ownerType: 'global', value: 3 },
+      // 该小时放 4 条操作日志,但故意不写任何 5m 桶:模拟那段时间 rollup 中断、细粒度层有缺口。
+      await insertOperateLogs(ctx, [
+        targetHour,
+        targetHour + FIVE_MIN,
+        targetHour + 2 * FIVE_MIN,
+        targetHour + 30 * 60 * 1000,
       ])
 
       await compactSystemMetrics(ctx)
@@ -172,7 +173,34 @@ describe('system metric collectors', () => {
         ownerType: 'global',
         start: targetHour,
       })
-      expect(hourPoints.map((p) => p.value)).toEqual([10])
+      // 即便没有 5m 桶,hour 桶也按 operate_log 精确重算 = 4。
+      expect(hourPoints.map((p) => p.value)).toEqual([4])
+    } finally {
+      await cleanup()
+    }
+  })
+
+  test('rollup also recomputes the current hour bucket from source', async () => {
+    const { ctx, cleanup } = await createTestServiceContext()
+    try {
+      const now = ctx.now()
+      const currentHour = Math.floor(now / HOUR) * HOUR
+      const currentFiveMin = Math.floor(now / FIVE_MIN) * FIVE_MIN
+      // 当前 5m 桶内放 3 条,确保落在当前小时。
+      await insertOperateLogs(ctx, [currentFiveMin, currentFiveMin + 1000, currentFiveMin + 2000])
+
+      await rollupSystemMetrics(ctx)
+
+      const hourPoints = await queryMetricSeries(ctx, {
+        end: currentHour + HOUR,
+        grain: 'hour',
+        metricKey: OPERATE_COUNT_METRIC,
+        namespace: SYSTEM_METRIC_NAMESPACE,
+        ownerType: 'global',
+        start: currentHour,
+      })
+      // 当前小时无需等 compact,rollup 已从源写入 = 3。
+      expect(hourPoints.map((p) => p.value)).toEqual([3])
     } finally {
       await cleanup()
     }
