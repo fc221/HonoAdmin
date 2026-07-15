@@ -33,17 +33,28 @@ export async function getLayoutPayload(
   }
 }
 
-function withSurfaceActiveRole(
+// 「当前角色」高亮跟随所在 surface:user 区高亮 user 角色,admin 区高亮管理端角色。
+// 持久化的 activeRoleId 可能停留在上次切换的另一侧(如切到用户后又回到 /admin),
+// 这里按 surface 归一化展示值。若当前角色已属于本侧则保留(兼顾一个账号有多个管理角色)。
+export function withSurfaceActiveRole(
   profile: UserProfile | null,
   surface: 'admin' | 'user',
 ): UserProfile | null {
-  if (!profile || surface !== 'user') {
+  if (!profile) {
     return profile
   }
 
-  const userRole = profile.roles.find((role) => role.code === 'user')
-  return userRole && profile.activeRoleId !== userRole.id
-    ? { ...profile, activeRoleId: userRole.id }
+  const matchesSurface = (role: UserProfile['roles'][number]) =>
+    surface === 'user' ? role.code === 'user' : role.code !== 'user'
+
+  const active = profile.roles.find((role) => role.id === profile.activeRoleId)
+  if (active && matchesSurface(active)) {
+    return profile
+  }
+
+  const surfaceRole = profile.roles.find(matchesSurface)
+  return surfaceRole
+    ? { ...profile, activeRoleId: surfaceRole.id }
     : profile
 }
 
