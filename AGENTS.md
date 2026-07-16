@@ -36,7 +36,7 @@
 - 代码改动前必须读本文件，以及相关指南：`docs/AGENT_DEVELOPMENT.md`、`docs/ARCHITECTURE.md`、`docs/FRONTEND_BACKEND_ARCHITECTURE.md`、`docs/ADMIN_CRUD.md`、`docs/ADMIN_FEATURE_CONTRACT.md`、`docs/PERFORMANCE_BOUNDARIES.md`、`docs/SECURITY.md`、`docs/CLOUDFLARE_WORKERS.md`。
 - 先确定归属层，再动文件。API 路由、Vue 页面、service SQL、schema、migration、runtime factory、adapter、UI primitive 不能混在一个文件里。
 - 优先改已有 owner 目录，不创建平行实现，不保留旧规范桥接。
-- 大改后运行 `bun run audit:structure`。警告不自动等于失败，但必须拆分或在最终回复解释。
+- 大改后运行 `bun run audit:structure`。行数警告不自动等于失败，但必须拆分或在最终回复解释；位置白名单违规直接失败。
 - 影响运行时的改动不能只跑 build；必须启动 dev server 或请求实际路径。
 
 ## 不可变架构
@@ -48,31 +48,89 @@
 - `apps/console/src/components`、`layout`、`theme`：Naive UI + Tailwind CSS 的布局、主题和通用控件封装。
 - `packages/runtime`：runtime factory、bootstrap、安全配置和运行时上下文。
 - `packages/db`、`packages/cache`、`packages/file-storage`：adapter contract 和实现。
-- `packages/domain`：纯领域逻辑。没有明确复用价值时不要乱放业务代码。
 - 生产路径只允许 `apps/server`、`apps/console`、`apps/public`。
-- 不允许恢复已移除的 contracts、config、独立 UI workspace 包。API schema、typed client、OpenAPI 文档归 `apps/server/src/api`。
+- 不允许恢复已移除的 contracts、config、独立 UI workspace 包。API schema 聚合、OpenAPI 文档归 `apps/server/src/api`；typed client 在 console（`apps/console/src/api/client.ts`，基于 `hc<AppType>`）。
 - 数据库使用 native SQL + `@hono-admin/db` adapter。除非项目合同变更，不引入 ORM。
 - 本地和 Bun runtime 必须可用，Cloudflare Workers build 必须可用。
 - runtime 资源通过 Hono context 传递：`c.runtime`、`c.db`、`c.cache`、`c.config`、`c.now()`。
+
+## 目录地图与落点决策表
+
+结构由 `scripts/audit-agent-structure.ts` 的位置白名单机器强制（`bun run audit:structure`，已纳入 `bun run check`）。新文件放错位置会硬失败，先看这里再落盘。
+
+### 目录地图：apps/server/src
+
+```text
+app.ts / hono-context.d.ts          # Hono app 组装 + Context 类型扩展
+api/
+  index.ts / openapi.ts             # 组合入口、OpenAPI 文档配置
+  menu.ts / schema.ts               # 纯聚合 barrel，禁止定义 schema 或引入 zod
+  shared/                           # resource 工厂、api-session、layout(-schema)、dashboard-schema、openapi、session
+  auth/ install/                    # 各自 {index,schema}.ts
+  user/index.ts、user/profile/{index,schema}.ts
+  admin/index.ts                    # 只组合 /system/*、/web/*
+  admin/(system|web)/               # 每个资源一个平铺 <name>.ts；仅当资源有专属 schema 时才 <name>/{index,schema}.ts；index.ts 是 barrel
+entry/                              # bun/dev/node/worker/static/diagnostics 运行时入口
+migrations/                         # migrator/registry/types + (sqlite|mysql|pg)/NNNN_*.ts
+public/                             # page.ts
+service/
+  types.ts
+  common/                           # 跨域共享业务 helper（分页/别名/查询）
+  system/(middleware|security|statistics)/   # 服务器基础设施命名空间
+  (admin|user)/                     # surface 业务域，feature 目录如 service/admin/system/<name>/{index,dto,entity,enum,...}.ts
+utils/                              # 后端小工具
+```
+
+### 目录地图：apps/console/src
+
+```text
+App.vue / main.ts / env.d.ts
+api/client.ts                       # 基于 hc<AppType> 的 typed client
+components/                         # 仅共享组件，含 ResourcePage.vue、layout/、theme/ 子树
+composables/                        # 共享前端逻辑
+icons/ router/ stores/ styles/
+views/                              # 定制页面 + 页面私有 .vue 组件；通用 CRUD 页面没有 view 文件
+```
+
+### 单一注册点
+
+`apps/server/src/service/admin/system/menu/consts.ts` 是唯一注册点。菜单叶子的 `routePath` 同时驱动：console 路由、侧边栏、resource key、前端 API URL（`/api` + routePath）、admin 权限目标。`api/shared/api-session.ts` 的 adminFeaturePaths 和 console client 的 resourcePaths 都由 `flattenMenuItems` 推导——不要再手写映射表。菜单项不写 `component` 字段 ⇒ 渲染通用 ResourcePage（CRUD 页面零前端文件）；写 `component` ⇒ 映射到 `views/<component>.vue`。
+
+### 落点决策表
+
+| 新增 X | 放哪 + 要动的文件 |
+| --- | --- |
+| Admin CRUD 资源 | 4 个落点：① service 模块 `service/admin/<group>/<name>/` ② api 资源文件 `api/admin/<group>/<name>.ts` ③ `api/admin/<group>/index.ts` 加一行导出 + `api/admin/index.ts` 加一行 `.route()` ④ menu consts 加一个菜单项。另加三方言迁移 + 测试。权限映射/前端 URL 从 menu consts 自动推导，不要再手写映射表。详见 `docs/ADMIN_CRUD.md`。 |
+| 通用 CRUD 页面 | 零 `.vue` 文件：菜单项不写 `component`，由 `components/ResourcePage.vue` 承载。 |
+| 定制页面 | `apps/console/src/views/<component>.vue` + 菜单项写 `component`。 |
+| 页面私有组件 | 与页面同放 `views/` 目录。 |
+| 共享组件 | `apps/console/src/components/`。 |
+| 共享前端逻辑 | `apps/console/src/composables/`。 |
+| server 中间件 | `apps/server/src/service/system/middleware/`。 |
+| 安全原语 | `apps/server/src/service/system/security/`。 |
+| 共享 service helper | `apps/server/src/service/common/`。 |
+| 统计/指标 | `apps/server/src/service/system/statistics/`。 |
+| migration | `migrations/(sqlite|mysql|pg)/` 三方言同序号，并登记各自 registry。 |
+| DB/cache/storage adapter | `packages/*`；业务代码禁止直接 import adapter 实现。 |
 
 ## Hono API 规则
 
 - 使用 Hono 原生组合方式：子模块 `const featureApi = new Hono<AppEnv>()`，默认导出；父模块只用 `app.route('/feature', featureApi)` 组合。
 - 不写 `registerXXXRoutes(app)` 这种把子路由注入父 app 的函数。
 - `apps/server/src/api/index.ts` 只组合 `/auth`、`/install`、`/admin`、`/user`、`/health`、`/openapi.json`。
-- `apps/server/src/api/admin/index.ts` 只组合 admin 下级路由组，例如 `/user`、`/system/*`、`/web/*`。
+- `apps/server/src/api/admin/index.ts` 只组合 `/system/*`、`/web/*` 路由组（用户管理挂在 `/system/user`）。
 - `apps/server/src/api/user/index.ts` 只组合 user 下级路由组，例如 `/profile`。
 - `apps/server/src/api` 根层只保留组合入口、schema、typed client、OpenAPI 文档配置；共享 helper 放 `api/shared`。业务能力默认按 feature 目录组织；功能很小且职责单一时可以先放单文件，复杂后必须拆目录。
 - API handler 只做请求解析、Zod 校验、调用 service、返回 response。SQL、权限规则、cache 失效、实体映射放 `apps/server/src/service`。
-- 独立 API 必须有 Zod validation 和 OpenAPI 元数据。小的 route-local schema 可放 feature 内；跨 console 使用的 DTO 放 `apps/server/src/api/schema.ts`。
-- 前端只能通过 `@hono-admin/server/api/client` 调 API，不能直接依赖 DB 字段或 service 内部结构。
+- 独立 API 必须有 Zod validation 和 OpenAPI 元数据。小的 route-local schema 可放 feature 内；跨端 DTO 放所属 feature 的 schema 文件（如 `api/auth/schema.ts`、`api/shared/layout-schema.ts`），由 `api/schema.ts` barrel 聚合。`api/schema.ts`、`api/menu.ts` 是纯聚合入口，禁止在其中定义 schema 或引入 zod。
+- 前端只能通过 console 的 typed client（`apps/console/src/api/client.ts`，基于 `hc<AppType>`）调 API，不能直接依赖 DB 字段或 service 内部结构。
 
 ## Server Dev 规则
 
-- 本地开发 server 使用 `apps/server/vite.config.ts` + `@hono/vite-dev-server`，入口是 `apps/server/src/dev.ts`。
-- `apps/server/src/dev.ts` 只负责配置 runtime context middleware 并默认导出 Hono app。
-- `apps/server/src/bun.ts` 是 Bun build/start 入口，不再作为热更新开发入口。
-- `apps/server/src/worker.ts` 是 Cloudflare Workers 入口。
+- 本地开发 server 使用 `apps/server/vite.config.ts` + `@hono/vite-dev-server`，入口是 `apps/server/src/entry/dev.ts`。
+- `apps/server/src/entry/dev.ts` 只负责配置 runtime context middleware 并默认导出 Hono app。
+- `apps/server/src/entry/bun.ts` 是 Bun build/start 入口，不再作为热更新开发入口。
+- `apps/server/src/entry/worker.ts` 是 Cloudflare Workers 入口。
 - console Vite dev server 通过 proxy 访问 `127.0.0.1:3000` 的 `/api` 和 `/uploads`。
 
 ## UI 规则
@@ -85,6 +143,7 @@
 - 业务页面不得各自改 Naive UI theme token，不得造成主题漂移。
 - 不允许 header/sidebar 抖动、内容溢出、表格错位、按钮文字溢出、弹窗遮挡、菜单激活态错误、hover 覆盖选中态、主题色块错乱。
 - 空数据表格也必须显示表头和稳定尺寸。
+- 通用 CRUD 页面由 `apps/console/src/components/ResourcePage.vue` 承载；`action.danger` 动作一律确认弹窗；行级自定义动作走 `runResourceItemAction` 通用分发，不在页面里手写分支。
 
 ## 代码质量规则
 
@@ -100,7 +159,7 @@
 
 ## Import 和 Export 规则
 
-- 优先使用 package barrel 或稳定子路径：`@hono-admin/runtime`、`@hono-admin/db`、`@hono-admin/cache`、`@hono-admin/file-storage`、`@hono-admin/server/api/client`、`@hono-admin/server/api/schema`。
+- 优先使用 package barrel 或稳定子路径：`@hono-admin/runtime`、`@hono-admin/db`、`@hono-admin/cache`、`@hono-admin/file-storage`、`@hono-admin/server/api/schema`、`@hono-admin/server/api/menu`。
 - import specifier 不写 `.ts`、`.tsx`、`.vue` 后缀。
 - 非 adapter/runtime factory 模块不得直接 import adapter 实现。
 - runtime factory 可以 import `@hono-admin/db/adapter/*`、`@hono-admin/cache/adapter/*`。
@@ -114,15 +173,15 @@
 - 新 file storage adapter：加到 `packages/file-storage/src/adapter`，再在 `packages/file-storage/src/factory.ts` 注册。
 - 新 migration：SQLite/D1、MySQL、PostgreSQL 三套 registry 都加同序号迁移；不要改已应用迁移。
 - 新 API：优先在 `apps/server/src/api/<surface>/<feature>` 新建子 Hono app，默认导出，由父级 `.route()` 组合；小型单职责接口可以先用单文件，复杂后拆为 feature 目录。
-- 新 Admin/User 页面：在 `apps/console/src/views` 加 Vue route view，通过 `@hono-admin/server/api/client` 调用 API，用 console 内部 components 组合 UI。
+- 新 Admin/User 页面：通用 CRUD 页零前端文件，只在 menu consts 加菜单项（不写 `component`）；定制页在 `apps/console/src/views` 加 view 并在菜单项写 `component`，通过 `api/client.ts` 的 typed client 调用 API，用 console 内部 components 组合 UI。
 - 新业务策略：新增策略模块并通过 map/factory 注册，不在核心流程散落条件判断。
 - 新字段：schema、migration、validation、response shape、UI、测试一起更新。
 
 ## 验证要求
 
 - 常规代码改动：运行 `bun run typecheck`、`bun run lint`、`bun test`、`bun run build`。
-- Runtime 相关改动：额外运行 `bun run build:bun` 或 `bun run build:workers`，并请求至少一个实际路径。
-- 结构相关改动：运行 `bun run audit:structure`。
+- Runtime 相关改动：额外运行 `bun run compile:bun` 或 `bun run build:workers`，并请求至少一个实际路径。
+- 结构相关改动：运行 `bun run audit:structure`（`bun run check` 已包含它，位置违规会硬失败）。
 - UI 相关改动：用浏览器验证关键页面，至少覆盖当前用户指出的问题路径；必要时做桌面/移动宽度截图。
 - Public 仅占位阶段：确认 `apps/public` 的占位 HTML 可被构建拷贝到 server 静态目录，不新增业务 demo。
 

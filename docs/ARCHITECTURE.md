@@ -12,14 +12,13 @@ HonoAdmin is a front/back separated monorepo:
 - `packages/db`: DB adapter contract and SQLite/D1/MySQL/PostgreSQL adapters.
 - `packages/cache`: cache adapter contract and memory/KV/noop adapters.
 - `packages/file-storage`: file storage contract and local/S3 adapters.
-- `packages/domain`: reusable pure domain targets.
 
 Console pages are Vue routes, not server-rendered route files.
 
 ## Layers
 
 - `apps/server/src/api`: Hono API route entries, OpenAPI registration, API boundary validation, and route grouping.
-- `apps/server/src/api/schema.ts`, `client.ts`, and `openapi.ts`: shared API DTO schemas, the typed API client used by console, and documentation metadata.
+- `apps/server/src/api/schema.ts` 与 `menu.ts`：纯聚合 barrel（跨端 DTO 与菜单常量的稳定出口，禁止在其中定义 schema 或引入 zod）；`openapi.ts`：文档元数据。typed client 不在 server：console 的 `apps/console/src/api/client.ts` 用 `hc<AppType>` 构建，server 只暴露 `AppType` 与 schema/menu barrel。
 - `apps/server/src/service`: business workflows and middleware. This layer consumes context resources but does not detect runtime details.
 - `apps/server/src/migrations`: append-only database migrations and migration runner.
 - `apps/server/src/utils`: backend helpers, errors, response shapes, and small shared utilities.
@@ -29,9 +28,11 @@ Console pages are Vue routes, not server-rendered route files.
 - `packages/db`, `packages/cache`, `packages/file-storage`: adapter contracts and implementations.
 - `docs`: persistent architecture and implementation guidance.
 
+`apps/server/src/service` 内部分两个层级：`service/system/{middleware,security,statistics}` 是服务器基础设施命名空间（context/安全/限流中间件、CSRF/限额等安全原语、统计聚合），`service/common` 是跨域共享的查询/分页/别名 helper；业务域走 `service/admin`、`service/user`（surface + feature 目录，如 `service/admin/system/<name>/`），与基础设施靠目录层级区分，不混放。
+
 ## Runtime Context
 
-Runtime resources are created by `packages/runtime` and attached by `apps/server/src/service/middleware/context`.
+Runtime resources are created by `packages/runtime` and attached by `apps/server/src/service/system/middleware/context`.
 
 Handlers should read:
 
@@ -43,7 +44,7 @@ Handlers should read:
 
 Business code must not inspect `Bun`, Cloudflare bindings, or environment globals directly. Runtime detection belongs in runtime factories and adapters.
 
-The direct context fields are a project-level Hono `Context` extension. Do not introduce new core resources by ad-hoc assignment in route files. Add the field to the runtime/context type, attach it in `service/middleware/context`, and document the extension point here.
+The direct context fields are a project-level Hono `Context` extension. Do not introduce new core resources by ad-hoc assignment in route files. Add the field to the runtime/context type, attach it in `service/system/middleware/context`, and document the extension point here.
 
 ## Database
 
@@ -84,6 +85,10 @@ API route rules:
 - Validate at the route boundary.
 - Keep business services typed from validated input, not raw request data.
 - Expose generated docs from a stable documentation route.
+
+## Menu Registration And Derivation
+
+`apps/server/src/service/admin/system/menu/consts.ts` 是唯一注册点。菜单叶子的 `routePath` 同时驱动 console 路由、侧边栏、resource key、前端 API URL（`/api` + routePath）与 admin 权限目标：`api/shared/api-session.ts` 的 adminFeaturePaths 与 console client 的 resourcePaths 都由 `flattenMenuItems` 从 adminMenus 推导，禁止手写平行映射表。菜单项不写 `component` 时渲染通用 `ResourcePage`（CRUD 页面零前端文件）；写 `component` 时映射到 `views/<component>.vue`。漏掉注册的任何一环都会以 typecheck 报错、404 或菜单缺失的形式暴露，不会静默降级。
 
 ## Import Boundaries
 

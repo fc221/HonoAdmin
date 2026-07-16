@@ -5,11 +5,11 @@ Admin/User features are built from a Hono API boundary, a service layer, API-own
 ## Ownership
 
 - `apps/server/src/api/admin/**`: admin API route registration and validation boundary.
-- `apps/server/src/api/admin/user/**`: backend user-management API surface.
+- `apps/server/src/api/admin/system/user.ts`: backend user-management API surface, mounted at `/api/admin/system/user`.
 - `apps/server/src/api/user/**`: user-facing API route registration and validation boundary.
 - `apps/server/src/service/**`: business rules, permissions, SQL orchestration, cache invalidation, and DTO/entity mapping.
 - `apps/server/src/migrations/**`: append-only database schema changes.
-- `apps/server/src/api/schema.ts`, `client.ts`, and `openapi.ts`: API schemas, typed console client, and OpenAPI metadata.
+- `apps/server/src/api/schema.ts`、`menu.ts`、`openapi.ts`：schema/menu 纯聚合 barrel 与 OpenAPI 元数据；typed client 在 console 的 `apps/console/src/api/client.ts`（`hc<AppType>`）。
 - `apps/console/src/components/**`: shared Naive UI + Tailwind layout/control primitives.
 - `apps/console/src/views/**`: route-view level loading, pending/error state, and composition.
 

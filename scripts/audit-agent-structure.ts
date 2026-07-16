@@ -74,8 +74,56 @@ const rules: FileRule[] = [
   },
 ]
 
+// 位置白名单：apps/*/src 下的源码文件必须命中其一；放错位置无条件 fail（不依赖 --strict）。
+const placementScope = /^apps\/(?:server|console)\/src\//
+
+const allowedPlacements: RegExp[] = [
+  // server 根
+  /^apps\/server\/src\/(?:app\.ts|hono-context\.d\.ts)$/,
+  // api：组合入口 + 纯聚合 barrel
+  /^apps\/server\/src\/api\/(?:index|menu|openapi|schema)\.ts$/,
+  /^apps\/server\/src\/api\/shared\/[\w-]+\.ts$/,
+  /^apps\/server\/src\/api\/(?:auth|install)\/(?:index|schema)\.ts$/,
+  /^apps\/server\/src\/api\/user\/index\.ts$/,
+  /^apps\/server\/src\/api\/user\/profile\/(?:index|schema)\.ts$/,
+  /^apps\/server\/src\/api\/admin\/index\.ts$/,
+  // admin 资源：默认平铺 <name>.ts；仅有专属 schema 时才 <name>/{index,schema}.ts
+  /^apps\/server\/src\/api\/admin\/(?:system|web)\/(?:[\w-]+\.ts|[\w-]+\/(?:index|schema)\.ts)$/,
+  /^apps\/server\/src\/entry\/[\w-]+\.ts$/,
+  /^apps\/server\/src\/migrations\/(?:migrator|registry|types)\.ts$/,
+  /^apps\/server\/src\/migrations\/(?:mysql|pg|sqlite)\/[\w-]+\.ts$/,
+  /^apps\/server\/src\/public\/[\w-]+\.ts$/,
+  /^apps\/server\/src\/service\/types\.ts$/,
+  /^apps\/server\/src\/service\/common\/[\w-]+\.ts$/,
+  // 业务域允许深层 feature 目录
+  /^apps\/server\/src\/service\/(?:admin|user)\//,
+  /^apps\/server\/src\/service\/system\/(?:middleware|security|statistics)\/[\w-]+\.ts$/,
+  /^apps\/server\/src\/utils\/[\w-]+\.ts$/,
+  // console
+  /^apps\/console\/src\/(?:App\.vue|main\.ts|env\.d\.ts)$/,
+  /^apps\/console\/src\/api\/client\.ts$/,
+  /^apps\/console\/src\/components\//,
+  /^apps\/console\/src\/composables\/[\w-]+\.ts$/,
+  /^apps\/console\/src\/(?:icons|router|stores)\/[\w-]+\.ts$/,
+  /^apps\/console\/src\/styles\//,
+  /^apps\/console\/src\/views\/.+\.vue$/,
+]
+
+// api/schema.ts 与 api/menu.ts 是纯聚合 barrel，禁止在其中定义 schema 或引入 zod。
+const pureBarrelFiles = new Set(['apps/server/src/api/menu.ts', 'apps/server/src/api/schema.ts'])
+
 function main() {
   const files = getFilesToCheck()
+
+  const placementViolations = findPlacementViolations(files)
+  if (placementViolations.length > 0) {
+    for (const violation of placementViolations) {
+      console.error(violation)
+    }
+    console.error(`[agent-structure] ${placementViolations.length} placement violation(s).`)
+    process.exit(1)
+  }
+
   const reports = files.map(createReport).filter((report): report is FileReport => report !== null)
   const warnings = reports.filter((report) => report.lines > report.warnAt)
   const failures = reports.filter((report) => report.lines > report.failAt)
@@ -105,6 +153,19 @@ function main() {
     console.log('')
     console.log('[agent-structure] strict mode would fail. Use --strict after splitting or documenting the exception.')
   }
+}
+
+function findPlacementViolations(files: string[]): string[] {
+  const violations: string[] = []
+  for (const file of files) {
+    if (placementScope.test(file) && !allowedPlacements.some((pattern) => pattern.test(file))) {
+      violations.push(`PLACEMENT ${file}: 不在允许的位置，参见 AGENTS.md 目录地图`)
+    }
+    if (pureBarrelFiles.has(file) && (/from 'zod'/).test(readFileSync(file, 'utf8'))) {
+      violations.push(`PLACEMENT ${file}: 这两个文件是纯聚合 barrel，禁止定义 schema/引入 zod`)
+    }
+  }
+  return violations
 }
 
 function getFilesToCheck(): string[] {

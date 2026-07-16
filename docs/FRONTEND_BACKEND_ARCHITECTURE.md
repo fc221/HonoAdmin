@@ -16,8 +16,8 @@ The production path is `apps/server`, `apps/console`, and `apps/public`.
 apps/
   server/
     src/api/
-      admin/
-      admin/user/
+      admin/system/
+      admin/web/
       user/
     src/service/
     src/migrations/
@@ -25,7 +25,6 @@ apps/
   console/
   public/
 packages/
-  domain/
   db/
   cache/
   file-storage/
@@ -42,17 +41,17 @@ packages/
 
 ## API Rules
 
-- `apps/server/src/bun.ts` and `apps/server/src/worker.ts` are the runtime entrypoints.
+- `apps/server/src/entry/bun.ts` and `apps/server/src/entry/worker.ts` are the runtime entrypoints; local dev uses `apps/server/src/entry/dev.ts`.
 - `apps/server/src/api` owns API route composition, auth/session/resource endpoints, and OpenAPI registration.
-- Split routes by surface and feature: `api/admin`, `api/admin/user`, and `api/user`.
+- Split routes by surface and feature: `api/admin/(system|web)`（用户管理为 `api/admin/system/user`）and `api/user`.
 - `apps/server/src/service` owns business services, SQL orchestration, permissions, validation DTOs, and cache invalidation.
 - `apps/server/src/migrations` owns append-only migration registries and the migration runner.
 - `apps/server/src/utils` owns backend-only helpers and error response shaping.
 - `packages/runtime` owns runtime factory/bootstrap/security wiring only.
 - `packages/db`, `packages/cache`, and `packages/file-storage` own adapter contracts and implementations.
-- Frontend apps call the typed client exported from `@hono-admin/server/api/client`.
-- Route inputs and outputs are validated with Zod schemas owned by `apps/server/src/api/schema.ts` or the owning service DTO.
-- New business rules belong in `apps/server/src/service`; reusable pure domain rules can move into `packages/domain`.
+- Frontend apps call the typed client in `apps/console/src/api/client.ts`（基于 `hc<AppType>`）; the server exposes `AppType` and the schema/menu barrels.
+- Route inputs and outputs are validated with Zod schemas owned by the feature's schema file (aggregated by `apps/server/src/api/schema.ts`) or the owning service DTO.
+- New business rules belong in `apps/server/src/service`.
 - Native SQL and online migrations remain the database model. Do not introduce an ORM.
 
 ## Public App Rule
