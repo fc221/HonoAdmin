@@ -13,7 +13,7 @@ This guide turns the project contract in `AGENTS.md` into a repeatable workflow 
    - Worker/runtime behavior: `docs/CLOUDFLARE_WORKERS.md`.
 3. Inspect the existing owner files before editing. Copy the closest working pattern instead of inventing a parallel flow.
 4. Decide the owner layer before writing code:
-   - `apps/server/src/bun.ts` and `apps/server/src/worker.ts`: Bun and Workers runtime entrypoints only.
+   - `apps/server/src/entry/` (`bun.ts`, `node.ts`, `worker.ts`, `dev.ts`): runtime entrypoints only.
    - `apps/server/src/api`: Hono API route composition, validation boundary, OpenAPI registration.
    - `apps/server/src/service`: business workflows, validation DTOs, entities, native SQL, cache invalidation.
    - `apps/server/src/migrations`: append-only database schema changes for SQLite/D1, MySQL, and PostgreSQL.
@@ -27,7 +27,8 @@ Use this split as the default shape for new admin features:
 
 ```text
 apps/console/src/
-  views/                     # route-view level API loading and composition for /admin and /user
+  views/                     # custom route views only; generic CRUD pages need no view file
+                             # (menu item without `component` renders components/ResourcePage.vue)
   router/                    # Vue Router entries and guards
   stores/                    # Pinia stores for app state
 
@@ -83,7 +84,7 @@ Pick checks by blast radius:
 - Documentation or skill-only change: validate the skill/document shape and inspect the diff.
 - Type or route shape change: `bun run typecheck`.
 - UI or browser behavior change: `bun run lint`, `bun test`, `bun run build`, then start the dev server and exercise the affected route.
-- Runtime/database/migration change: `bun run check`, relevant runtime build (`bun run build:bun` or `bun run build:workers`), and a request path that proves migrations/bootstrap run before the handler.
+- Runtime/database/migration change: `bun run check`, relevant runtime build (`bun run compile:bun` or `bun run build:workers`), and a request path that proves migrations/bootstrap run before the handler.
 - CRUD/search/list growth: add or update focused tests for schema, action result, service SQL, and bounded pagination behavior.
 
 Always include the commands run and remaining risk in the final response.

@@ -25,7 +25,6 @@ packages/db   DBAdapter and SQLite/D1/MySQL/PostgreSQL implementations
 packages/cache  CacheAdapter and memory/KV/noop implementations
 packages/file-storage  file storage contract and local/S3 implementations
 packages/runtime  runtime factory, bootstrap, security config, context types
-packages/domain  reusable pure domain logic
 docs          architecture, CRUD, security, deployment, performance guides
 ```
 
@@ -67,7 +66,7 @@ The console currently uses browser sessions:
 - `/api/admin/*` and `/api/user/*` are protected by session middleware; admin paths also check menu/action permissions.
 - The console client sends `credentials: 'include'`.
 
-API tokens are reserved for external clients. `apps/server/src/service/user/api-token.ts` contains Bearer JWT issue/verify/revoke logic, but the console does not use it.
+API tokens are reserved for external clients. Only session cookies are implemented today (the earlier Bearer JWT placeholder module was removed); when an external client integration lands, add token routes under `apps/server/src/api/user` with a Bearer-reading middleware (`JWT_SECRET` is already separated from `SESSION_SECRET`, see `docs/SECURITY.md`).
 
 ## Checks
 
@@ -76,7 +75,7 @@ bun run typecheck
 bun run lint
 bun test
 bun run build
-bun run build:bun
+bun run compile:bun
 bun run build:workers
 bun run audit:structure
 ```

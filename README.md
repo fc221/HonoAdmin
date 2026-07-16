@@ -25,7 +25,6 @@ packages/db   DBAdapter 与 SQLite/D1/MySQL/PostgreSQL 实现
 packages/cache  CacheAdapter 与 memory/KV/noop 实现
 packages/file-storage  文件存储 contract 与 local/S3 实现
 packages/runtime  runtime factory、bootstrap、安全配置、context types
-packages/domain  可复用纯领域逻辑
 docs          架构、CRUD、安全、部署和性能边界文档
 ```
 
@@ -75,11 +74,10 @@ Console 当前使用浏览器 session 方案：
 - `/api/admin/*` 和 `/api/user/*` 目前通过 `requireApiSession` 读取 session cookie，并在 admin 路径上继续检查菜单/操作权限。
 - Console API client 使用 `credentials: 'include'`，所以同源或 Vite proxy 下自动携带 session cookie。
 
-API token 方案定位为外部客户端/开放 API：
+API token 方案预留给外部客户端/开放 API：
 
-- `apps/server/src/service/user/api-token.ts` 已提供 Bearer JWT 的签发、验证、过期和 cache 撤销能力。
-- 当前 console 不使用 API token；浏览器后台仍走 session cookie。
-- 后续接外部客户端时，在 `apps/server/src/api/user` 下新增 token 路由，并让对应 API middleware 读取 `Authorization: Bearer <token>`。
+- 当前仅使用 session cookie，代码中没有 Bearer token 实现（此前的占位模块已删除）。
+- 后续接外部客户端时，在 `apps/server/src/api/user` 下新增 token 路由，并让对应 API middleware 读取 `Authorization: Bearer <token>`（`JWT_SECRET` 已与 `SESSION_SECRET` 分离，见 `docs/SECURITY.md`）。
 
 ## 常用检查
 
@@ -88,7 +86,7 @@ bun run typecheck
 bun run lint
 bun test
 bun run build
-bun run build:bun
+bun run compile:bun
 bun run build:workers
 bun run audit:structure
 ```
