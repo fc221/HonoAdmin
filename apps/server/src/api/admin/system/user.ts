@@ -1,23 +1,23 @@
 import type { AppEnv } from '@hono-admin/runtime'
 import type { Context } from 'hono'
-import type { ResourceField } from '../../../schema'
-import type { ResourceDefinition } from '../../../shared/resource'
-import { listRoleOptions } from '../../../../service/admin/system/role'
+import type { ResourceField } from '../../schema'
+import type { ResourceDefinition } from '../../shared/resource'
+import { listRoleOptions } from '../../../service/admin/system/role'
 import {
   createUser,
   deleteUser,
   getUserById,
   listUsers,
   updateUser,
-} from '../../../../service/admin/system/user'
-import { createUserSchema, updateUserSchema } from '../../../../service/admin/system/user/dto'
-import { userGenderOptions, userStatusOptions } from '../../../../service/admin/system/user/enum'
+} from '../../../service/admin/system/user'
+import { createUserSchema, updateUserSchema } from '../../../service/admin/system/user/dto'
+import { userGenderOptions, userStatusOptions } from '../../../service/admin/system/user/enum'
 import {
   createAction,
   deleteAction,
   editAction,
-} from '../../../shared/resource'
-import { buildResourceApp } from '../../../shared/resource-routes'
+} from '../../shared/resource'
+import { buildResourceApp } from '../../shared/resource-routes'
 
 const userResource: ResourceDefinition = {
   actions: [createAction],
@@ -86,9 +86,9 @@ async function userBaseFields(c: Context<AppEnv>): Promise<ResourceField[]> {
   ]
 }
 
-const adminUserApi = buildResourceApp(userResource, { tag: 'admin' })
+const systemUserApi = buildResourceApp(userResource, { tag: 'admin' })
 
-export default adminUserApi
+export default systemUserApi
 
 function normalizeUserInput(
   input: Record<string, unknown>,

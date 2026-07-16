@@ -1,15 +1,15 @@
 import type { AppEnv } from '@hono-admin/runtime'
-import type { ResourceDefinition } from '../../shared/resource'
+import type { ResourceDefinition } from '../../../shared/resource'
 import { Hono } from 'hono'
 import {
   getDatabaseMigrationStatus,
   getUpdateStatus,
   runDatabaseMigrations,
-} from '../../../service/admin/system/update'
-import { describeRoute, jsonResponse } from '../../shared/openapi'
-import { buildResourceApp } from '../../shared/resource-routes'
-import { resourceMutationSchema } from '../../shared/resource-schema'
-import { updateStatusSchema } from './update-schema'
+} from '../../../../service/admin/system/update'
+import { describeRoute, jsonResponse } from '../../../shared/openapi'
+import { buildResourceApp } from '../../../shared/resource-routes'
+import { resourceMutationSchema } from '../../../shared/resource-schema'
+import { updateStatusSchema } from './schema'
 
 const updateResource: ResourceDefinition = {
   columns: [

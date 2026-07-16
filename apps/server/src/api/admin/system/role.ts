@@ -1,24 +1,24 @@
 import type { AppEnv } from '@hono-admin/runtime'
 import type { Context } from 'hono'
-import type { PermissionRecord } from '../../../../service/admin/system/permission/dto'
-import type { ResourceField } from '../../../schema'
-import type { ResourceDefinition } from '../../../shared/resource'
-import { adminMenus } from '../../../../service/admin/system/menu/consts'
-import { listPermissions } from '../../../../service/admin/system/permission'
+import type { PermissionRecord } from '../../../service/admin/system/permission/dto'
+import type { ResourceField } from '../../schema'
+import type { ResourceDefinition } from '../../shared/resource'
+import { adminMenus } from '../../../service/admin/system/menu/consts'
+import { listPermissions } from '../../../service/admin/system/permission'
 import {
   createRole,
   deleteRole,
   getRoleById,
   listPaginatedRoles,
   updateRole,
-} from '../../../../service/admin/system/role'
+} from '../../../service/admin/system/role'
 import {
   createAction,
   deleteAction,
   editAction,
   listInput,
-} from '../../../shared/resource'
-import { buildResourceApp } from '../../../shared/resource-routes'
+} from '../../shared/resource'
+import { buildResourceApp } from '../../shared/resource-routes'
 
 const roleResource: ResourceDefinition = {
   actions: [createAction],
