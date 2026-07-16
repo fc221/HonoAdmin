@@ -59,3 +59,50 @@ export function toScheduledJobRecord(row: ScheduledJobEntity): ScheduledJobRecor
     updatedAt: row.updated_at,
   }
 }
+
+/** SELECT 列清单,与 ScheduledJobEntity 字段一一对应。 */
+export const scheduledJobColumns = `
+  id,
+  name,
+  description,
+  expression,
+  handler_key,
+  params,
+  status,
+  is_running,
+  run_started_at,
+  last_run_at,
+  next_run_at,
+  last_result,
+  last_status,
+  last_duration_ms,
+  created_at,
+  updated_at
+`
+
+export function serializeParams(params: string | undefined): string | null {
+  const list = splitParams(params)
+  return list.length ? JSON.stringify(list) : null
+}
+
+function splitParams(params: string | undefined): string[] {
+  if (!params) {
+    return []
+  }
+  return params
+    .split(',')
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0)
+}
+
+export function parseParams(raw: string | null): string[] {
+  if (!raw) {
+    return []
+  }
+  try {
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed.map((item) => String(item)) : []
+  } catch {
+    return splitParams(raw)
+  }
+}

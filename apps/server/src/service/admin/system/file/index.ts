@@ -1,16 +1,13 @@
-import type { FileStorageConfig } from '@hono-admin/file-storage'
 import type { PaginatedResult } from '../../../common/pagination'
 import type { ServiceContext } from '../../../types'
-import type { ConfigEntity } from '../config/entity'
 import type {
   FileRecord,
   ListFileInput,
 } from './dto'
 import type { FileEntity } from './entity'
-import type { FileStorageMode, FileUploadType } from './enum'
+import type { FileUploadType } from './enum'
 import { createFileStorageAdapter } from '@hono-admin/file-storage/factory'
-import { formatFileSize } from '@hono-admin/utils/common'
-import { ConfigurationError, NotFoundError, ValidationError } from '../../../../utils/errors'
+import { NotFoundError, ValidationError } from '../../../../utils/errors'
 import {
   createPaginatedResult,
   getPaginationOffset,
@@ -21,7 +18,9 @@ import {
   buildWhereClause,
 } from '../../../common/query'
 import { listFileSchema } from './dto'
-import { fileStorageModes, fileUploadTypes } from './enum'
+import { fileUploadTypes } from './enum'
+import { resolveFileStorageConfig } from './storage-config'
+import { createStorageKey, normalizeUploadedFile } from './upload'
 
 export interface UploadFileInput {
   file: File
@@ -43,15 +42,6 @@ export type FileAccessResult
     url: string
   }
 
-const allowedMimeTypes = new Map<string, string>([
-  ['image/gif', 'gif'],
-  ['image/jpeg', 'jpg'],
-  ['image/png', 'png'],
-  ['image/webp', 'webp'],
-])
-const allowedExtensions = new Set(['gif', 'jpeg', 'jpg', 'png', 'webp'])
-const defaultLocalRoot = './uploads'
-const defaultSignedUrlTtlSeconds = 300
 const fileUrlPrefix = '/uploads/'
 
 const fileColumns = `
@@ -207,234 +197,6 @@ export async function getFileAccess(
   })
 }
 
-async function normalizeUploadedFile(
-  file: File,
-  maxFileSizeBytes: number,
-): Promise<{
-  body: ArrayBuffer
-  extension: string
-  mimeType: string
-  originalName: string
-  size: number
-}> {
-  const originalName = file.name.trim() || 'upload'
-  const mimeType = normalizeMimeType(file.type)
-  const extension = getFileExtension(originalName)
-
-  if (file.size <= 0) {
-    throw new ValidationError('请选择要上传的图片。', { field: 'file' })
-  }
-
-  if (file.size > maxFileSizeBytes) {
-    throw new ValidationError(`图片不能超过 ${formatFileSize(maxFileSizeBytes)}。`, {
-      field: 'file',
-      maxFileSizeBytes,
-    })
-  }
-
-  if (!allowedMimeTypes.has(mimeType)) {
-    throw new ValidationError('仅支持 JPG、PNG、WEBP、GIF 图片。', {
-      field: 'file',
-      mimeType,
-    })
-  }
-
-  if (!allowedExtensions.has(extension)) {
-    throw new ValidationError('图片扩展名必须是 jpg、png、webp 或 gif。', {
-      extension,
-      field: 'file',
-    })
-  }
-  const body = await file.arrayBuffer()
-  const detectedMimeType = detectImageMimeType(new Uint8Array(body))
-  if (!detectedMimeType || detectedMimeType !== mimeType) {
-    throw new ValidationError('图片文件内容和类型不匹配。', {
-      detectedMimeType,
-      field: 'file',
-      mimeType,
-    })
-  }
-
-  return {
-    body,
-    extension: allowedMimeTypes.get(detectedMimeType) ?? extension,
-    mimeType,
-    originalName,
-    size: file.size,
-  }
-}
-
-function normalizeMimeType(value: string): string {
-  return value.split(';', 1)[0]?.trim().toLowerCase() ?? ''
-}
-
-function detectImageMimeType(bytes: Uint8Array): string | null {
-  if (bytes.length >= 8 && hasBytes(bytes, [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])) {
-    return 'image/png'
-  }
-
-  if (bytes.length >= 3 && hasBytes(bytes, [0xFF, 0xD8, 0xFF])) {
-    return 'image/jpeg'
-  }
-
-  if (
-    bytes.length >= 6
-    && (
-      hasAscii(bytes, 'GIF87a', 0)
-      || hasAscii(bytes, 'GIF89a', 0)
-    )
-  ) {
-    return 'image/gif'
-  }
-
-  if (
-    bytes.length >= 12
-    && hasAscii(bytes, 'RIFF', 0)
-    && hasAscii(bytes, 'WEBP', 8)
-  ) {
-    return 'image/webp'
-  }
-
-  return null
-}
-
-function hasBytes(bytes: Uint8Array, expected: number[]): boolean {
-  return expected.every((byte, index) => bytes[index] === byte)
-}
-
-function hasAscii(bytes: Uint8Array, value: string, offset: number): boolean {
-  for (let index = 0; index < value.length; index += 1) {
-    if (bytes[offset + index] !== value.charCodeAt(index)) {
-      return false
-    }
-  }
-
-  return true
-}
-
-async function resolveFileStorageConfig(
-  ctx: ServiceContext,
-  preferredMode?: FileStorageMode,
-): Promise<FileStorageConfig> {
-  const configs = await listFileConfigValues(ctx)
-  const configuredMode = normalizeStorageMode(
-    preferredMode ?? configs.get('file_storage_driver'),
-  )
-  const mode = ctx.config.runtimeTarget === 'cloudflare-workers'
-    && configuredMode === 'local'
-    ? 's3'
-    : configuredMode
-
-  if (mode === 'local') {
-    return {
-      mode,
-      root: configs.get('file_local_root')?.trim() || defaultLocalRoot,
-    }
-  }
-
-  const s3Config = {
-    accessKeyId: configs.get('file_s3_access_key_id')?.trim() ?? '',
-    bucket: configs.get('file_s3_bucket')?.trim() ?? '',
-    endpoint: configs.get('file_s3_endpoint')?.trim() ?? '',
-    mode,
-    publicBaseUrl: normalizePublicBaseUrl(
-      configs.get('file_s3_public_base_url'),
-    ),
-    region: configs.get('file_s3_region')?.trim() || 'auto',
-    secretAccessKey: configs.get('file_s3_secret_access_key')?.trim() ?? '',
-    signedUrlTtlSeconds: normalizeSignedUrlTtl(
-      configs.get('file_s3_signed_url_ttl_seconds'),
-    ),
-  }
-
-  assertS3Config(s3Config)
-  return s3Config
-}
-
-async function listFileConfigValues(
-  ctx: ServiceContext,
-): Promise<Map<string, string>> {
-  const rows = await ctx.db.query<Pick<ConfigEntity, 'config_key' | 'config_value'>>(
-    `
-      SELECT config_key, config_value
-      FROM sys_config
-      WHERE config_type = 'file'
-        AND config_key IN (
-          'file_storage_driver',
-          'file_local_root',
-          'file_s3_endpoint',
-          'file_s3_region',
-          'file_s3_bucket',
-          'file_s3_public_base_url',
-          'file_s3_access_key_id',
-          'file_s3_secret_access_key',
-          'file_s3_signed_url_ttl_seconds'
-        )
-    `,
-  )
-
-  return new Map(rows.map((row) => [row.config_key, row.config_value]))
-}
-
-function assertS3Config(
-  config: Extract<FileStorageConfig, { mode: 's3' }>,
-): void {
-  const missing = [
-    ['file_s3_endpoint', config.endpoint],
-    ['file_s3_bucket', config.bucket],
-    ['file_s3_access_key_id', config.accessKeyId],
-    ['file_s3_secret_access_key', config.secretAccessKey],
-  ].filter(([, value]) => !value)
-
-  if (missing.length) {
-    throw new ConfigurationError('S3 文件存储配置不完整。', {
-      missing: missing.map(([key]) => key),
-    })
-  }
-}
-
-function normalizeStorageMode(value: unknown): FileStorageMode {
-  return fileStorageModes.includes(value as FileStorageMode)
-    ? value as FileStorageMode
-    : 'local'
-}
-
-function normalizeSignedUrlTtl(value: string | undefined): number {
-  const ttl = Number(value)
-
-  if (!Number.isInteger(ttl) || ttl <= 0) {
-    return defaultSignedUrlTtlSeconds
-  }
-
-  return Math.min(ttl, 604800)
-}
-
-function normalizePublicBaseUrl(value: string | undefined): string | undefined {
-  const publicBaseUrl = value?.trim()
-  if (!publicBaseUrl) {
-    return undefined
-  }
-
-  let parsedUrl: URL
-  try {
-    parsedUrl = new URL(publicBaseUrl)
-  } catch {
-    throw new ConfigurationError('S3 公共访问地址必须是有效的 URL。', {
-      configKey: 'file_s3_public_base_url',
-    })
-  }
-
-  if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
-    throw new ConfigurationError('S3 公共访问地址必须使用 http 或 https。', {
-      configKey: 'file_s3_public_base_url',
-    })
-  }
-
-  parsedUrl.hash = ''
-  parsedUrl.search = ''
-  return parsedUrl.toString().replace(/\/+$/, '')
-}
-
 async function countFiles(
   ctx: ServiceContext,
   whereSql: string,
@@ -507,27 +269,6 @@ function normalizeStorageKey(storageKey: string): string {
   }
 
   return normalizedKey
-}
-
-function createStorageKey(
-  uploadType: FileUploadType,
-  extension: string,
-  now: number,
-): string {
-  const date = new Date(now)
-  const year = Number.isFinite(date.getTime())
-    ? String(date.getUTCFullYear())
-    : 'unknown'
-  const month = Number.isFinite(date.getTime())
-    ? String(date.getUTCMonth() + 1).padStart(2, '0')
-    : '00'
-
-  return `${uploadType}/${year}/${month}/${crypto.randomUUID()}.${extension}`
-}
-
-function getFileExtension(fileName: string): string {
-  const extension = fileName.split('.').pop()?.trim().toLowerCase()
-  return extension && extension !== fileName.toLowerCase() ? extension : ''
 }
 
 function toFileRecord(row: FileEntity): FileRecord {
