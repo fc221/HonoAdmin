@@ -17,7 +17,7 @@ import {
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { apiClient } from '../../../api/client'
-import ConfigTypeForm from '../../../components/ConfigTypeForm.vue'
+import ConfigTypeForm from './ConfigTypeForm.vue'
 
 // 面板加载前的占位 tab;真正的列表和白名单都以服务端为准,别在这儿维护第二份。
 const defaultConfigTypes: ConfigTypeOption[] = [

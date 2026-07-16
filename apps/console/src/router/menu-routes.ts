@@ -6,11 +6,13 @@ export type ConsoleViewLoader = () => Promise<unknown>
 export function createMenuRouteRecords(
   menus: MenuItem[],
   viewModules: Record<string, ConsoleViewLoader>,
+  fallback?: ConsoleViewLoader,
 ): RouteRecordRaw[] {
   return flattenMenuItems(menus)
-    .filter((item) => item.routePath && item.component)
+    .filter((item) => item.routePath && (item.component || fallback))
     .map((item) => ({
-      component: resolveViewComponent(item, viewModules),
+      // 菜单项未指定 component 时落到通用兜底视图(ResourcePage)。
+      component: item.component ? resolveViewComponent(item, viewModules) : fallback as RouteComponent,
       meta: {
         activeMenuName: item.name,
         resource: resolveResourceName(item.name),

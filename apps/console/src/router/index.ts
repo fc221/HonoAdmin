@@ -6,6 +6,8 @@ import { useSessionStore } from '../stores/session'
 import { createMenuRouteRecords } from './menu-routes'
 
 const viewModules = import.meta.glob('../views/**/*.vue')
+// 菜单项未指定 component 时的通用兜底视图。放在 components/ 下,不进 viewModules glob。
+const resourcePageView = () => import('../components/ResourcePage.vue')
 const installView = resolveView('../views/install.vue')
 const loginView = resolveView('../views/login.vue')
 const notFoundView = resolveView('../views/not-found.vue')
@@ -20,7 +22,7 @@ export const router = createRouter({
     {
       children: [
         { path: '', redirect: '/admin/dashboard' },
-        ...createMenuRouteRecords(adminMenus, viewModules),
+        ...createMenuRouteRecords(adminMenus, viewModules, resourcePageView),
         { component: notFoundView, path: ':pathMatch(.*)*' },
       ],
       component: AppLayout,
@@ -29,7 +31,7 @@ export const router = createRouter({
     {
       children: [
         { path: '', redirect: '/user/dashboard' },
-        ...createMenuRouteRecords(userMenus, viewModules),
+        ...createMenuRouteRecords(userMenus, viewModules, resourcePageView),
         { component: notFoundView, path: ':pathMatch(.*)*' },
       ],
       component: AppLayout,
