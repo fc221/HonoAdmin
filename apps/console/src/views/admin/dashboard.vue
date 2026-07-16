@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import type { DashboardPayload } from '@hono-admin/server/api/schema'
 import { formatFileSize } from '@hono-admin/utils/common'
-import { NCard, NEmpty, NProgress, NTag, NTooltip, useLoadingBar, useNotification } from 'naive-ui'
+import { NCard, NEmpty, NProgress, NTag, NTooltip } from 'naive-ui'
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiClient } from '../../api/client'
 import StatGrid from '../../components/StatGrid.vue'
+import { usePageFeedback } from '../../composables/page-feedback'
 
 const router = useRouter()
-const loadingBar = useLoadingBar()
-const notification = useNotification()
+const { loadingBar, notifyError } = usePageFeedback()
 const dashboard = ref<DashboardPayload | null>(null)
 
 const activity = computed(() => dashboard.value?.activity ?? [])
@@ -87,11 +87,7 @@ onMounted(async () => {
   }
   catch (reason) {
     loadingBar.error()
-    notification.error({
-      content: reason instanceof Error ? reason.message : '仪表盘加载失败。',
-      duration: 4500,
-      title: '仪表盘加载失败',
-    })
+    notifyError('仪表盘加载失败', reason, '仪表盘加载失败。')
   }
 })
 

@@ -1,43 +1,28 @@
 <script setup lang="ts">
-import type { DropdownOption } from 'naive-ui'
-import { NLayout, NLayoutContent, NLayoutHeader, useLoadingBar, useNotification } from 'naive-ui'
+import { NLayout, NLayoutContent, NLayoutHeader } from 'naive-ui'
 import { storeToRefs } from 'pinia'
-import { computed, h, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { apiClient, ApiClientError } from '../../api/client'
 import { useLayoutStore } from '../../stores/layout'
 import { useSessionStore } from '../../stores/session'
-import { useThemeStore } from '../../stores/theme'
-import AppIcon from '../AppIcon.vue'
 import AppHeader from './components/AppHeader.vue'
 import AppMobileSidebar from './components/AppMobileSidebar.vue'
 import AppSidebar from './components/AppSidebar.vue'
 import AppTopNav from './components/AppTopNav.vue'
 import {
-  createMenuOptions,
-  createRootMenuOptions,
-  getActivePath,
-  getExpandableMenuKeys,
-  getExpandedMenuKeys,
-  getLogoText,
-  renderThemeIcon,
-} from './helpers'
-import {
   isFlushVariant,
   isHybridVariant,
   isTopNavVariant,
 } from './layout-config'
+import { useLayoutMenus } from './layout-menus'
+import { useSurfaceSession } from './surface-session'
+import { useUserMenu } from './user-menu'
 
 const route = useRoute()
 const router = useRouter()
-const loadingBar = useLoadingBar()
-const notification = useNotification()
-const themeStore = useThemeStore()
 const layoutStore = useLayoutStore()
-const sessionStore = useSessionStore()
 layoutStore.normalizeForConsole()
-const { selectedTheme } = storeToRefs(themeStore)
-const { loading, menus, siteTitle, user } = storeToRefs(sessionStore)
+const { loading, siteTitle, user } = storeToRefs(useSessionStore())
 const {
   mainWidth,
   sidebarCollapsed,
@@ -46,9 +31,7 @@ const {
   variant,
 } = storeToRefs(layoutStore)
 const mobileOpen = ref(false)
-const menuExpandedKeys = ref<Array<string | number>>([])
 const routeRefreshKey = ref(0)
-const layoutReady = ref(false)
 const pendingActiveMenuName = ref<string | null>(null)
 let routeNavigationId = 0
 
@@ -61,13 +44,6 @@ const activeMenuName = computed(() =>
 const visibleActiveMenuName = computed(() => pendingActiveMenuName.value ?? activeMenuName.value)
 const routeViewKey = computed(() => `${route.path}:${routeRefreshKey.value}`)
 
-const activePath = computed(() => getActivePath(menus.value, visibleActiveMenuName.value) ?? [])
-const activeRoot = computed(() => activePath.value[0] ?? menus.value[0])
-const breadcrumbs = computed(() => activePath.value.map(item => ({
-  href: item.href,
-  label: item.label,
-  name: item.name,
-})))
 const flushLayout = computed(() => isFlushVariant(variant.value))
 const hybridLayout = computed(() => isHybridVariant(variant.value))
 const topNavLayout = computed(() => isTopNavVariant(variant.value))
@@ -96,161 +72,29 @@ const contentWidthClass = computed(() =>
     ? 'mx-auto w-full max-w-7xl'
     : 'w-full',
 )
-const expandableMenuKeys = computed(() => new Set(getExpandableMenuKeys(menus.value)))
-const logoText = computed(() => getLogoText(siteTitle.value))
-const menuOptions = computed(() => createMenuOptions(menus.value))
-const rootMenuOptions = computed(() => createRootMenuOptions(menus.value))
-const activeChildrenMenus = computed(() => {
-  const root = activeRoot.value
-  if (!root) {
-    return []
-  }
-
-  return root.children?.length ? root.children : [root]
-})
-const sidebarMenuOptions = computed(() =>
-  hybridLayout.value ? createMenuOptions(activeChildrenMenus.value) : menuOptions.value,
-)
-const mobileSidebarMenuOptions = computed(() =>
-  hybridLayout.value ? menuOptions.value : undefined,
-)
-const mobileMenuOptions = computed(() => mobileSidebarMenuOptions.value ?? menuOptions.value)
-const topMenuOptions = computed(() =>
-  hybridLayout.value ? rootMenuOptions.value : menuOptions.value,
-)
-// 顶栏菜单:hybrid 顶部只放一级菜单,选中键用一级(root);top-nav 顶部是完整菜单树,
-// 选中键必须用当前叶子,下拉里的子菜单项才会高亮当前页。
-const topSelectedMenuKey = computed(() =>
-  hybridLayout.value
-    ? (activeRoot.value?.name ?? visibleActiveMenuName.value)
-    : visibleActiveMenuName.value,
-)
 const desktopSidebarLogoVisible = computed(() => !hybridLayout.value)
-const userLabel = computed(() => user.value?.nickname || user.value?.username || '用户')
-const themeDropdownOptions = computed<DropdownOption[]>(() =>
-  themeStore.themeOptions.map(option => ({
-    icon: renderThemeIcon(option.icon),
-    key: option.value,
-    label: () => h('span', { class: 'flex min-w-0 items-center justify-between gap-3' }, [
-      h('span', { class: 'truncate' }, option.label),
-      selectedTheme.value === option.value
-        ? h(AppIcon, { class: 'text-primary', name: 'ri:check-line' })
-        : null,
-    ]),
-  })),
-)
-const userDropdownOptions = computed<DropdownOption[]>(() => {
-  const roles = user.value?.roles ?? []
-  const activeRoleId = user.value?.activeRoleId
-  const options: DropdownOption[] = [
-    {
-      key: 'user-info',
-      props: { class: 'pointer-events-none' },
-      render: () => h('div', { class: 'flex flex-col px-3 py-2' }, [
-        h('div', { class: 'truncate text-sm font-medium text-base-content' }, user.value?.nickname || user.value?.username || '用户'),
-        h('div', { class: 'truncate text-xs text-base-muted' }, user.value?.username ?? ''),
-      ]),
-      type: 'render',
-    },
-    { key: 'user-info-divider', type: 'divider' },
-    {
-      icon: () => h(AppIcon, { name: 'ri:user-line' }),
-      key: 'profile',
-      label: '个人中心',
-    },
-  ]
 
-  // 个人中心之下再列出角色切换,当前角色打勾且禁用。
-  if (roles.length > 1) {
-    options.push({
-      key: 'role-title',
-      props: { class: 'pointer-events-none' },
-      render: () => h('div', { class: 'px-3 pt-1 text-xs text-base-muted' }, '切换角色'),
-      type: 'render',
-    })
-    for (const role of roles) {
-      const active = role.id === activeRoleId
-      options.push({
-        disabled: active,
-        icon: () => h(AppIcon, {
-          class: active ? 'text-primary' : '',
-          name: active ? 'ri:check-line' : 'ri:user-shared-2-line',
-        }),
-        key: `role:${role.id}`,
-        label: role.name,
-      })
-    }
-  }
-
-  options.push(
-    { key: 'logout-divider', type: 'divider' },
-    {
-      icon: () => h(AppIcon, { class: 'text-error', name: 'ri:logout-box-r-line' }),
-      key: 'logout',
-      label: () => h('span', { class: 'text-error' }, '退出登录'),
-    },
-  )
-
-  return options
-})
-
-watch(
-  () => [menus.value, visibleActiveMenuName.value] as const,
-  () => {
-    const validKeys = expandableMenuKeys.value
-    const nextKeys = new Set(menuExpandedKeys.value.filter(key => validKeys.has(key)))
-    for (const key of getExpandedMenuKeys(menus.value, visibleActiveMenuName.value, activePath.value)) {
-      nextKeys.add(key)
-    }
-    menuExpandedKeys.value = [...nextKeys]
-  },
-  { immediate: true },
-)
-
-// 仅在 surface(admin/user)切换时拉一次布局,菜单内切换不重拉(ensureLayout 自带缓存)。
-// 加载/401/428/异常的编排从原 AppShell 整体搬到这里。
-watch(
-  surface,
-  async (nextSurface) => {
-    layoutReady.value = false
-    sessionStore.setActiveSurface(nextSurface)
-    const requestedPath = route.fullPath
-    loadingBar.start()
-    try {
-      await sessionStore.ensureLayout(nextSurface)
-      layoutReady.value = true
-      loadingBar.finish()
-    }
-    catch (reason) {
-      if (reason instanceof ApiClientError && reason.status === 401) {
-        loadingBar.finish()
-        await router.replace(`${loginPath.value}?${new URLSearchParams({ returnTo: requestedPath })}`)
-        return
-      }
-      if (reason instanceof ApiClientError && reason.status === 428) {
-        loadingBar.finish()
-        await redirectAfterInstallStateError()
-        return
-      }
-
-      loadingBar.error()
-      notification.error({
-        content: reason instanceof Error ? reason.message : '布局加载失败。',
-        duration: 4500,
-        title: '页面加载失败',
-      })
-    }
-  },
-  { immediate: true },
-)
+const {
+  breadcrumbs,
+  logoText,
+  menuExpandedKeys,
+  mobileMenuOptions,
+  sidebarMenuOptions,
+  topMenuOptions,
+  topSelectedMenuKey,
+} = useLayoutMenus({ hybridLayout, visibleActiveMenuName })
+const {
+  selectedTheme,
+  selectTheme,
+  selectUserAction,
+  themeDropdownOptions,
+  userDropdownOptions,
+  userLabel,
+} = useUserMenu({ loginPath, navigate, refreshPage, surface })
+const { layoutReady } = useSurfaceSession({ loginPath, surface })
 
 function closeMobile() {
   mobileOpen.value = false
-}
-
-async function redirectAfterInstallStateError() {
-  const status = await apiClient.installStatus().catch(() => null)
-  await router.replace(status?.installed ? '/admin/system/update' : '/install')
 }
 
 function navigate(href: string, activeKey?: string | number) {
@@ -270,57 +114,8 @@ function refreshPage() {
   routeRefreshKey.value += 1
 }
 
-function selectTheme(key: string | number) {
-  themeStore.setTheme(key)
-}
-
 function updateSidebarCollapsed(collapsed: boolean) {
   layoutStore.setSidebarCollapsed(collapsed)
-}
-
-function selectUserAction(key: string | number) {
-  const raw = String(key)
-  if (raw.startsWith('role:')) {
-    switchRole(Number(raw.slice('role:'.length)))
-    return
-  }
-  if (key === 'profile') {
-    navigate('/user/profile')
-  }
-  if (key === 'logout') {
-    logout()
-  }
-}
-
-async function logout() {
-  loadingBar.start()
-  await sessionStore.logout()
-  loadingBar.finish()
-  await router.replace(loginPath.value)
-}
-
-async function switchRole(roleId: number) {
-  loadingBar.start()
-  try {
-    const result = await sessionStore.switchRole(roleId)
-    const target = typeof result.data?.target === 'string' ? result.data.target : ''
-    loadingBar.finish()
-    if (target) {
-      await router.push(target)
-      return
-    }
-    // 角色切换会清空缓存,这里按当前 surface 再拉一次以恢复菜单/用户。
-    await sessionStore.ensureLayout(surface.value)
-    refreshPage()
-  }
-  catch (reason) {
-    loadingBar.error()
-    notification.error({
-      content: reason instanceof Error ? reason.message : '角色切换失败。',
-      duration: 4500,
-      title: '操作失败',
-    })
-  }
 }
 </script>
 

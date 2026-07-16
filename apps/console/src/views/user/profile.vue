@@ -11,19 +11,15 @@ import {
   NSelect,
   NTabPane,
   NTabs,
-  useLoadingBar,
-  useMessage,
-  useNotification,
 } from 'naive-ui'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { apiClient } from '../../api/client'
 import DataTable from '../../components/DataTable.vue'
+import { usePageFeedback } from '../../composables/page-feedback'
 import AvatarUpload from './AvatarUpload.vue'
 import ProfileInfoCard from './ProfileInfoCard.vue'
 
-const message = useMessage()
-const loadingBar = useLoadingBar()
-const notification = useNotification()
+const { loadingBar, message, notifyError } = usePageFeedback()
 const avatarFiles = ref<UploadFileInfo[]>([])
 const page = ref(1)
 const pageSize = ref(10)
@@ -205,14 +201,6 @@ function selectedAvatarFile() {
   return avatarFiles.value
     .map(file => file.file)
     .find((file): file is File => file instanceof File)
-}
-
-function notifyError(title: string, reason: unknown, fallback: string) {
-  notification.error({
-    content: reason instanceof Error ? reason.message : fallback,
-    duration: 4500,
-    title,
-  })
 }
 
 onMounted(load)

@@ -11,17 +11,13 @@ import {
   NSpace,
   NStep,
   NSteps,
-  useLoadingBar,
-  useMessage,
-  useNotification,
 } from 'naive-ui'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiClient } from '../api/client'
+import { usePageFeedback } from '../composables/page-feedback'
 
-const message = useMessage()
-const loadingBar = useLoadingBar()
-const notification = useNotification()
+const { loadingBar, message, notifyError } = usePageFeedback()
 const router = useRouter()
 const adminFormRef = ref<FormInst | null>(null)
 const status = ref<InstallStatus | null>(null)
@@ -100,11 +96,7 @@ async function load() {
     }
   }
   catch (reason) {
-    notification.error({
-      content: reason instanceof Error ? reason.message : '安装状态加载失败。',
-      duration: 4500,
-      title: '安装状态加载失败',
-    })
+    notifyError('安装状态加载失败', reason, '安装状态加载失败。')
   }
 }
 
@@ -173,11 +165,7 @@ async function submit(action: () => Promise<void>) {
   }
   catch (reason) {
     loadingBar.error()
-    notification.error({
-      content: reason instanceof Error ? reason.message : '操作失败。',
-      duration: 4500,
-      title: '操作失败',
-    })
+    notifyError('操作失败', reason, '操作失败。')
   }
   finally {
     loading.value = false

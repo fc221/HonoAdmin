@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import type { UpdateStatus } from '@hono-admin/server/api/schema'
-import { NAlert, NButton, NCard, NTag, useLoadingBar, useMessage, useNotification } from 'naive-ui'
+import { NAlert, NButton, NCard, NTag } from 'naive-ui'
 import { computed, onMounted, ref } from 'vue'
 import { apiClient } from '../../../api/client'
 import AppIcon from '../../../components/AppIcon.vue'
+import { usePageFeedback } from '../../../composables/page-feedback'
 
-const loadingBar = useLoadingBar()
-const message = useMessage()
-const notification = useNotification()
+const { loadingBar, message, notifyError } = usePageFeedback()
 const loading = ref(false)
 const migrating = ref(false)
 const status = ref<UpdateStatus | null>(null)
@@ -48,14 +47,6 @@ async function migrate() {
   finally {
     migrating.value = false
   }
-}
-
-function notifyError(title: string, reason: unknown, fallback: string) {
-  notification.error({
-    content: reason instanceof Error ? reason.message : fallback,
-    duration: 4500,
-    title,
-  })
 }
 
 onMounted(load)

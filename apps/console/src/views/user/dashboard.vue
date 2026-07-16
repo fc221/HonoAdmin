@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import type { DashboardPayload } from '@hono-admin/server/api/schema'
-import { useLoadingBar, useNotification } from 'naive-ui'
 import { onMounted, ref } from 'vue'
 import { apiClient } from '../../api/client'
 import StatGrid from '../../components/StatGrid.vue'
+import { usePageFeedback } from '../../composables/page-feedback'
 
 const dashboard = ref<DashboardPayload | null>(null)
-const loadingBar = useLoadingBar()
-const notification = useNotification()
+const { loadingBar, notifyError } = usePageFeedback()
 
 onMounted(async () => {
   loadingBar.start()
@@ -17,11 +16,7 @@ onMounted(async () => {
   }
   catch (reason) {
     loadingBar.error()
-    notification.error({
-      content: reason instanceof Error ? reason.message : '仪表盘加载失败。',
-      duration: 4500,
-      title: '仪表盘加载失败',
-    })
+    notifyError('仪表盘加载失败', reason, '仪表盘加载失败。')
   }
 })
 </script>

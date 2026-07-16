@@ -5,18 +5,11 @@ import type {
   ConfigTypeOption,
 } from '@hono-admin/server/api/schema'
 import { configTypeSchema } from '@hono-admin/server/api/schema'
-import {
-  NCard,
-  NSpin,
-  NTabPane,
-  NTabs,
-  useLoadingBar,
-  useMessage,
-  useNotification,
-} from 'naive-ui'
+import { NCard, NSpin, NTabPane, NTabs } from 'naive-ui'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { apiClient } from '../../../api/client'
+import { usePageFeedback } from '../../../composables/page-feedback'
 import ConfigTypeForm from './ConfigTypeForm.vue'
 
 // 面板加载前的占位 tab;真正的列表和白名单都以服务端为准,别在这儿维护第二份。
@@ -30,9 +23,7 @@ const configTypes = configTypeSchema.options
 
 const route = useRoute()
 const router = useRouter()
-const loadingBar = useLoadingBar()
-const message = useMessage()
-const notification = useNotification()
+const { loadingBar, message, notifyError } = usePageFeedback()
 const loading = ref(false)
 const payload = ref<ConfigPanelPayload | null>(null)
 const submitting = ref(false)
@@ -153,14 +144,6 @@ function parseConfigType(value: unknown): ConfigType {
 
 function setFieldValue(configKey: string, value: string) {
   formValues[configKey] = value
-}
-
-function notifyError(title: string, reason: unknown, fallback: string) {
-  notification.error({
-    content: reason instanceof Error ? reason.message : fallback,
-    duration: 4500,
-    title,
-  })
 }
 </script>
 

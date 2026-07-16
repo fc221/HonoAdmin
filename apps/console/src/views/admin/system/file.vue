@@ -17,18 +17,14 @@ import {
   NSpace,
   NTag,
   NText,
-  useLoadingBar,
-  useMessage,
-  useNotification,
 } from 'naive-ui'
 import { computed, h, onMounted, ref } from 'vue'
 import { apiClient } from '../../../api/client'
 import AppIcon from '../../../components/AppIcon.vue'
 import Upload from '../../../components/Upload.vue'
+import { usePageFeedback } from '../../../composables/page-feedback'
 
-const message = useMessage()
-const loadingBar = useLoadingBar()
-const notification = useNotification()
+const { loadingBar, message, notifyError } = usePageFeedback()
 const data = ref<ResourceList | null>(null)
 const keyword = ref('')
 const loading = ref(false)
@@ -217,14 +213,6 @@ function selectedUploadFiles() {
   return uploadFiles.value
     .map(file => file.file)
     .filter((file): file is File => file instanceof File)
-}
-
-function notifyError(title: string, reason: unknown, fallback: string) {
-  notification.error({
-    content: reason instanceof Error ? reason.message : fallback,
-    duration: 4500,
-    title,
-  })
 }
 
 onMounted(load)
