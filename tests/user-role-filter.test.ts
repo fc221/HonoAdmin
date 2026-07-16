@@ -59,7 +59,7 @@ describe('user list role filter', () => {
 
       const listBy = async (roleId?: number) => {
         const suffix = roleId ? `&roleId=${roleId}` : ''
-        const res = await app.request(`/api/admin/user?page=1&pageSize=50${suffix}`, {
+        const res = await app.request(`/api/admin/system/user?page=1&pageSize=50${suffix}`, {
           headers: { Cookie: cookie },
         })
         return res.json()

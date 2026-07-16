@@ -1,3 +1,4 @@
+import type { MenuItem } from '@hono-admin/server/api/menu'
 import type { AppType } from '@hono-admin/server/api/routes'
 import type {
   ConfigPanelPayload,
@@ -15,6 +16,7 @@ import type {
   UpdateStatus,
   UserProfile,
 } from '@hono-admin/server/api/schema'
+import { adminMenus, flattenMenuItems, userMenus } from '@hono-admin/server/api/menu'
 import { hc } from 'hono/client'
 
 export class ApiClientError extends Error {
@@ -49,23 +51,24 @@ async function unwrap<T>(response: FetchLike): Promise<T> {
 type Surface = 'admin' | 'user'
 type ResourceQuery = { keyword?: string, page?: number, pageSize?: number, roleId?: number, uploadType?: string }
 
-/** 通用 CRUD 的资源 → URL 路径映射。值是 `/api` 之后的部分。 */
+/**
+ * 通用 CRUD 的资源 → URL 路径映射,从菜单(唯一注册点)推导:
+ * resource = 菜单 name 去 surface 前缀、点转横线(admin.system.user → system-user),
+ * URL = routePath(后端 API 前缀恒为 '/api' + routePath)。新增资源只加菜单项即可。
+ */
+function buildResourcePaths(menus: MenuItem[], prefix: string): Record<string, string> {
+  const paths: Record<string, string> = {}
+  for (const item of flattenMenuItems(menus)) {
+    if (item.routePath && item.name.startsWith(prefix)) {
+      paths[item.name.slice(prefix.length).replaceAll('.', '-')] = item.routePath
+    }
+  }
+  return paths
+}
+
 const resourcePaths: Record<Surface, Record<string, string>> = {
-  admin: {
-    'system-config': '/admin/system/config',
-    'system-cron': '/admin/system/cron',
-    'system-file': '/admin/system/file',
-    'system-operate-log': '/admin/system/operate-log',
-    'system-role': '/admin/system/role',
-    'system-update': '/admin/system/update',
-    'system-user': '/admin/user',
-    'web-feedback': '/admin/web/feedback',
-    'web-notification': '/admin/web/notification',
-    'web-page': '/admin/web/page',
-  },
-  user: {
-    profile: '/user/profile',
-  },
+  admin: buildResourcePaths(adminMenus, 'admin.'),
+  user: buildResourcePaths(userMenus, 'user.'),
 }
 
 function resourceUrl(surface: Surface, resource: string, suffix = ''): string {

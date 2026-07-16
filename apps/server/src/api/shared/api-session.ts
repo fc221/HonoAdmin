@@ -1,5 +1,6 @@
 import type { AppEnv } from '@hono-admin/runtime'
 import type { Context, Next } from 'hono'
+import { adminMenus, flattenMenuItems } from '../../service/admin/system/menu/consts'
 import { canAccessAdminPath } from '../../service/admin/system/role'
 import { isAdminInstalled } from '../../service/admin/system/user'
 import { getOptionalSessionUser } from './session'
@@ -72,21 +73,15 @@ function resolveAdminActionKey(method: string): string {
   return '*'
 }
 
+// 菜单是唯一注册点:权限映射从 adminMenus 推导(apiPrefix = '/api' + routePath),
+// 新增资源只加菜单项即可,不再手工维护映射表。dashboard 在 getAdminPermissionTarget 里单独特判,
+// 这里包含它也无害(精确路径已被提前返回)。
 const adminFeaturePaths: Array<{
   adminPath: string
   apiPrefix: string
-}> = [
-  { adminPath: '/admin/system/user', apiPrefix: '/api/admin/user' },
-  { adminPath: '/admin/system/config', apiPrefix: '/api/admin/system/config' },
-  { adminPath: '/admin/system/cron', apiPrefix: '/api/admin/system/cron' },
-  { adminPath: '/admin/system/file', apiPrefix: '/api/admin/system/file' },
-  { adminPath: '/admin/system/operate-log', apiPrefix: '/api/admin/system/operate-log' },
-  { adminPath: '/admin/system/role', apiPrefix: '/api/admin/system/role' },
-  { adminPath: '/admin/system/update', apiPrefix: '/api/admin/system/update' },
-  { adminPath: '/admin/web/feedback', apiPrefix: '/api/admin/web/feedback' },
-  { adminPath: '/admin/web/notification', apiPrefix: '/api/admin/web/notification' },
-  { adminPath: '/admin/web/page', apiPrefix: '/api/admin/web/page' },
-]
+}> = flattenMenuItems(adminMenus)
+  .filter((item) => Boolean(item.routePath))
+  .map((item) => ({ adminPath: item.routePath!, apiPrefix: `/api${item.routePath}` }))
 
 function getAdminFeatureTarget(c: Context<AppEnv>): {
   actionOverride?: string

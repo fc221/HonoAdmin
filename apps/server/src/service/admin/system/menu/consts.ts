@@ -15,6 +15,11 @@ export interface MenuBreadcrumbItem {
   name: string
 }
 
+/** 展平菜单树。菜单是唯一注册点:权限映射、前端资源 URL、路由都从它推导,共用这个遍历。 */
+export function flattenMenuItems(items: MenuItem[]): MenuItem[] {
+  return items.flatMap((item) => [item, ...flattenMenuItems(item.children ?? [])])
+}
+
 export const adminMenus: MenuItem[] = [
   {
     href: '/admin/dashboard',
@@ -35,7 +40,6 @@ export const adminMenus: MenuItem[] = [
         label: '页面管理',
         name: 'admin.web.page',
         routePath: '/admin/web/page',
-        component: 'admin/web/page',
       },
       {
         href: '/admin/web/notification',
@@ -43,7 +47,6 @@ export const adminMenus: MenuItem[] = [
         label: '公告管理',
         name: 'admin.web.notification',
         routePath: '/admin/web/notification',
-        component: 'admin/web/notification',
       },
       {
         href: '/admin/web/feedback',
@@ -51,7 +54,6 @@ export const adminMenus: MenuItem[] = [
         label: '用户反馈',
         name: 'admin.web.feedback',
         routePath: '/admin/web/feedback',
-        component: 'admin/web/feedback',
       },
     ],
   },
@@ -83,7 +85,6 @@ export const adminMenus: MenuItem[] = [
         label: '角色管理',
         name: 'admin.system.role',
         routePath: '/admin/system/role',
-        component: 'admin/system/role',
       },
       {
         href: '/admin/system/file',
@@ -99,7 +100,6 @@ export const adminMenus: MenuItem[] = [
         label: '操作日志',
         name: 'admin.system.operate-log',
         routePath: '/admin/system/operate-log',
-        component: 'admin/system/operate-log',
       },
       {
         href: '/admin/system/cron',

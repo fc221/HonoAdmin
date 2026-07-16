@@ -810,7 +810,7 @@ describe('API resource routes', () => {
       expect(login.status).toBe(200)
       const cookie = getCookieHeader(login)
 
-      const update = await app.request(`/api/admin/user/${admin.id}`, {
+      const update = await app.request(`/api/admin/system/user/${admin.id}`, {
         body: JSON.stringify({
           bio: '',
           gender: '',

@@ -6,13 +6,13 @@ import { requireApiSession } from '../shared/api-session'
 import { getLayoutPayload } from '../shared/layout'
 import { describeRoute, jsonResponse } from '../shared/openapi'
 import {
-  adminUserApi,
   systemConfigApi,
   systemCronApi,
   systemFileApi,
   systemOperateLogApi,
   systemRoleApi,
   systemUpdateApi,
+  systemUserApi,
 } from './system'
 import {
   webFeedbackApi,
@@ -27,6 +27,7 @@ const systemApi = new Hono<AppEnv>()
   .route('/operate-log', systemOperateLogApi)
   .route('/role', systemRoleApi)
   .route('/update', systemUpdateApi)
+  .route('/user', systemUserApi)
 
 const webApi = new Hono<AppEnv>()
   .route('/feedback', webFeedbackApi)
@@ -56,7 +57,6 @@ const adminApi = new Hono<AppEnv>()
       title: '后台仪表盘',
     })),
   )
-  .route('/user', adminUserApi)
   .route('/system', systemApi)
   .route('/web', webApi)
 
