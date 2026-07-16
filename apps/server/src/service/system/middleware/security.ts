@@ -4,7 +4,7 @@ import { defaultSecurityRuntimeConfig } from '@hono-admin/runtime/security-confi
 import { formatFileSize } from '@hono-admin/utils/common'
 import { createMiddleware } from 'hono/factory'
 import { secureHeaders } from 'hono/secure-headers'
-import { ForbiddenError } from '../../utils/errors'
+import { ForbiddenError } from '../../../utils/errors'
 import {
   prepareCsrfToken,
   verifyCsrfRequest,

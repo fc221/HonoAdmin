@@ -11,9 +11,9 @@ import api from './api'
 import { openApiDocumentation } from './api/openapi'
 import publicPageApp from './public/page'
 import { getFileAccess } from './service/admin/system/file'
-import { apiRateLimit } from './service/middleware/api-rate-limit'
-import { apiSameOrigin } from './service/middleware/api-same-origin'
-import { headers, requestBodyLimit } from './service/middleware/security'
+import { apiRateLimit } from './service/system/middleware/api-rate-limit'
+import { apiSameOrigin } from './service/system/middleware/api-same-origin'
+import { headers, requestBodyLimit } from './service/system/middleware/security'
 import { toErrorShape } from './utils/errors'
 
 let runtimeContextMiddleware: MiddlewareHandler<AppEnv> | null = null

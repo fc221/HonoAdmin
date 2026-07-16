@@ -1,6 +1,6 @@
-import type { ServiceRequestContext } from '../types'
+import type { ServiceRequestContext } from '../../types'
 import { buildCacheKey } from '@hono-admin/cache'
-import { TooManyRequestsError } from '../../utils/errors'
+import { TooManyRequestsError } from '../../../utils/errors'
 
 type RateLimitContext = Pick<ServiceRequestContext, 'cache'>
 

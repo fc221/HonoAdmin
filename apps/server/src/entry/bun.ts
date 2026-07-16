@@ -2,7 +2,7 @@ import type { CachePolicy } from './static'
 import { createBunRuntime } from '@hono-admin/runtime/bun'
 import app, { setApiRuntimeContextMiddleware } from '../app'
 import { startLocalScheduler } from '../service/admin/system/cron'
-import { createAttachRuntime } from '../service/middleware/context'
+import { createAttachRuntime } from '../service/system/middleware/context'
 import { startRuntimeDiagnostics } from './diagnostics'
 import {
   buildCacheControl,

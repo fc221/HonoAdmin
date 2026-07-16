@@ -7,23 +7,23 @@ import {
   needsPasswordRehash,
   verifyUserPassword,
 } from '../apps/server/src/service/admin/system/user'
-import { apiSameOrigin } from '../apps/server/src/service/middleware/api-same-origin'
+import { apiSameOrigin } from '../apps/server/src/service/system/middleware/api-same-origin'
 import {
   csrf,
   headers,
   requestBodyLimit,
-} from '../apps/server/src/service/middleware/security'
+} from '../apps/server/src/service/system/middleware/security'
 import {
   csrfCookieName,
   csrfFieldName,
   csrfHeaderName,
   getPreparedCsrfToken,
   prepareCsrfToken,
-} from '../apps/server/src/service/security/csrf'
+} from '../apps/server/src/service/system/security/csrf'
 import {
   consumeRateLimit,
   createRateLimitKey,
-} from '../apps/server/src/service/security/rate-limit'
+} from '../apps/server/src/service/system/security/rate-limit'
 import { DatabaseError, toErrorShape, TooManyRequestsError } from '../apps/server/src/utils/errors'
 
 describe('security utilities', () => {

@@ -1,7 +1,7 @@
 import type { AppEnv } from '@hono-admin/runtime'
 import { getRateLimitCache } from '@hono-admin/runtime/rate-limit-cache'
 import { createMiddleware } from 'hono/factory'
-import { getClientIp } from '../../utils/request'
+import { getClientIp } from '../../../utils/request'
 import { resolveSecurityLimits } from '../security/limits'
 import { consumeRateLimit, createRateLimitKey } from '../security/rate-limit'
 

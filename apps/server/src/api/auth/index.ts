@@ -6,12 +6,12 @@ import { clearAdminSession } from '../../service/admin/session'
 import { canAccessAdminPath } from '../../service/admin/system/role'
 import { getDatabaseMigrationStatus } from '../../service/admin/system/update'
 import { getUserCredentialByUsername, isAdminInstalled } from '../../service/admin/system/user'
-import { resolveSecurityLimits } from '../../service/security/limits'
+import { resolveSecurityLimits } from '../../service/system/security/limits'
 import {
   clearRateLimit,
   consumeRateLimit,
   createRateLimitKey,
-} from '../../service/security/rate-limit'
+} from '../../service/system/security/rate-limit'
 import { loginUser } from '../../service/user/login'
 import { switchCurrentSessionRole } from '../../service/user/role-switch'
 import { getClientIp } from '../../utils/request'

@@ -1,7 +1,7 @@
 import type { SecurityRuntimeConfig } from '@hono-admin/runtime/security-config'
-import type { ServiceRequestContext } from '../types'
+import type { ServiceRequestContext } from '../../types'
 import { defaultSecurityRuntimeConfig } from '@hono-admin/runtime/security-config'
-import { listConfigs } from '../admin/system/config'
+import { listConfigs } from '../../admin/system/config'
 
 export interface SecurityLimits extends SecurityRuntimeConfig {
   apiRateLimitEnabled: boolean

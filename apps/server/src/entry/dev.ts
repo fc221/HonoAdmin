@@ -1,7 +1,7 @@
 import { createBunRuntime } from '@hono-admin/runtime/bun'
 import app, { setApiRuntimeContextMiddleware } from '../app'
 import { startLocalScheduler } from '../service/admin/system/cron'
-import { createAttachRuntime } from '../service/middleware/context'
+import { createAttachRuntime } from '../service/system/middleware/context'
 
 setApiRuntimeContextMiddleware(createAttachRuntime(createBunRuntime))
 

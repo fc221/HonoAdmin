@@ -6,7 +6,7 @@ import { serve } from '@hono/node-server'
 import { getMimeType } from 'hono/utils/mime'
 import app, { setApiRuntimeContextMiddleware } from '../app'
 import { startLocalScheduler } from '../service/admin/system/cron'
-import { createAttachRuntime } from '../service/middleware/context'
+import { createAttachRuntime } from '../service/system/middleware/context'
 import {
   buildCacheControl,
   buildEtag,

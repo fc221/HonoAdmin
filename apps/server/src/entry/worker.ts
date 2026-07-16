@@ -2,7 +2,7 @@ import type { RuntimeBindings } from '@hono-admin/runtime'
 import { createCloudflareWorkersRuntime } from '@hono-admin/runtime/cloudflare-workers'
 import app, { setApiRuntimeContextMiddleware } from '../app'
 import { runSchedulerTick } from '../service/admin/system/cron'
-import { createAttachRuntime } from '../service/middleware/context'
+import { createAttachRuntime } from '../service/system/middleware/context'
 
 setApiRuntimeContextMiddleware(createAttachRuntime(createCloudflareWorkersRuntime))
 

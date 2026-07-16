@@ -1,7 +1,7 @@
 import type { AppEnv } from '@hono-admin/runtime'
 import type { Context } from 'hono'
 import { createMiddleware } from 'hono/factory'
-import { ForbiddenError } from '../../utils/errors'
+import { ForbiddenError } from '../../../utils/errors'
 
 const apiSessionCookieName = 'hono_admin_session'
 const unsafeApiMethods = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
